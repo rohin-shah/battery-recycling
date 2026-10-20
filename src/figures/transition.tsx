@@ -1,32 +1,30 @@
 import { useFrame } from '@react-three/fiber'
-import { createContext, useContext, useLayoutEffect, useRef, type ReactNode, type RefObject } from 'react'
+import { createContext, useContext, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { MathUtils, Object3D, type InstancedMesh } from 'three'
 import type { Vec } from './parts'
 
 /**
- * Plays each step change as a short animation of the work being done, rather than cutting to the end state.
- * Stepping forward by one plays the transition; jumping or stepping back cuts straight to the state, as does reduced motion.
+ * Animation between steps is driven by a continuous `progress` from the reader's scrubber: 1.4 means 40% of the way
+ * through the transition into step 2. Dragging plays the work forwards or backwards at the reader's pace.
  */
-
-export const TRANSITION_SECONDS = 2.4
 
 export type Clock = { step: number; t: number }
 const StepContext = createContext<RefObject<Clock> | null>(null)
 
-const still = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 export const ease = (x: number) => MathUtils.smootherstep(MathUtils.clamp(x, 0, 1), 0, 1)
 /** Progress within a window [a, b] of the transition, 0 → 1. */
 export const within = (t: number, a: number, b: number) => ease((t - a) / (b - a))
 
-export function StepClock({ step, children }: { step: number; children: ReactNode }) {
-  const clock = useRef<Clock>({ step, t: 1 })
-  useFrame((_, dt) => {
-    const c = clock.current
-    if (c.step !== step) {
-      c.t = step === c.step + 1 && !still() ? 0 : 1
-      c.step = step
-    }
-    c.t = Math.min(1, c.t + dt / TRANSITION_SECONDS)
+/** The step being entered and how far into its transition: progress 0 → step 0 settled; 0.3 → step 1 at t = 0.3. */
+export function split(progress: number): Clock {
+  const step = progress <= 0 ? 0 : Math.ceil(progress - 1e-6)
+  return { step, t: step === 0 ? 1 : 1 - (step - progress) }
+}
+
+export function StepClock({ progress, children }: { progress: number; children: ReactNode }) {
+  const clock = useRef<Clock>(split(progress))
+  useLayoutEffect(() => {
+    clock.current = split(progress)
   })
   return <StepContext.Provider value={clock}>{children}</StepContext.Provider>
 }
@@ -57,7 +55,7 @@ export function Flow({ step, from, to, color, count = 24, size = 0.08, arc = 1, 
 }) {
   const clock = useClock()
   const mesh = useRef<InstancedMesh>(null)
-  const o = useRef(new Object3D()).current
+  const [o] = useState(() => new Object3D())
   useLayoutEffect(() => {
     o.scale.setScalar(0)
     o.updateMatrix()

@@ -133,11 +133,19 @@ export function BagFilter({ active }: { active: boolean }) {
 }
 
 /** Shredder: a 2 m housing with a hopper over two counter-rotating rollers; optional nitrogen blanket. */
+/** One shredder roller; the pair turn towards each other. */
+function Roller({ x, active, speed }: { x: number; active: boolean; speed: number }) {
+  const r = useRef<Mesh>(null)
+  useTurn(r, active, 'z', speed)
+  return (
+    <mesh ref={r} position={[x, 1.2, 0]} rotation={[Math.PI / 2, 0, 0]}>
+      <cylinderGeometry args={[0.25, 0.25, 1.4, 8]} />
+      <meshStandardMaterial color={ENCODING.steel} metalness={0.6} roughness={0.35} flatShading />
+    </mesh>
+  )
+}
+
 export function Shredder({ active, nitrogen = false }: { active: boolean; nitrogen?: boolean }) {
-  const a = useRef<Mesh>(null)
-  const b = useRef<Mesh>(null)
-  useTurn(a, active, 'z', 4)
-  useTurn(b, active, 'z', -4)
   return (
     <group>
       <Cutaway w={2} h={1.4} d={1.6} />
@@ -146,12 +154,8 @@ export function Shredder({ active, nitrogen = false }: { active: boolean; nitrog
         <cylinderGeometry args={[1.2, 0.7, 0.7, 4, 1, true]} />
         <meshStandardMaterial map={brushedSteel()} metalness={0.4} roughness={0.45} side={2} />
       </mesh>
-      {[a, b].map((r, i) => (
-        <mesh key={i} ref={r} position={[(i - 0.5) * 0.55, 1.2, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.25, 0.25, 1.4, 8]} />
-          <meshStandardMaterial color={ENCODING.steel} metalness={0.6} roughness={0.35} flatShading />
-        </mesh>
-      ))}
+      <Roller x={-0.275} active={active} speed={4} />
+      <Roller x={0.275} active={active} speed={-4} />
       {nitrogen && (
         <mesh position={[0, 1.3, 0]}>
           <sphereGeometry args={[1.5, 24, 16]} />
@@ -254,9 +258,9 @@ export function Sieve({ active }: { active: boolean }) {
           <boxGeometry args={[2, 0.18, 0.05]} />
         </Steel>
       </group>
-      {[-0.9, 0.9].map((x) =>
+      {[-0.9, 0.9].flatMap((x) =>
         [-0.5, 0.5].map((z) => (
-          <Steel key={`${x}${z}`} position={[x, 0.5, z]}>
+          <Steel key={`${x},${z}`} position={[x, 0.5, z]}>
             <boxGeometry args={[0.06, 1, 0.06]} />
           </Steel>
         )),
@@ -272,9 +276,9 @@ export function Bench() {
       <Steel position={[0, 0.88, 0]}>
         <boxGeometry args={[2, 0.05, 0.9]} />
       </Steel>
-      {[-0.95, 0.95].map((x) =>
+      {[-0.95, 0.95].flatMap((x) =>
         [-0.4, 0.4].map((z) => (
-          <Steel key={`${x}${z}`} position={[x, 0.43, z]}>
+          <Steel key={`${x},${z}`} position={[x, 0.43, z]}>
             <boxGeometry args={[0.05, 0.86, 0.05]} />
           </Steel>
         )),

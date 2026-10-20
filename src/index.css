@@ -119,3 +119,12 @@ figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
 .method h3 { font-size: 1rem; margin: 20px 0 4px; }
 .method ul { padding-left: 1.2em; }
 .sources { font-size: 0.85rem; }
+.stages li button { font: inherit; color: inherit; background: none; border: 0; padding: 0; width: 100%; cursor: pointer; }
+/* In-scene labels: a pill above its point, with a leader line down to it */
+.tag {
+  position: absolute; left: 0; bottom: 0; transform: translate(-50%, -14px); white-space: nowrap;
+  font: 600 11px/1.2 system-ui, -apple-system, sans-serif; color: #1b2620; background: rgb(255 255 255 / 0.9);
+  border: 1px solid rgb(0 0 0 / 0.15); border-radius: 999px; padding: 2px 7px; pointer-events: none;
+}
+.tag::after { content: ''; position: absolute; left: 50%; top: 100%; width: 1px; height: 12px; background: rgb(0 0 0 / 0.45); }
+.fig-view { position: relative; overflow: hidden; }

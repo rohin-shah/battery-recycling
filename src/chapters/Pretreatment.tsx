@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Figure } from '../figures/Figure'
 import { OUTPUTS, outputLabel, outputsSoFar, PRETREATMENT, PretreatmentFigure } from '../figures/PretreatmentFigure'
+import { split } from '../figures/transition'
 import { PROCESS, RECOVERY_TOTAL, ROUTES, type RouteId } from '../model/data'
-import { Choice, Steps } from '../ui/controls'
+import { Choice, Scrubber } from '../ui/controls'
 import { Num } from '../ui/Num'
 import { Chapter, Cite, Ink } from './Chapter'
 
@@ -15,7 +16,10 @@ const pct = (v: number) => `${Math.round(v * 100)}%`
 
 export function Pretreatment() {
   const [route, setRoute] = useState<RouteId>('pyro')
-  const [step, setStep] = useState(0)
+  const [progress, setProgress] = useState(0)
+  const { step, t } = split(progress)
+  // Outputs join the list once they've landed, about halfway through their step.
+  const shown = outputsSoFar(route, t >= 0.6 ? step : step - 1)
   const steps = PRETREATMENT[route]
   return (
     <Chapter
@@ -31,14 +35,14 @@ export function Pretreatment() {
                 options={ROUTE_OPTIONS}
                 onChange={(r) => {
                   setRoute(r)
-                  setStep(0)
+                  setProgress(0)
                 }}
               />
-              <Steps label="Step" steps={steps.map((s) => s.label)} value={step} onChange={setStep} />
+              <Scrubber label="Step" steps={steps.map((s) => s.label)} value={progress} onChange={setProgress} />
               <p className="legend" aria-live="polite">
                 Out so far:{' '}
-                {outputsSoFar(route, step).length
-                  ? outputsSoFar(route, step).map((k) => (
+                {shown.length
+                  ? shown.map((k) => (
                       <Ink key={k} c={OUTPUTS[k].ink}>
                         {outputLabel(route, k)}
                       </Ink>
@@ -48,7 +52,7 @@ export function Pretreatment() {
             </>
           }
         >
-          <PretreatmentFigure route={route} step={step} />
+          <PretreatmentFigure route={route} progress={progress} />
         </Figure>
       }
     >
@@ -78,7 +82,7 @@ export function Pretreatment() {
         that make shredding dangerous. Then they’re shredded, a magnet pulls out the steel, and sieving and sifting split black mass from the foils. In the version modelled here the black mass is then smelted like the first route, so its lithium and
         manganese end up in slag again: <Num v={RECOVERY_TOTAL.thermal}>{pct(RECOVERY_TOTAL.thermal.value)}</Num> recovered by mass.
       </p>
-      <p>Pick a route and step through it. Whichever you choose, what comes out next goes into acid.</p>
+      <p>Pick a route, then drag the slider to run it step by step, or tap a step to play it. Whichever route you choose, what comes out next goes into acid.</p>
     </Chapter>
   )
 }

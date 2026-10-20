@@ -5,7 +5,8 @@ import { ENCODING, type Ink } from './encoding'
 import { BagFilter, Bench, Condenser, Drum, ElectrolyteDrum, Furnace, Melt, Puffs, Sieve, Shredder, Zigzag } from './machines'
 import { Mover, Pile, type Vec } from './parts'
 import { Floor, Person, Phone } from './scale'
-import { Flow, GrowIn, StepClock } from './transition'
+import { Tag } from './Tag'
+import { ease, Flow, GrowIn, split, StepClock } from './transition'
 
 /**
  * Each route as a process line in real metres, one machine per flowsheet box (Blömeke et al. 2022, Figs 4–6), stepped
@@ -336,6 +337,23 @@ export const outputLabel = (route: RouteId, k: Output) => LINES[route].labels?.[
 /** Outputs produced up to and including `step`. */
 export const outputsSoFar = (route: RouteId, step: number) => LINES[route].steps.slice(0, step + 1).flatMap((s) => s.out ?? [])
 
+/** Each machine's label(s), relative to the machine, named as in the flowsheet boxes. */
+const TAGS: Record<string, [Vec, string][]> = {
+  furnace3: [[[1.3, 3.4, 1.2], 'Pre-heating'], [[1.3, 2.2, 1.2], 'Decomposition'], [[1.3, 0.8, 1.2], 'Smelting & reducing']],
+  furnace1: [[[0, 2.6, 1.1], 'Furnace']],
+  bagFilter: [[[0, 3.6, 0.6], 'Bag filter']],
+  mill: [[[0, 2, 0], 'Mill']],
+  shredderN2: [[[0, 2.2, 0.8], 'Shredder, under nitrogen']],
+  shredder: [[[0, 2.2, 0.8], 'Shredder']],
+  condenser: [[[0, 2.6, 0], 'Condenser']],
+  dryer: [[[0, 2.1, 0.6], 'Rotary dryer']],
+  kiln: [[[0, 2.5, 0.75], 'Pyrolysis kiln']],
+  magnet: [[[0, 1.9, 0.4], 'Magnetic drum']],
+  zigzag: [[[0, 3.6, 0.4], 'Air sifter']],
+  sieve: [[[0, 1.4, 0.6], 'Sieve']],
+  bench: [[[0.9, 0.95, 0.45], 'Workbench']],
+}
+
 /** Machines further than this from the focus aren't drawn, so turning the figure never swings one into view. */
 const NEAR = 4.5
 
@@ -391,31 +409,58 @@ function BatchShape({ kind }: { kind: BatchKind }): ReactNode {
 
 const neg = ([x, y, z]: Vec): Vec => [-x, -y, -z]
 
-export function PretreatmentFigure({ route, step }: { route: RouteId; step: number }) {
+const mix = (a: Vec, b: Vec, k: number): Vec => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k]
+
+/** `progress` is the reader's scrubber position: 2.5 is halfway through the transition into step 3. */
+export function PretreatmentFigure({ route, progress }: { route: RouteId; progress: number }) {
   const line = LINES[route]
+  const { step, t } = split(progress)
   const s = line.steps[step]
-  const near = (x: number) => Math.abs(x - s.focus[0]) <= NEAR
+  // The camera glides from the previous step's view to this one as the reader scrubs.
+  const prev = line.steps[Math.max(0, step - 1)]
+  const k = ease(t * 1.6)
+  const focus = mix(prev.focus, s.focus, k)
+  const zoom = prev.zoom + (s.zoom - prev.zoom) * k
+  const near = (x: number) => Math.abs(x - focus[0]) <= NEAR || Math.abs(x - s.focus[0]) <= NEAR
   const producedAt = new Map<Output, number>()
   line.steps.forEach((st, i) => st.out?.forEach((o) => producedAt.set(o, i)))
   const meltFrom = line.steps.findIndex((st) => st.melt)
   const furnace = line.machines.find((m) => m.kind.startsWith('furnace'))
   const xs = line.machines.map((m) => m.at[0])
   return (
-    <StepClock step={step}>
-      <Mover key={route} to={[0, -0.6, 0]} scale={s.zoom}>
-        <Mover to={neg(s.focus)}>
+    <StepClock progress={progress}>
+      <Mover key={route} to={[0, -0.6, 0]} scale={zoom}>
+        <Mover to={neg(focus)}>
           <Floor x={(Math.min(...xs) + Math.max(...xs)) / 2} width={Math.max(...xs) - Math.min(...xs) + 24} />
           {line.machines.map((m, i) => (
             <Mover key={i} to={m.at} scale={near(m.at[0]) ? 1 : 0}>
               <MachineShape kind={m.kind} active={!!s.active?.includes(i)} s={s} />
               {!['condenser', 'bagFilter'].includes(m.kind) && <Person position={[-2.1, 0, -1.4]} />}
+              {TAGS[m.kind]?.map(([at, text]) => (
+                <Tag key={text} at={at} show={near(m.at[0])}>
+                  {text}
+                </Tag>
+              ))}
+              {i === 0 && (
+                <Tag at={[-2.1, 1.9, -1.4]} show={near(m.at[0])}>
+                  Person, 1.75 m
+                </Tag>
+              )}
             </Mover>
           ))}
-          {furnace && s.melt && near(furnace.at[0]) && (
+          {furnace && (
             <group position={furnace.at}>
-              <GrowIn step={meltFrom}>
-                <Melt width={furnace.kind === 'furnace1' ? 1.9 : 2.1} />
-              </GrowIn>
+              {s.melt && near(furnace.at[0]) && (
+                <GrowIn step={meltFrom}>
+                  <Melt width={furnace.kind === 'furnace1' ? 1.9 : 2.1} />
+                </GrowIn>
+              )}
+              <Tag at={[-0.6, 0.65, 1.1]} show={!!s.melt && near(furnace.at[0])}>
+                Slag
+              </Tag>
+              <Tag at={[0.5, 0.38, 1.1]} show={!!s.melt && near(furnace.at[0])}>
+                Alloy
+              </Tag>
             </group>
           )}
           {s.slagFormers && (
@@ -423,22 +468,31 @@ export function PretreatmentFigure({ route, step }: { route: RouteId; step: numb
               <Pile color={ENCODING.slag} radius={0.4} count={120} seed={41} />
             </group>
           )}
-          {s.batch && (
-            <Mover to={s.batch.at}>
+          {/* Batch and phone stay mounted (only their contents change), so their labels never unmount mid-render. */}
+          <Mover to={s.batch?.at ?? focus}>
+            {s.batch && (
               <GrowIn key={`${route}-${step}`} step={step} start={0.5} end={0.9}>
                 <BatchShape kind={s.batch.kind} />
               </GrowIn>
-              <Phone position={[0.55, 0, 0.35]} rotation={0.4} />
-            </Mover>
-          )}
+            )}
+            {s.batch && <Phone position={[0.55, 0, 0.35]} rotation={0.4} />}
+            <Tag at={[0.55, 0.05, 0.35]} show={s.batch?.kind === 'modules' || s.batch?.kind === 'cells'}>
+              Phone, 15 cm
+            </Tag>
+          </Mover>
           {(Object.entries(line.outputs) as [Output, Vec][]).map(([k, at]) => {
             const from = producedAt.get(k)
-            if (from === undefined || from > step || !near(at[0])) return null
+            const made = from !== undefined && from <= step && near(at[0])
             return (
               <group key={k} position={at}>
-                <GrowIn step={from} start={0.5}>
-                  {k === 'electrolyte' ? <ElectrolyteDrum /> : PILE_COLOURS[k].map((c, i) => <Pile key={c} color={c} radius={0.5} count={140} seed={i + k.length * 3} />)}
-                </GrowIn>
+                {made && (
+                  <GrowIn step={from} start={0.5}>
+                    {k === 'electrolyte' ? <ElectrolyteDrum /> : PILE_COLOURS[k].map((c, i) => <Pile key={c} color={c} radius={0.5} count={140} seed={i + k.length * 3} />)}
+                  </GrowIn>
+                )}
+                <Tag at={[0, k === 'electrolyte' ? 1.05 : 0.55, 0]} show={made && (from < step || t >= 0.6)}>
+                  {outputLabel(route, k)}
+                </Tag>
               </group>
             )
           })}
