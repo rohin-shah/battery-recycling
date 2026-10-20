@@ -70,7 +70,7 @@ summary { cursor: pointer; margin-bottom: 8px; }
 .fig { margin: 0; position: sticky; top: 0; z-index: 1; background: var(--bg); padding: 8px 0; }
 .fig-view {
   /* Always light, in both themes: the figure colours (black mass especially) are tuned for one background */
-  height: 42vh; min-height: 220px; border-radius: 12px; background: #f4f5f0; border: 1px solid var(--line);
+  height: 36vh; min-height: 220px; border-radius: 12px; background: #f4f5f0; border: 1px solid var(--line);
   touch-action: pan-y; cursor: grab;
 }
 .fig-view:active { cursor: grabbing; }
@@ -87,5 +87,15 @@ figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
 .cite { color: var(--muted); }
 .fig .slider { margin: 8px 0 4px; }
 .stages { display: flex; gap: 6px; list-style: none; padding: 0; margin: 4px 0 0; font-size: 0.8rem; }
-.stages li { flex: 1; text-align: center; padding: 4px; border-radius: 6px; border: 1px solid var(--line); }
+.stages li { flex: 1 1 0; min-width: 0; overflow-wrap: anywhere; hyphens: auto; text-align: center; padding: 4px; border-radius: 6px; border: 1px solid var(--line); }
 .stages li[aria-current='step'] { background: var(--forest); border-color: var(--forest); color: #fff; }
+.prose h3 { font-size: 1rem; margin: 20px 0 4px; }
+.ink { white-space: nowrap; }
+.ink i { display: inline-block; width: 0.6em; height: 0.6em; border-radius: 50%; margin-right: 0.25em; border: 1px solid var(--line); vertical-align: 0.05em; }
+.legend { font-size: 0.8rem; margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.fig .choice { margin: 8px 0 4px; }
+.recovered { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.recovered th, .recovered td { text-align: left; padding: 2px 4px; font-weight: normal; }
+.recovered thead th { color: var(--muted); }
+.recovered td { text-align: right; }
+.recovered tr.lost { color: var(--muted); }

@@ -18,6 +18,22 @@ export function Choice<T extends string>({ label, value, options, onChange }: {
   )
 }
 
+/** A slider that scrubs through named steps, with the steps listed beneath and the current one highlighted. */
+export function Steps({ label, steps, value, onChange }: { label: string; steps: string[]; value: number; onChange: (v: number) => void }) {
+  return (
+    <div className="steps">
+      <Slider label={label} value={value} min={0} max={steps.length - 1} step={1} format={(v) => `${v + 1} of ${steps.length}`} onChange={onChange} />
+      <ol className="stages" aria-label={label}>
+        {steps.map((s, i) => (
+          <li key={s} aria-current={i === value ? 'step' : undefined}>
+            {s}
+          </li>
+        ))}
+      </ol>
+    </div>
+  )
+}
+
 export function Slider({ label, value, min, max, step, format, hint, onChange }: {
   label: string
   value: number

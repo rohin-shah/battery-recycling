@@ -15,7 +15,7 @@ describe('reproduces Blömeke 2022', () => {
     expect(perTonne).toBeGreaterThan(NET[route].value * 1.1)
   })
 
-  test('substitution 0.75 and 0.5 worsen the mechanical route by 20% and 41% (Section 4.4)', () => {
+  test('substitution 0.75 and 0.5 worsen the mechanical route by 20% and 41% (Section 4.2)', () => {
     const full = blomeke('mechanical').net
     expect(blomeke('mechanical', 0.75).net / full).toBeCloseTo(0.8, 1)
     expect(blomeke('mechanical', 0.5).net / full).toBeCloseTo(0.59, 1)

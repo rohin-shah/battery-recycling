@@ -54,7 +54,7 @@ export type Material = 'aluminium' | 'steel' | 'copper' | 'nickelSulphate' | 'co
 /** Blömeke's modelled pack: BatPaC NMC622 pouch cells. */
 export const PACK = {
   mass: blo(576.38, 'kg', 'Table 2'),
-  capacity: blo(95, 'kWh', 'Section 2.2'),
+  capacity: blo(95, 'kWh', 'Table 2'),
 }
 
 /** Carbon avoided per kg of primary material replaced (ecoinvent 3.8, IPCC 2013 GWP100). */
@@ -69,7 +69,7 @@ export const PRIMARY_FACTOR: Record<Material, Value> = {
   graphite: blo(6.131, 'kg CO₂e/kg', 'Table SM.6.1'),
 }
 
-/** Battery materials: the substitution factor applies only to these (Section 4.4). */
+/** Battery materials: the substitution factor applies only to these (Section 4.2). */
 export const SUBSTITUTABLE: Material[] = ['nickelSulphate', 'cobaltSulphate', 'manganeseSulphate', 'lithiumCarbonate', 'graphite']
 
 /** Recovered material, kg per tonne of spent battery (Table 3 baseline outputs ÷ 25,000 t). */
@@ -105,6 +105,26 @@ export const RECOVERY_TOTAL: Record<RouteId, Value> = {
   pyro: blo(0.5, 'fraction', 'Fig. 7'),
   mechanical: blo(0.72, 'fraction', 'Fig. 7'),
   thermal: blo(0.57, 'fraction', 'Fig. 7'),
+}
+
+/** Process facts quoted in the chapters. */
+export const PROCESS = {
+  residualEnergy: blo(30, 'kWh', 'SM.3', 'stated', 'Assumed: about a third of the pack’s capacity when it arrives'),
+  /** Housing, electronics, cables and connectors (Table 2 "pack" level) as a share of the pack's mass. */
+  peripheryShare: blo(194.89 / 576.38, 'fraction', 'Table 2', 'derived', 'The text says “more than 30%”'),
+  disassemblyHours: blo(2, 'hours, two workers', 'Section 3.2 (Routes 1 and 2; 3 h for Route 3)'),
+  slagIron: blo(0.7, 'fraction of iron', 'Section 3.2'),
+  flueDustLithium: blo(0.14, 'fraction of lithium (up to)', 'Section 3.2, citing Verscheure et al. 2014'),
+  digestion: blo(140, '°C', 'SM.2'),
+  leachPh: blo(1, 'pH', 'SM.2'),
+  lithiumPrecipitation: blo(90, '°C', 'SM.2'),
+}
+
+/** Share of each material recovered (Fig. 7 bar labels); absent = not recovered by that route in the baseline. */
+export const RECOVERY_RATE: Record<RouteId, Partial<Record<'graphite' | 'cobalt' | 'nickel' | 'lithium' | 'manganese' | 'aluminium' | 'copper' | 'steel', number>>> = {
+  pyro: { cobalt: 0.93, nickel: 0.94, aluminium: 0.79, copper: 0.91, steel: 0.65 },
+  mechanical: { graphite: 0.83, cobalt: 0.83, nickel: 0.83, lithium: 0.72, manganese: 0.83, aluminium: 0.94, copper: 0.97, steel: 0.94 },
+  thermal: { cobalt: 0.86, nickel: 0.88, aluminium: 0.94, copper: 0.97, steel: 0.94 },
 }
 
 /** Net result with full substitution, German grid (bar labels). */
@@ -146,7 +166,7 @@ export const BASE_GRID: Value = ember(355.61, 2020)
 
 export const DEFAULTS = {
   packKwh: { value: 60, unit: 'kWh', source: 'assumption', how: 'stated', note: 'Typical UK EV; mass scaled linearly from Blömeke’s pack' } satisfies Value,
-  substitution: { value: 1, unit: 'fraction', source: 'blomeke2022', how: 'stated', where: 'Section 4.4' } satisfies Value,
+  substitution: { value: 1, unit: 'fraction', source: 'blomeke2022', how: 'stated', where: 'Section 4.2' } satisfies Value,
 }
 
 /** Second life: the paper's own California model, cumulative 2025–2050. */
