@@ -110,3 +110,6 @@ One slice per chapter, each with an interactive figure that adds a single concep
 - LFP in the calculator and simulations.
 - How a cell is made, and how it fits into a module and a pack.
 - Charging, discharging, and why Li-ion cells lose capacity.
+
+## Later
+- Split the larger chapter figures into smaller, single-idea inline figures (Ciechanowski-style), once the current figures are settled.

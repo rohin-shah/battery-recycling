@@ -1,11 +1,13 @@
 import { useFrame } from '@react-three/fiber'
-import { useRef, type RefObject } from 'react'
+import { useRef, type ReactNode, type RefObject } from 'react'
 import { MathUtils, type Group, type Mesh, type MeshStandardMaterial } from 'three'
 import { ENCODING } from './encoding'
+import { brushedSteel, machinePanel } from './textures'
 
 /**
- * Simple, recognisable process machines for the pretreatment figure (Blömeke et al. 2022, Figs 4–6).
- * Violet glow = heat; moving parts turn only while their step is active.
+ * Process machines for the pretreatment figure (Blömeke et al. 2022, Figs 4–6), in metres with the floor at y = 0.
+ * Sizes are typical for industrial plant and illustrative only. Fronts are cut away so the inside can be seen.
+ * Violet glow = heat; moving parts turn while their step is active.
  */
 
 const still = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -14,72 +16,88 @@ const still = () => window.matchMedia('(prefers-reduced-motion: reduce)').matche
 function useGlow(level: number) {
   const mat = useRef<MeshStandardMaterial>(null)
   useFrame((_, dt) => {
-    if (mat.current) mat.current.emissiveIntensity = MathUtils.damp(mat.current.emissiveIntensity, level, 3, dt)
+    if (mat.current) mat.current.emissiveIntensity = MathUtils.damp(mat.current.emissiveIntensity, level, 2.5, dt)
   })
   return mat
 }
 
-/** Spins a part about one axis while active. */
 function useTurn(ref: RefObject<Group | Mesh | null>, active: boolean, axis: 'x' | 'y' | 'z', speed = 2) {
   useFrame((_, dt) => {
     if (ref.current && active && !still()) ref.current.rotation[axis] += dt * speed
   })
 }
 
-function Body({ size, glow = 0, opacity = 1, color = ENCODING.machine }: { size: [number, number, number]; glow?: number; opacity?: number; color?: string }) {
+const Panel = ({ size, position, glow = 0 }: { size: [number, number, number]; position: [number, number, number]; glow?: number }) => {
   const mat = useGlow(glow)
   return (
-    <mesh>
+    <mesh position={position}>
       <boxGeometry args={size} />
-      <meshStandardMaterial ref={mat} color={color} emissive={ENCODING.heat} emissiveIntensity={0} roughness={0.5} transparent={opacity < 1} opacity={opacity} depthWrite={opacity === 1} />
+      <meshStandardMaterial ref={mat} map={machinePanel()} emissive={ENCODING.heat} emissiveIntensity={0} roughness={0.6} />
     </mesh>
   )
 }
 
-/** Furnace. Three stacked zones (pre-heating, decomposition, smelting) unless `single`; the melt shows as alloy under slag. */
-export function Furnace({ zones, melt, single = false }: { zones: [number, number, number]; melt: boolean; single?: boolean }) {
-  const heights = single ? [0.9] : [0.32, 0.32, 0.36]
-  let y = 0.55
+const Steel = ({ children, ...p }: { children: ReactNode; position?: [number, number, number]; rotation?: [number, number, number] }) => (
+  <mesh {...p}>
+    {children}
+    <meshStandardMaterial map={brushedSteel()} metalness={0.5} roughness={0.4} />
+  </mesh>
+)
+
+/** An open-fronted box: back, sides and floor, so the inside shows. */
+function Cutaway({ w, h, d, y = 0, glow = 0 }: { w: number; h: number; d: number; y?: number; glow?: number }) {
+  const t = 0.1
   return (
-    <group>
-      {heights.map((h, i) => {
-        y -= h
-        const at = y + h / 2
-        return (
-          <group key={i} position={[0, at, 0]}>
-            <Body size={[0.8, h - 0.03, 0.8]} glow={(single ? zones[2] : zones[i]) * 1.5} opacity={0.8} />
-          </group>
-        )
-      })}
-      {melt && (
-        <>
-          <mesh position={[0, -0.28, 0]}>
-            <cylinderGeometry args={[0.3, 0.3, 0.1, 24]} />
-            <meshStandardMaterial color={ENCODING.slag} />
-          </mesh>
-          <mesh position={[0, -0.38, 0]}>
-            <cylinderGeometry args={[0.3, 0.3, 0.1, 24]} />
-            <meshStandardMaterial color={ENCODING.steel} metalness={0.6} roughness={0.3} />
-          </mesh>
-        </>
-      )}
+    <group position={[0, y, 0]}>
+      <Panel size={[w, h, t]} position={[0, h / 2, -d / 2]} glow={glow} />
+      <Panel size={[t, h, d]} position={[-w / 2, h / 2, 0]} glow={glow} />
+      <Panel size={[t, h, d]} position={[w / 2, h / 2, 0]} glow={glow} />
+      <Panel size={[w, t, d]} position={[0, t / 2, 0]} glow={glow} />
     </group>
   )
 }
 
-/** Rising puffs of off-gas from a stack. */
-function OffGas({ active }: { active: boolean }) {
+/** Furnace, 2.4 m wide. Three zones stacked (smelting 1.6 m, decomposition 1.2 m, pre-heating 1.2 m) unless `single`. */
+export function Furnace({ zones, single = false }: { zones: [number, number, number]; single?: boolean }) {
+  if (single) return <Cutaway w={2.2} h={2.5} d={2.2} glow={zones[2] * 2} />
+  return (
+    <group>
+      <Cutaway w={2.4} h={1.6} d={2.4} glow={zones[2] * 2} />
+      <Cutaway w={2.4} h={1.2} d={2.4} y={1.6} glow={zones[1] * 2} />
+      <Cutaway w={2.4} h={1.2} d={2.4} y={2.8} glow={zones[0] * 2} />
+    </group>
+  )
+}
+
+/** The melt in the smelting zone: heavy alloy sinks under lighter slag. */
+export function Melt({ width = 2.1 }: { width?: number }) {
+  return (
+    <group>
+      <mesh position={[0, 0.25, 0]}>
+        <boxGeometry args={[width, 0.25, width]} />
+        <meshStandardMaterial color={ENCODING.steel} metalness={0.7} roughness={0.3} emissive={ENCODING.heat} emissiveIntensity={0.4} />
+      </mesh>
+      <mesh position={[0, 0.5, 0]}>
+        <boxGeometry args={[width, 0.25, width]} />
+        <meshStandardMaterial color={ENCODING.slag} roughness={0.8} emissive={ENCODING.heat} emissiveIntensity={0.3} />
+      </mesh>
+    </group>
+  )
+}
+
+/** Puffs rising from a point while active. */
+export function Puffs({ active, height = 1.5, size = 0.3 }: { active: boolean; height?: number; size?: number }) {
   const g = useRef<Group>(null)
   useFrame(({ clock }) => {
     g.current?.children.forEach((c, i) => {
-      const t = (clock.elapsedTime * 0.4 + i / 3) % 1
-      c.position.y = t * 0.6
-      c.scale.setScalar(active && !still() ? 0.06 + t * 0.08 : 0)
+      const t = (clock.elapsedTime * 0.35 + i / 4) % 1
+      c.position.y = t * height
+      c.scale.setScalar(active && !still() ? size * (0.4 + t) : 0)
     })
   })
   return (
-    <group ref={g} position={[0, 0.55, 0]}>
-      {[0, 1, 2].map((i) => (
+    <group ref={g}>
+      {[0, 1, 2, 3].map((i) => (
         <mesh key={i}>
           <sphereGeometry args={[1, 12, 8]} />
           <meshStandardMaterial color={ENCODING.dust} transparent opacity={0.35} depthWrite={false} />
@@ -89,30 +107,32 @@ function OffGas({ active }: { active: boolean }) {
   )
 }
 
-/** Bag filter with a stack: catches flue dust, sends cleaned off-gas up. */
+/** Bag filter on legs, 3.5 m tall, with a 6 m stack. */
 export function BagFilter({ active }: { active: boolean }) {
   return (
     <group>
-      <mesh position={[0, 0, 0]}>
-        <cylinderGeometry args={[0.22, 0.22, 0.6, 20]} />
-        <meshStandardMaterial color={ENCODING.machine} roughness={0.5} />
-      </mesh>
-      <mesh position={[0, -0.4, 0]}>
-        <coneGeometry args={[0.22, 0.2, 20]} />
-        <meshStandardMaterial color={ENCODING.machine} roughness={0.5} />
-      </mesh>
-      <mesh position={[0.15, 0.45, 0]}>
-        <cylinderGeometry args={[0.04, 0.04, 0.5, 10]} />
-        <meshStandardMaterial color={ENCODING.steel} />
-      </mesh>
-      <group position={[0.15, 0.15, 0]}>
-        <OffGas active={active} />
+      <Steel position={[0, 2.4, 0]}>
+        <cylinderGeometry args={[0.6, 0.6, 2.2, 24]} />
+      </Steel>
+      <Steel position={[0, 1.0, 0]}>
+        <coneGeometry args={[0.6, 0.6, 24]} />
+      </Steel>
+      {[-0.45, 0.45].map((x) => (
+        <Steel key={x} position={[x, 0.65, 0]}>
+          <boxGeometry args={[0.08, 1.3, 0.08]} />
+        </Steel>
+      ))}
+      <Steel position={[0.8, 3.0, 0]}>
+        <cylinderGeometry args={[0.15, 0.15, 6, 12]} />
+      </Steel>
+      <group position={[0.8, 6, 0]}>
+        <Puffs active={active} />
       </group>
     </group>
   )
 }
 
-/** Shredder: a hopper over two counter-rotating rollers; optional nitrogen haze. */
+/** Shredder: a 2 m housing with a hopper over two counter-rotating rollers; optional nitrogen blanket. */
 export function Shredder({ active, nitrogen = false }: { active: boolean; nitrogen?: boolean }) {
   const a = useRef<Mesh>(null)
   const b = useRef<Mesh>(null)
@@ -120,121 +140,145 @@ export function Shredder({ active, nitrogen = false }: { active: boolean; nitrog
   useTurn(b, active, 'z', -4)
   return (
     <group>
-      <Body size={[0.7, 0.5, 0.6]} />
+      <Cutaway w={2} h={1.4} d={1.6} />
+      {/* Hopper */}
+      <mesh position={[0, 1.75, 0]} rotation={[0, Math.PI / 4, 0]}>
+        <cylinderGeometry args={[1.2, 0.7, 0.7, 4, 1, true]} />
+        <meshStandardMaterial map={brushedSteel()} metalness={0.4} roughness={0.45} side={2} />
+      </mesh>
       {[a, b].map((r, i) => (
-        <mesh key={i} ref={r} position={[(i - 0.5) * 0.28, 0.32, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.12, 0.12, 0.55, 8]} />
-          <meshStandardMaterial color={ENCODING.steel} metalness={0.5} roughness={0.35} flatShading />
+        <mesh key={i} ref={r} position={[(i - 0.5) * 0.55, 1.2, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.25, 0.25, 1.4, 8]} />
+          <meshStandardMaterial color={ENCODING.steel} metalness={0.6} roughness={0.35} flatShading />
         </mesh>
       ))}
       {nitrogen && (
-        <mesh>
-          <sphereGeometry args={[0.65, 24, 16]} />
-          <meshStandardMaterial color={ENCODING.nitrogen} transparent opacity={active ? 0.25 : 0.1} depthWrite={false} />
+        <mesh position={[0, 1.3, 0]}>
+          <sphereGeometry args={[1.5, 24, 16]} />
+          <meshStandardMaterial color={ENCODING.nitrogen} transparent opacity={active ? 0.22 : 0.08} depthWrite={false} />
         </mesh>
       )}
     </group>
   )
 }
 
-/** A horizontal rotating drum: rotary dryer or kiln (hot), magnetic drum, or mill. */
-export function Drum({ active, hot = false, color = ENCODING.machine, length = 0.9, radius = 0.25 }: { active: boolean; hot?: boolean; color?: string; length?: number; radius?: number }) {
+/** A rotating drum on two supports, its axis along x: rotary dryer or kiln (hot), magnetic drum, or ball mill. */
+export function Drum({ active, hot = false, length, radius, height, color }: { active: boolean; hot?: boolean; length: number; radius: number; height: number; color?: string }) {
   const g = useRef<Group>(null)
-  const mat = useGlow(hot && active ? 1.4 : 0)
-  useTurn(g, active, 'x', 1.5)
-  return (
-    <group ref={g} rotation={[0, 0, Math.PI / 2]}>
-      <mesh>
-        <cylinderGeometry args={[radius, radius, length, 24]} />
-        <meshStandardMaterial ref={mat} color={color} emissive={ENCODING.heat} emissiveIntensity={0} roughness={0.45} />
-      </mesh>
-      {/* A stripe so the turning is visible */}
-      <mesh position={[0, 0, radius]}>
-        <boxGeometry args={[0.04, length, 0.02]} />
-        <meshStandardMaterial color={ENCODING.steel} />
-      </mesh>
-    </group>
-  )
-}
-
-/** Condenser with a drum collecting liquid electrolyte. */
-export function Condenser({ full }: { full: boolean }) {
+  const mat = useGlow(hot && active ? 1.6 : 0)
+  useTurn(g, active, 'x', 1.2)
   return (
     <group>
-      <mesh position={[0, 0.15, 0]}>
-        <cylinderGeometry args={[0.12, 0.12, 0.6, 16]} />
-        <meshStandardMaterial color={ENCODING.machine} />
-      </mesh>
-      <mesh position={[0.3, -0.25, 0]}>
-        <cylinderGeometry args={[0.15, 0.15, 0.3, 20]} />
-        <meshStandardMaterial color={ENCODING.electrolyte} transparent opacity={full ? 0.9 : 0.2} />
-      </mesh>
+      {[-length / 2 + 0.3, length / 2 - 0.3].map((x) => (
+        <Steel key={x} position={[x, (height - radius) / 2, 0]}>
+          <boxGeometry args={[0.2, height - radius, radius * 1.6]} />
+        </Steel>
+      ))}
+      <group ref={g} position={[0, height, 0]}>
+        <mesh rotation={[0, 0, Math.PI / 2]}>
+          <cylinderGeometry args={[radius, radius, length, 28]} />
+          <meshStandardMaterial ref={mat} map={color ? undefined : brushedSteel()} color={color ?? '#ffffff'} metalness={0.4} roughness={0.45} emissive={ENCODING.heat} emissiveIntensity={0} />
+        </mesh>
+        {/* Bands, so the turning shows */}
+        {[-length / 3, length / 3].map((x) => (
+          <mesh key={x} position={[x, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
+            <torusGeometry args={[radius + 0.01, 0.04, 6, 24]} />
+            <meshStandardMaterial color="#3a3f44" />
+          </mesh>
+        ))}
+        <mesh position={[0, radius, 0]}>
+          <boxGeometry args={[length * 0.9, 0.04, 0.08]} />
+          <meshStandardMaterial color="#3a3f44" />
+        </mesh>
+      </group>
     </group>
   )
 }
 
-/** Zigzag air sifter: a tall column of alternating baffles. */
+/** Condenser column, 2.5 m. */
+export function Condenser() {
+  return (
+    <Steel position={[0, 1.25, 0]}>
+      <cylinderGeometry args={[0.3, 0.3, 2.5, 20]} />
+    </Steel>
+  )
+}
+
+/** A 200-litre drum (0.58 m × 0.88 m) of recovered electrolyte. */
+export function ElectrolyteDrum() {
+  return (
+    <mesh position={[0, 0.44, 0]}>
+      <cylinderGeometry args={[0.29, 0.29, 0.88, 24]} />
+      <meshStandardMaterial color={ENCODING.electrolyte} roughness={0.5} />
+    </mesh>
+  )
+}
+
+/** Zigzag air sifter: a 3.5 m column, cut away to show its baffles and the rising air. */
 export function Zigzag({ active }: { active: boolean }) {
-  const mat = useRef<MeshStandardMaterial>(null)
+  const air = useRef<MeshStandardMaterial>(null)
   useFrame(({ clock }) => {
-    if (mat.current) mat.current.opacity = active && !still() ? 0.25 + Math.sin(clock.elapsedTime * 6) * 0.1 : 0.1
+    if (air.current) air.current.opacity = active && !still() ? 0.3 + Math.sin(clock.elapsedTime * 6) * 0.1 : 0.08
   })
   return (
     <group>
-      {[0, 1, 2, 3, 4].map((i) => (
-        <mesh key={i} position={[(i % 2 ? 0.08 : -0.08), -0.4 + i * 0.2, 0]} rotation={[0, 0, i % 2 ? 0.5 : -0.5]}>
-          <boxGeometry args={[0.32, 0.2, 0.3]} />
-          <meshStandardMaterial color={ENCODING.machine} roughness={0.5} />
+      <Cutaway w={0.8} h={3.5} d={0.8} />
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <mesh key={i} position={[i % 2 ? 0.12 : -0.12, 0.5 + i * 0.5, 0]} rotation={[0, 0, i % 2 ? 0.6 : -0.6]}>
+          <boxGeometry args={[0.5, 0.05, 0.7]} />
+          <meshStandardMaterial color={ENCODING.steel} />
         </mesh>
       ))}
-      {/* The rising air stream */}
-      <mesh position={[0, 0.1, 0.2]}>
-        <cylinderGeometry args={[0.05, 0.05, 1.1, 8]} />
-        <meshStandardMaterial ref={mat} color={ENCODING.nitrogen} transparent opacity={0.1} depthWrite={false} />
+      <mesh position={[0, 1.9, 0.1]}>
+        <cylinderGeometry args={[0.12, 0.12, 3.2, 10]} />
+        <meshStandardMaterial ref={air} color={ENCODING.nitrogen} transparent opacity={0.08} depthWrite={false} />
       </mesh>
     </group>
   )
 }
 
-/** Vibrating sieve tray on legs. */
+/** Vibrating sieve: a 2 m × 1.2 m mesh tray at 1 m. */
 export function Sieve({ active }: { active: boolean }) {
   const tray = useRef<Group>(null)
   useFrame(({ clock }) => {
-    if (tray.current) tray.current.position.x = active && !still() ? Math.sin(clock.elapsedTime * 30) * 0.015 : 0
+    if (tray.current) tray.current.position.x = active && !still() ? Math.sin(clock.elapsedTime * 30) * 0.02 : 0
   })
   return (
     <group>
-      <group ref={tray} position={[0, 0.05, 0]} rotation={[0, 0, -0.12]}>
+      <group ref={tray} position={[0, 1, 0]} rotation={[0, 0, -0.1]}>
         <mesh>
-          <boxGeometry args={[0.9, 0.04, 0.6]} />
-          <meshStandardMaterial color={ENCODING.machine} wireframe />
+          <boxGeometry args={[2, 0.06, 1.2, 20, 1, 12]} />
+          <meshStandardMaterial color={ENCODING.steel} wireframe />
         </mesh>
-        <mesh>
-          <boxGeometry args={[0.9, 0.03, 0.6]} />
-          <meshStandardMaterial color={ENCODING.machine} transparent opacity={0.3} />
-        </mesh>
+        <Steel position={[0, 0.08, -0.6]}>
+          <boxGeometry args={[2, 0.18, 0.05]} />
+        </Steel>
       </group>
-      {[-0.4, 0.4].map((x) => (
-        <mesh key={x} position={[x, -0.25, 0]}>
-          <boxGeometry args={[0.04, 0.55, 0.04]} />
-          <meshStandardMaterial color={ENCODING.steel} />
-        </mesh>
-      ))}
+      {[-0.9, 0.9].map((x) =>
+        [-0.5, 0.5].map((z) => (
+          <Steel key={`${x}${z}`} position={[x, 0.5, z]}>
+            <boxGeometry args={[0.06, 1, 0.06]} />
+          </Steel>
+        )),
+      )}
     </group>
   )
 }
 
-/** Workbench where modules are opened down to cells. */
+/** Workbench, 2 m × 0.9 m, 0.9 m high. */
 export function Bench() {
   return (
-    <group position={[0, -0.25, 0]}>
-      <Body size={[1.0, 0.05, 0.7]} />
-      {[-0.45, 0.45].map((x) => (
-        <mesh key={x} position={[x, -0.2, 0]}>
-          <boxGeometry args={[0.05, 0.4, 0.6]} />
-          <meshStandardMaterial color={ENCODING.steel} />
-        </mesh>
-      ))}
+    <group>
+      <Steel position={[0, 0.88, 0]}>
+        <boxGeometry args={[2, 0.05, 0.9]} />
+      </Steel>
+      {[-0.95, 0.95].map((x) =>
+        [-0.4, 0.4].map((z) => (
+          <Steel key={`${x}${z}`} position={[x, 0.43, z]}>
+            <boxGeometry args={[0.05, 0.86, 0.05]} />
+          </Steel>
+        )),
+      )}
     </group>
   )
 }
