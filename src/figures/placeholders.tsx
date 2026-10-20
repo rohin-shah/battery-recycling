@@ -5,24 +5,6 @@ import { ENCODING } from './encoding'
 
 // shortcut: Phase 4 stand-ins to prove the figure system; Phase 5 replaces each with its chapter's real figure.
 
-export function PackPlaceholder() {
-  const modules = Array.from({ length: 8 }, (_, i) => [((i % 4) - 1.5) * 0.62, 0, (Math.floor(i / 4) - 0.5) * 0.9] as const)
-  return (
-    <group>
-      <mesh>
-        <boxGeometry args={[2.8, 0.5, 2.1]} />
-        <meshStandardMaterial color={ENCODING.casing} transparent opacity={0.35} roughness={0.5} />
-      </mesh>
-      {modules.map((p, i) => (
-        <mesh key={i} position={p}>
-          <boxGeometry args={[0.55, 0.35, 0.8]} />
-          <meshStandardMaterial color={ENCODING.cell} roughness={0.6} />
-        </mesh>
-      ))}
-    </group>
-  )
-}
-
 const COUNT = 2000
 
 /** A pile of instanced flecks, to load-test the shared canvas. */

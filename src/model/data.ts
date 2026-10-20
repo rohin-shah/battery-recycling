@@ -151,6 +151,9 @@ export const DEFAULTS = {
 
 /** Second life: the paper's own California model, cumulative 2025–2050. */
 export const SECOND_LIFE = {
+  leavesCar: { value: 80, unit: '% of original capacity', source: 'wesselkamper2025', how: 'stated', where: 'Methods', note: 'Cut-off taken from prior literature' } satisfies Value,
+  leavesStorage: { value: 60, unit: '% of original capacity', source: 'wesselkamper2025', how: 'stated', where: 'Methods' } satisfies Value,
+  nmcCarLife: { value: 10, unit: 'years (average)', source: 'wesselkamper2025', how: 'stated', where: 'Methods' } satisfies Value,
   secondUseFirst: { value: 55.8, unit: 'Mt CO₂e saved', source: 'wesselkamper2025', how: 'stated', where: 'Fig. 5' } satisfies Value,
   recyclingFirst: { value: 48.3, unit: 'Mt CO₂e saved', source: 'wesselkamper2025', how: 'stated', where: 'Fig. 5' } satisfies Value,
 }

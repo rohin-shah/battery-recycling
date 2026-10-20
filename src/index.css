@@ -69,7 +69,8 @@ summary { cursor: pointer; margin-bottom: 8px; }
 /* Phone: the figure stays pinned above the text it illustrates */
 .fig { margin: 0; position: sticky; top: 0; z-index: 1; background: var(--bg); padding: 8px 0; }
 .fig-view {
-  height: 42vh; min-height: 220px; border-radius: 12px; background: var(--card); border: 1px solid var(--line);
+  /* Always light, in both themes: the figure colours (black mass especially) are tuned for one background */
+  height: 42vh; min-height: 220px; border-radius: 12px; background: #f4f5f0; border: 1px solid var(--line);
   touch-action: pan-y; cursor: grab;
 }
 .fig-view:active { cursor: grabbing; }
@@ -83,3 +84,8 @@ figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
   .fig { order: 2; top: 12vh; background: none; }
   .fig-view { height: 70vh; }
 }
+.cite { color: var(--muted); }
+.fig .slider { margin: 8px 0 4px; }
+.stages { display: flex; gap: 6px; list-style: none; padding: 0; margin: 4px 0 0; font-size: 0.8rem; }
+.stages li { flex: 1; text-align: center; padding: 4px; border-radius: 6px; border: 1px solid var(--line); }
+.stages li[aria-current='step'] { background: var(--forest); border-color: var(--forest); color: #fff; }
