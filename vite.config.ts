@@ -18,4 +18,6 @@ export default defineConfig({
   // Relative paths, so the build works under GitHub Pages' /<repo>/ path and later at a custom domain's root.
   base: './',
   plugins: [react(), csp()],
+  // three.js lives in the lazy Chapters chunk (~240 kB gzipped); the text above it doesn't wait for it.
+  build: { chunkSizeWarningLimit: 1000 },
 })

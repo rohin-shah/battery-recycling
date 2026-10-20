@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { calculate } from './model/engine'
 import { DEFAULT_REGION, RECOVERY_TOTAL, REGIONS, ROUTES, type RegionId, type RouteId } from './model/data'
 import { type Build, fromQuery, LIMITS, toQuery } from './share'
@@ -8,7 +8,9 @@ const t = (v: number) => `${v.toLocaleString('en-GB', { minimumFractionDigits: 1
 const pct = (v: number) => `${Math.round(v)}%`
 const range = (k: keyof typeof LIMITS) => ({ min: LIMITS[k][0], max: LIMITS[k][1], step: LIMITS[k][2] })
 
-const ROUTE_OPTIONS = Object.entries(ROUTES) as [RouteId, string][]
+const Chapters = lazy(() => import('./chapters/Chapters'))
+
+const ROUTE_OPTIONS =Object.entries(ROUTES) as [RouteId, string][]
 const REGION_OPTIONS = (Object.keys(REGIONS) as RegionId[]).map((r): [RegionId, string] => [r, REGIONS[r].name])
 
 export default function App() {
@@ -55,7 +57,9 @@ export default function App() {
         </button>
       </section>
 
-      {/* Process chapters go here (Phase 5). */}
+      <Suspense fallback={null}>
+        <Chapters />
+      </Suspense>
 
       <section className="card" aria-labelledby="calc-h">
         <h2 id="calc-h">Your battery</h2>

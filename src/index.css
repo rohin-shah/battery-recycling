@@ -23,7 +23,9 @@
   :root { --bg: #121815; --text: #eef1ea; --card: #1c241f; --net: #5fa07f; --process: #9488d6; }
 }
 body { margin: 0; }
-main { max-width: 680px; margin: 0 auto; padding: 16px 16px 48px; }
+main { max-width: 1080px; margin: 0 auto; padding: 16px 16px 48px; }
+/* Prose and cards keep a readable measure; chapters use the full width for text beside figure */
+main > :not(.chapter) { max-width: 680px; margin-left: auto; margin-right: auto; }
 h1 { font-size: 2rem; line-height: 1.2; letter-spacing: -0.5px; margin: 24px 0 8px; }
 h2 { font-size: 1.15rem; margin: 0 0 12px; }
 a { color: inherit; }
@@ -59,3 +61,25 @@ summary { cursor: pointer; margin-bottom: 8px; }
   .bar-label { grid-column: 1 / -1; }
 }
 @media (prefers-reduced-motion: reduce) { .bar-fill { transition: none; } }
+
+/* Figures: one fixed canvas draws into each .fig-view's rectangle */
+.stage { position: fixed !important; inset: 0; pointer-events: none; z-index: 2; }
+.chapter { display: grid; gap: 16px; margin: 56px 0; }
+.chapter .prose { max-width: 680px; margin: 0 auto; }
+/* Phone: the figure stays pinned above the text it illustrates */
+.fig { margin: 0; position: sticky; top: 0; z-index: 1; background: var(--bg); padding: 8px 0; }
+.fig-view {
+  height: 42vh; min-height: 220px; border-radius: 12px; background: var(--card); border: 1px solid var(--line);
+  touch-action: pan-y; cursor: grab;
+}
+.fig-view:active { cursor: grabbing; }
+.fig-port { width: 100%; height: 100%; }
+.fig-view:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
+/* Wide screens: text on the left, figure beside it and pinned while the text scrolls */
+@media (min-width: 900px) {
+  .chapter { grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+  .chapter .prose { order: 1; margin: 0; padding: 20vh 0; }
+  .fig { order: 2; top: 12vh; background: none; }
+  .fig-view { height: 70vh; }
+}
