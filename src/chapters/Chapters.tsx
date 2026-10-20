@@ -1,4 +1,3 @@
-import { Stage } from '../figures/Stage'
 import { Disassembly } from './Disassembly'
 import { Hydromet } from './Hydromet'
 import { Pretreatment } from './Pretreatment'
@@ -9,7 +8,6 @@ import { SecondLife } from './SecondLife'
 export default function Chapters() {
   return (
     <>
-      <Stage />
       <SecondLife />
       <Disassembly />
       <Pretreatment />

@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Figure } from '../figures/Figure'
 import { MATERIAL_INK, ORDER, RecoveredFigure } from '../figures/RecoveredFigure'
-import { DEFAULTS, RECOVERED, RECOVERY_RATE, RECOVERY_TOTAL, ROUTES, type Material, type RouteId } from '../model/data'
+import { DEFAULTS, derived, EU_MINIMUM, RECOVERED, RECOVERY_RATE, RECOVERY_TOTAL, ROUTES, type Material, type RouteId, type Value } from '../model/data'
 import { packMass } from '../model/engine'
 import { Choice } from '../ui/controls'
+import { Num } from '../ui/Num'
 import { Chapter, Cite, Ink } from './Chapter'
 
 const NAMES: Record<Material, string> = {
@@ -22,6 +23,9 @@ const ROUTE_OPTIONS: [RouteId, string][] = [
   ['thermal', 'Thermal-mechanical'],
 ]
 const massT = packMass(DEFAULTS.packKwh.value) / 1000
+const massKg = derived(massT * 1000, 'kg', 'Pack mass scaled from Blömeke’s 576 kg, 95 kWh pack (Table 2)')
+const rateValue = (value: number): Value => ({ value, unit: 'share recovered', source: 'blomeke2022', how: 'stated', where: 'Fig. 7' })
+const pct = (v: Value) => <Num v={v}>{Math.round(v.value * 100)}%</Num>
 
 export function Recovered() {
   const [route, setRoute] = useState<RouteId>('mechanical')
@@ -40,7 +44,7 @@ export function Recovered() {
       }
     >
       <p>
-        Here is what comes out of a {DEFAULTS.packKwh.value} kWh pack (about {Math.round(massT * 1000)} kg), by route (
+        Here is what comes out of a <Num v={DEFAULTS.packKwh}>{DEFAULTS.packKwh.value} kWh</Num> pack (about <Num v={massKg}>{Math.round(massT * 1000)} kg</Num>), by route (
         <Cite source="blomeke2022">Blömeke et al. 2022</Cite>). The metals leave as salts, so their masses include the sulphate or carbonate and some water
         bound into the crystals: a kilogram of <Ink c="nickel">nickel sulphate</Ink> holds well under a kilogram of nickel.
       </p>
@@ -61,8 +65,8 @@ export function Recovered() {
                 <th scope="row">
                   <Ink c={ink}>{NAMES[m]}</Ink>
                 </th>
-                <td>{kg[m] ? Math.round(kg[m]) : '–'}</td>
-                <td>{rate ? `${Math.round(rate * 100)}%` : 'lost'}</td>
+                <td>{kg[m] ? <Num v={derived(kg[m], 'kg', `Table 3: ${RECOVERED[route][m]!.value} kg per tonne of battery × ${massT.toFixed(3)} t`)}>{Math.round(kg[m])}</Num> : '–'}</td>
+                <td>{rate ? pct(rateValue(rate)) : 'lost'}</td>
               </tr>
             )
           })}
@@ -75,9 +79,8 @@ export function Recovered() {
         recovers all of them.
       </p>
       <p>
-        In total that’s {Math.round(RECOVERY_TOTAL.pyro.value * 100)}% of the pack by mass for the pyrometallurgical route,{' '}
-        {Math.round(RECOVERY_TOTAL.thermal.value * 100)}% for thermal-mechanical and {Math.round(RECOVERY_TOTAL.mechanical.value * 100)}% for mechanical. The
-        EU’s legal minimum is 50%, so all three pass (<Cite source="blomeke2022">Blömeke et al. 2022</Cite>). Now for the question that matters for the climate:
+        In total that’s {pct(RECOVERY_TOTAL.pyro)} of the pack by mass for the pyrometallurgical route, {pct(RECOVERY_TOTAL.thermal)} for
+        thermal-mechanical and {pct(RECOVERY_TOTAL.mechanical)} for mechanical. The EU’s legal minimum is {pct(EU_MINIMUM)}, so all three pass (<Cite source="blomeke2022">Blömeke et al. 2022</Cite>). Now for the question that matters for the climate:
         does recovering all this save more carbon than the recycling emits?
       </p>
     </Chapter>

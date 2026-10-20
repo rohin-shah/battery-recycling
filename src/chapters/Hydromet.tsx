@@ -3,6 +3,7 @@ import { Figure } from '../figures/Figure'
 import { HYDROMET_STEPS, HydrometFigure } from '../figures/HydrometFigure'
 import { PROCESS } from '../model/data'
 import { Steps } from '../ui/controls'
+import { Num } from '../ui/Num'
 import { Chapter, Cite, Ink } from './Chapter'
 
 const { digestion, leachPh, lithiumPrecipitation } = PROCESS
@@ -35,8 +36,8 @@ export function Hydromet() {
         finishes with it (<Cite source="blomeke2022">Blömeke et al. 2022</Cite>).
       </p>
       <p>
-        <strong>Leaching.</strong> The black mass is heated with concentrated sulphuric acid to about {digestion.value} °C, turning its metals into
-        sulphates, which then dissolve in water: a strongly acidic solution at about pH {leachPh.value}. The solid that was black mass is now a liquid in which
+        <strong>Leaching.</strong> The black mass is heated with concentrated sulphuric acid to about <Num v={digestion}>{digestion.value} °C</Num>, turning its metals into
+        sulphates, which then dissolve in water: a strongly acidic solution at about <Num v={leachPh}>pH {leachPh.value}</Num>. The solid that was black mass is now a liquid in which
         every metal atom moves on its own, as an ion. Step the figure forward to see it.
       </p>
       <p>
@@ -52,7 +53,7 @@ export function Hydromet() {
       </p>
       <p>
         <strong>Lithium comes last.</strong> What’s left is mostly <Ink c="lithium">lithium</Ink> in solution. It’s concentrated by evaporation, then sodium
-        carbonate is added at about {lithiumPrecipitation.value} °C and lithium carbonate precipitates out.
+        carbonate is added at about <Num v={lithiumPrecipitation}>{lithiumPrecipitation.value} °C</Num> and lithium carbonate precipitates out.
       </p>
       <p>
         Finally each metal stream is crystallised into a sulphate salt. That’s why it works: physical sorting can only separate particles, but chemistry can

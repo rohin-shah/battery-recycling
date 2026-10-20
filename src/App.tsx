@@ -1,8 +1,11 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { calculate } from './model/engine'
-import { DEFAULT_REGION, RECOVERY_TOTAL, REGIONS, ROUTES, type RegionId, type RouteId } from './model/data'
+import { Cite } from './chapters/Chapter'
+import { Method } from './Method'
+import { derived, PACK, RECOVERY_TOTAL, REGIONS, ROUTES, type RegionId, type RouteId } from './model/data'
 import { type Build, fromQuery, LIMITS, toQuery } from './share'
 import { Choice, Slider } from './ui/controls'
+import { Num } from './ui/Num'
 
 const t = (v: number) => `${v.toLocaleString('en-GB', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} t`
 const pct = (v: number) => `${Math.round(v)}%`
@@ -10,7 +13,7 @@ const range = (k: keyof typeof LIMITS) => ({ min: LIMITS[k][0], max: LIMITS[k][1
 
 const Chapters = lazy(() => import('./chapters/Chapters'))
 
-const ROUTE_OPTIONS =Object.entries(ROUTES) as [RouteId, string][]
+const ROUTE_OPTIONS = Object.entries(ROUTES) as [RouteId, string][]
 const REGION_OPTIONS = (Object.keys(REGIONS) as RegionId[]).map((r): [RegionId, string] => [r, REGIONS[r].name])
 
 export default function App() {
@@ -42,10 +45,7 @@ export default function App() {
         <h1>Think your battery goes to landfill?</h1>
         <p>
           It can’t. In the UK, waste EV batteries may not be landfilled or incinerated (
-          <a href="https://www.legislation.gov.uk/uksi/2009/890/regulation/56" target="_blank" rel="noreferrer">
-            Waste Batteries and Accumulators Regulations 2009, reg. 56
-          </a>
-          ).
+          <Cite source="wbar2009">Waste Batteries and Accumulators Regulations 2009, reg. 56</Cite>).
         </p>
       </header>
 
@@ -68,12 +68,22 @@ export default function App() {
           value={build.packKwh}
           {...range('packKwh')}
           format={(v) => `${v} kWh`}
-          hint={`About ${Math.round(r.massKg)} kg, scaled from a 95 kWh NMC pack`}
+          hint={
+            <>
+              About <Num v={derived(r.massKg, 'kg', 'Scaled linearly from Blömeke’s 576 kg, 95 kWh pack (Table 2)')}>{Math.round(r.massKg)} kg</Num>, scaled from a{' '}
+              <Num v={PACK.capacity}>95 kWh</Num> NMC pack
+            </>
+          }
           onChange={(packKwh) => set({ packKwh })}
         />
         <Choice label="Recycling route" value={build.route} options={ROUTE_OPTIONS} onChange={(route) => set({ route })} />
         <Choice label="Where the metals are refined" value={build.region} options={REGION_OPTIONS} onChange={(region) => set({ region })} />
-        {build.region === DEFAULT_REGION && <p className="hint">Most UK black mass is shipped to Asia, mainly South Korea, for refining today.</p>}
+        <aside className="note">
+          <strong>Where UK black mass goes.</strong> No UK plant refines black mass at commercial scale yet. Batteries recycled in the UK are discharged,
+          dismantled and shredded here, and the black mass is exported for refining (<Cite source="dbt2025">DBT 2025</Cite>), mostly to Asia (
+          <Cite source="faraday2024">Faraday Institution 2024</Cite>). South Korea, home to hydrometallurgical recyclers such as SungEel HiTech, is the
+          default here. Both are government and industry reports, not peer-reviewed studies.
+        </aside>
         <details>
           <summary>Advanced</summary>
           <Slider
@@ -86,10 +96,10 @@ export default function App() {
           />
         </details>
 
-        <div className="bars" role="img" aria-label={`Recycling emits ${t(r.process)} and avoids ${t(r.credit)} of CO₂e, a net ${r.net <= 0 ? 'saving' : 'cost'} of ${t(Math.abs(r.net))}`}>
-          <Bar kind="process" label="Emitted by recycling" value={r.process} scale={scale} />
-          <Bar kind="credit" label="Avoided by not mining" value={r.credit} scale={scale} />
-          <Bar kind="net" label={r.net <= 0 ? 'Net saving' : 'Net emitted'} value={Math.abs(r.net)} scale={scale} />
+        <div className="bars">
+          <Bar kind="process" label="Emitted by recycling" value={r.process} scale={scale} note="Blömeke’s process emissions for this route (Fig. 8c), scaled to your pack, with its electricity (Table 3) moved to the chosen grid (Ember)" />
+          <Bar kind="credit" label="Avoided by not mining" value={r.credit} scale={scale} note="Recovered mass (Table 3) × carbon of the primary material it replaces (Table SM.6.1), scaled to your pack" />
+          <Bar kind="net" label={r.net <= 0 ? 'Net saving' : 'Net emitted'} value={Math.abs(r.net)} scale={scale} note="Emitted minus avoided" />
         </div>
         <p className="caption">Tonnes of CO₂e for this pack. The avoided figure assumes recovered material replaces mined material.</p>
       </section>
@@ -98,11 +108,16 @@ export default function App() {
         <section className="card reveal" aria-live="polite">
           <h2>How much comes back</h2>
           <p>
-            You guessed <strong>{pct(build.guess)}</strong>. This route recovers <strong>{pct(RECOVERY_TOTAL[build.route].value * 100)}</strong> of
-            the pack’s mass, about {Math.round(r.recoveredKg)} kg.
+            You guessed <strong>{pct(build.guess)}</strong>. This route recovers{' '}
+            <strong>
+              <Num v={RECOVERY_TOTAL[build.route]}>{pct(RECOVERY_TOTAL[build.route].value * 100)}</Num>
+            </strong>{' '}
+            of the pack’s mass, about <Num v={derived(r.recoveredKg, 'kg', 'Pack mass × the route’s total recovery rate (Fig. 7)')}>{Math.round(r.recoveredKg)} kg</Num>.
           </p>
         </section>
       )}
+
+      <Method />
 
       <button type="button" className="go secondary" onClick={share}>
         {copied ? 'Link copied' : 'Share'}
@@ -111,14 +126,16 @@ export default function App() {
   )
 }
 
-function Bar({ kind, label, value, scale }: { kind: 'process' | 'credit' | 'net'; label: string; value: number; scale: number }) {
+function Bar({ kind, label, value, scale, note }: { kind: 'process' | 'credit' | 'net'; label: string; value: number; scale: number; note: string }) {
   return (
     <div className={`bar ${kind}`}>
       <span className="bar-label">{label}</span>
       <span className="bar-track">
         <span className="bar-fill" style={{ width: `${(Math.max(0, value) / scale) * 100}%` }} />
       </span>
-      <strong className="bar-value">{t(value)}</strong>
+      <strong className="bar-value">
+        <Num v={derived(value, 't CO₂e', note)}>{t(value)}</Num>
+      </strong>
     </div>
   )
 }

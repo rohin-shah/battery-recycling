@@ -62,8 +62,7 @@ summary { cursor: pointer; margin-bottom: 8px; }
 }
 @media (prefers-reduced-motion: reduce) { .bar-fill { transition: none; } }
 
-/* Figures: one fixed canvas draws into each .fig-view's rectangle */
-.stage { position: fixed !important; inset: 0; pointer-events: none; z-index: 2; }
+/* Figures: each has its own canvas, created while it is near the screen */
 .chapter { display: grid; gap: 16px; margin: 56px 0; }
 .chapter .prose { max-width: 680px; margin: 0 auto; }
 /* Phone: the figure stays pinned above the text it illustrates */
@@ -74,7 +73,6 @@ summary { cursor: pointer; margin-bottom: 8px; }
   touch-action: pan-y; cursor: grab;
 }
 .fig-view:active { cursor: grabbing; }
-.fig-port { width: 100%; height: 100%; }
 .fig-view:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
 figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
 /* Wide screens: text on the left, figure beside it and pinned while the text scrolls */
@@ -99,3 +97,25 @@ figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
 .recovered thead th { color: var(--muted); }
 .recovered td { text-align: right; }
 .recovered tr.lost { color: var(--muted); }
+
+/* Tap-to-source numbers */
+.num {
+  font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer;
+  text-decoration: underline dotted color-mix(in srgb, var(--text) 50%, transparent); text-underline-offset: 3px;
+}
+.num:hover { text-decoration-style: solid; }
+.source-card {
+  max-width: min(420px, calc(100vw - 32px)); margin: auto; padding: 16px; border-radius: 12px;
+  border: 1px solid var(--line); background: var(--card); color: var(--text);
+  box-shadow: 0 8px 30px rgb(0 0 0 / 0.2); font-size: 0.9rem; line-height: 1.5;
+}
+.source-card:popover-open { display: grid; gap: 8px; }
+.source-card::backdrop { background: rgb(0 0 0 / 0.25); }
+.source-card .unit { font-weight: normal; color: var(--muted); }
+.source-card .close { justify-self: end; font: inherit; font-size: 0.85rem; background: none; border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; color: inherit; cursor: pointer; }
+.note { font-size: 0.85rem; background: color-mix(in srgb, var(--teal) 12%, transparent); border-left: 3px solid var(--teal); padding: 8px 12px; margin: 0 0 12px; border-radius: 0 8px 8px 0; }
+.bar-value .num { font-weight: inherit; }
+.method { margin-top: 48px; font-size: 0.95rem; }
+.method h3 { font-size: 1rem; margin: 20px 0 4px; }
+.method ul { padding-left: 1.2em; }
+.sources { font-size: 0.85rem; }

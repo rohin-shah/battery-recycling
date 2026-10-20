@@ -4,7 +4,7 @@
  *      'chart-read' = read off a figure; 'derived' = calculated from stated values.
  */
 
-export type SourceId = 'blomeke2022' | 'ember2026' | 'wesselkamper2025' | 'assumption' | 'you'
+export type SourceId = 'blomeke2022' | 'ember2026' | 'wesselkamper2025' | 'wbar2009' | 'dbt2025' | 'faraday2024' | 'assumption' | 'you'
 
 export const SOURCES: Record<SourceId, { name: string; url?: string }> = {
   blomeke2022: {
@@ -18,6 +18,18 @@ export const SOURCES: Record<SourceId, { name: string; url?: string }> = {
   wesselkamper2025: {
     name: 'Wesselkämper et al. (2025), Recycling or Second Use? Supply Potentials and Climate Effects of End-of-Life Electric Vehicle Batteries, Environ. Sci. Technol. 59, 15751',
     url: 'https://doi.org/10.1021/acs.est.5c01823',
+  },
+  wbar2009: {
+    name: 'The Waste Batteries and Accumulators Regulations 2009 (SI 2009/890), regulation 56',
+    url: 'https://www.legislation.gov.uk/uksi/2009/890/regulation/56',
+  },
+  dbt2025: {
+    name: 'Frazer-Nash Consultancy for the Department for Business and Trade (2025), UK critical minerals recycling and midstream processing capability assessment (grey literature)',
+    url: 'https://www.gov.uk/government/publications/uk-critical-minerals-midstream-and-recycling-capability-report',
+  },
+  faraday2024: {
+    name: 'Leong, Faraday Institution (2024), Faraday Insights 20: Developing a UK lithium-ion battery recycling industry (grey literature)',
+    url: 'https://www.faraday.ac.uk/wp-content/uploads/2024/07/Faraday_Insights_20_FINAL.pdf',
   },
   assumption: { name: 'Assumption (see How this was counted)' },
   you: { name: 'Your choice' },
@@ -42,6 +54,9 @@ const blo = (value: number, unit: string, where: string, how: Value['how'] = 'st
   note,
 })
 
+/** A figure the site calculates from sourced inputs, for its source card. */
+export const derived = (value: number, unit: string, note: string): Value => ({ value, unit, source: 'blomeke2022', how: 'derived', note })
+
 export type RouteId = 'pyro' | 'mechanical' | 'thermal'
 export const ROUTES: Record<RouteId, string> = {
   pyro: 'Pyrometallurgical + hydrometallurgical',
@@ -50,6 +65,9 @@ export const ROUTES: Record<RouteId, string> = {
 }
 
 export type Material = 'aluminium' | 'steel' | 'copper' | 'nickelSulphate' | 'cobaltSulphate' | 'manganeseSulphate' | 'lithiumCarbonate' | 'graphite'
+
+/** The modelled plant's capacity in the baseline scenario. */
+export const PLANT = blo(25000, 't of spent batteries a year', 'Section 3.2, Table 3')
 
 /** Blömeke's modelled pack: BatPaC NMC622 pouch cells. */
 export const PACK = {
@@ -107,6 +125,9 @@ export const RECOVERY_TOTAL: Record<RouteId, Value> = {
   thermal: blo(0.57, 'fraction', 'Fig. 7'),
 }
 
+/** EU legal minimum recovery rate, which Blömeke checks every route against. */
+export const EU_MINIMUM = blo(0.5, 'fraction of mass', 'Section 4.1')
+
 /** Process facts quoted in the chapters. */
 export const PROCESS = {
   residualEnergy: blo(30, 'kWh', 'SM.3', 'stated', 'Assumed: about a third of the pack’s capacity when it arrives'),
@@ -158,7 +179,7 @@ export const REGIONS: Record<RegionId, { name: string; grid: Value }> = {
   uk: { name: 'United Kingdom', grid: ember(217.41, 2025) },
   us: { name: 'United States', grid: ember(384.4, 2025) },
 }
-/** Where most UK black mass goes for hydromet today (DBT/Frazer-Nash 2025; Faraday Insights 20). */
+/** Most UK black mass is exported to Asia for hydromet (Faraday Insights 20); South Korea stands in as the default. */
 export const DEFAULT_REGION: RegionId = 'southKorea'
 
 /** Removed when swapping grids, on the same (Ember) basis as the destination. Blömeke used 0.366 kg/kWh (UBA). */
