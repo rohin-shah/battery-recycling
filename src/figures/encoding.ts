@@ -20,6 +20,12 @@ export const ENCODING = {
   iron: '#9a5b2e',
   steel: '#8a8f95',
   slag: '#c9c6bd',
+  plastic: '#d9d2c3',
+  electrolyte: '#e6d38a',
+  dust: '#9a9c95',
+  nitrogen: '#bcd4ec',
+  machine: '#a9ada5',
+  heat: '#8f7ff0', // a brighter violet for glowing machines; the dark violet barely shows as light
 } as const
 
 export type Ink = keyof typeof ENCODING

@@ -62,21 +62,7 @@ export function Module({ charged = false, color = ENCODING.cell }: { charged?: b
   return (
     <mesh>
       <boxGeometry args={[0.38, 0.26, 0.55]} />
-      <meshStandardMaterial ref={mat} color={color} emissive={ENCODING.energy} emissiveIntensity={charged ? 0.6 : 0} roughness={0.6} />
-    </mesh>
-  )
-}
-
-/** A process vessel (furnace, kiln, shredder). Hot ones glow violet: heat is energy spent. */
-export function Vessel({ hot, active, size = [0.9, 0.9, 0.9] }: { hot: boolean; active: boolean; size?: Vec }) {
-  const mat = useRef<MeshStandardMaterial>(null)
-  useFrame((_, dt) => {
-    if (mat.current) mat.current.emissiveIntensity = MathUtils.damp(mat.current.emissiveIntensity, hot && active ? 1.5 : 0, 3, dt)
-  })
-  return (
-    <mesh>
-      <boxGeometry args={size} />
-      <meshStandardMaterial ref={mat} color="#b9bcb5" emissive={ENCODING.energy} emissiveIntensity={0} transparent opacity={0.85} roughness={0.4} />
+      <meshStandardMaterial ref={mat} color={color} emissive={ENCODING.heat} emissiveIntensity={charged ? 0.6 : 0} roughness={0.6} />
     </mesh>
   )
 }
