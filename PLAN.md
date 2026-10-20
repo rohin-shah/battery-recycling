@@ -17,14 +17,14 @@ Out of scope: economics, other impact categories, landfill as an option, a simpl
 | Impact | Climate change only, GWP100, **tonnes CO₂e to 1 decimal place** |
 | System model | Avoided burden. Process, credit and net are always shown separately; the credit is labelled as an assumption |
 | Unit | Per pack. Default is 60 kWh, with mass scaled linearly from Blömeke's pack (576 kg / 95 kWh ≈ 6.1 kg/kWh, so ≈ 364 kg). The scaling is labelled as an assumption |
-| Chemistries | Those covered by the literature: NMC (pouch). LFP only if an approved paper supports it (see Open) |
+| Chemistries | NMC (pouch) only, from Blömeke. LFP is dropped: the sources can't model it at pack level without stacking assumptions. "How this was counted" says so in one line; the second-life chapter may still mention Wesselkämper's "LFP to second life" |
+| Material factors | Blömeke's (ecoinvent 3.8) throughout; the disagreement with other studies (e.g. cobalt sulphate) is noted in "How this was counted" |
 | Routes | Blömeke 2022: (1) pyro + hydro, (2) mechanical + hydro, (3) thermal-mechanical + hydro |
-| Region | Reader choice: Europe incl. UK, China or North America (Hanna 2025). A separate grey-literature box covers where UK black mass goes today, labelled as grey |
+| Region | Pretreatment (discharge, dismantling, shredding to black mass) is fixed in the UK. Reader chooses where hydromet happens; default **South Korea**, where most UK black mass goes today. Method: swap Blömeke's electricity (stated kWh/t per route: 1,564 / 692 / 656, at 0.366 kg/kWh German grid) for the destination grid's intensity. Both sides use Ember (CC BY 4.0, life-cycle, per kWh generated): remove at Germany 2020 (356 g), add at the destination's 2025 value (UK 217, South Korea 417, China 526, EU 209, US 384). Location moves results only 2–10%, and the page says so. A grey-literature box (DBT/Frazer-Nash 2025, Faraday Insights 20) explains the UK has no commercial hydromet yet |
 | Substitution | Advanced slider, default 1 (Blömeke sensitivities: 0.75 → +20%, 0.5 → +41% recycling GWP) |
-| Second life | Process chapter before recycling, with one sourced number (Wesselkämper 2025: second use beats recycling in every scenario). Not in the calculator |
+| Second life | Process chapter before recycling. One sourced result: Wesselkämper 2025's own California model to 2050, where second use first saved more than recycling straight away in every scenario (55.8 vs 48.3 Mt CO₂e). Its cited 45–70 kg CO₂e/kWh is not used (derived from a secondary review with a broken citation). Not in the calculator |
 | Data values | From the supplementary files first. Values read off charts are labelled "chart-read" |
 | Simulations | Illustrative and interactive (drag, rotate, scrub). Real numbers only where sourced, e.g. mass flows and recovery rates from Blömeke Fig. 7. The ion-level figures are schematics you can manipulate |
-| Cell visual | NMC pouch cell → module → pack, matching Blömeke's Table 2 bill of materials |
 | Tone | Sceptical, informed reader. No hype or emojis. Methods section in the passive voice ("How this was counted"). Every number is tappable to its source |
 | Sharing | All state in URL parameters (evorpetrol's `share.ts` pattern), including the reader's guess. No backend |
 | Stack | Fork of the evorpetrol setup: Vite, React, TypeScript, Motion, three.js via React Three Fiber and drei, Vitest, oxlint. **One shared WebGL canvas** (drei `View`), and figures render only when on screen |
@@ -38,17 +38,19 @@ Out of scope: economics, other impact categories, landfill as an option, a simpl
 |---|---|
 | Blömeke et al. 2022, *J. Clean. Prod.* 377, 134344 | Core calculator: 3 routes, 1 t of spent NMC622 pouch packs, Germany 2021. Net avoided ≈ 5–7 t CO₂e per t of battery. Table 2 pack bill of materials; Fig. 7 recovery rates |
 | Hanna et al. 2025, *ES&T* 59, 14432 | Regional factors (NA / Europe incl. UK / China). Truncated hydro as a cross-check |
-| Wesselkämper et al. 2025, *ES&T* 59, 15751 | Second life vs recycling; LFP to second life |
+| Wesselkämper et al. 2025, *ES&T* 59, 15751 | Second life vs recycling (own model results only) |
+| Ember, Yearly Electricity Data (2025 release), CC BY 4.0 | Grid intensities for the region swap |
 | Dittmer et al. 2026, *Waste Management* | Hydromet cross-check (3.5 kg CO₂e/kg of black mass) |
 | Perocillo et al. 2025, *Int J LCA* 30 | Hydro/pyro cross-check (0.9 kg CO₂e/kg of battery) |
 | Harper et al. 2019, *Nature* 575 | Qualitative process background |
-| UK battery regulations (clause to be confirmed) | Ban on landfilling/incinerating EV batteries, for the hook |
+| DBT/Frazer-Nash 2025; Faraday Insights 20 (2024) | Grey: UK only makes black mass and exports it for hydromet, mostly to Asia |
+| Waste Batteries and Accumulators Regulations 2009, reg. 56 (E, W, NI); Waste Batteries (Scotland) Regs 2009 | The hook: EV packs ("industrial" batteries) may not be landfilled or incinerated. Scotland's 2025 amendment unchecked |
 
 Sanity check for a 60 kWh default pack (≈ 0.36 t): net ≈ −1.8 to −2.5 t CO₂e.
 
 ## Open
 
-- **LFP and UK-route sources:** a shortlist is being prepared. Rohin approves each source before it's added.
+- Any further source is approved by Rohin before it's added.
 - Domain name.
 
 ## Phases
@@ -63,7 +65,7 @@ Each phase ends with a check-in: demo it, agree, then move on. Nothing is publis
 ### Phase 1: Data
 - Fetch the supplementary files: Blömeke SM (incl. SM.7), Hanna SI-1/SI-2, Wesselkämper S1–S7.
 - Data file: every parameter as `{ central, unit, source, note, chartRead? }`.
-- Add LFP and UK-route sources once approved, and the legal clause for the hook.
+- Ember grid intensities; WBAR 2009 reg. 56 for the hook.
 - **Done when:** every calculator input has a sourced value, and chart-read values are flagged.
 
 ### Phase 2: Calculation engine (no UI)
@@ -71,7 +73,7 @@ Each phase ends with a check-in: demo it, agree, then move on. Nothing is publis
 - **Done when:** tests reproduce Blömeke's net per tonne for each route and Hanna's regional deltas within rounding.
 
 ### Phase 3: Calculator chapter (first slice)
-- Inputs: pack kWh, chemistry, route, region, substitution (advanced). Process, credit and net bars. Recovered-mass reveal against the reader's guess.
+- Inputs: pack kWh, route, hydromet region, substitution (advanced). Process, credit and net bars. Recovered-mass reveal against the reader's guess.
 - Share link restores every input and the guess.
 - **Done when:** changing any input updates the numbers to match the engine, and a copied link reproduces the state in a fresh browser.
 
@@ -83,13 +85,11 @@ Each phase ends with a check-in: demo it, agree, then move on. Nothing is publis
 
 ### Phase 5: Process chapters
 One slice per chapter, each with an interactive figure that adds a single concept:
-1. Cell → module → pack (NMC pouch).
-2. Charging, discharging and degradation: lithiation, SEI, stranded lithium.
-3. Waste hierarchy and second life.
-4. Discharge and disassembly.
-5. Pretreatment routes: pyro, mechanical, thermal-mechanical (scrub through each).
-6. Hydrometallurgy at ion level: leaching, solvent extraction, precipitation. Why it works.
-7. Recovered salts and ions, with the recovery rate for each route.
+1. Waste hierarchy and second life.
+2. Discharge and disassembly.
+3. Pretreatment routes: pyro, mechanical, thermal-mechanical (scrub through each).
+4. Hydrometallurgy at ion level: leaching, solvent extraction, precipitation. Why it works.
+5. Recovered salts and ions, with the recovery rate for each route.
 - **Done when:** each chapter reads well on its own, and the whole page holds frame rate on a phone.
 
 ### Phase 6: Hook, reveal and method
@@ -105,3 +105,8 @@ One slice per chapter, each with an interactive figure that adds a single concep
 ### Phase 8: Test and launch
 - 10–20 testers answer three pre/post questions (route, why hydromet works, net impact). Target: 80% correct.
 - Fix any gaps, choose the domain, publish, share. GoatCounter tracks the 5% share target.
+
+## Milestone 2 (per the PRD)
+- LFP in the calculator and simulations.
+- How a cell is made, and how it fits into a module and a pack.
+- Charging, discharging, and why Li-ion cells lose capacity.

@@ -1,0 +1,156 @@
+/**
+ * Every number the model uses, with where it came from.
+ * how: 'stated' = printed in the source (text, table or a value label on a figure);
+ *      'chart-read' = read off a figure; 'derived' = calculated from stated values.
+ */
+
+export type SourceId = 'blomeke2022' | 'ember2026' | 'wesselkamper2025' | 'assumption' | 'you'
+
+export const SOURCES: Record<SourceId, { name: string; url?: string }> = {
+  blomeke2022: {
+    name: 'Blömeke et al. (2022), Material and energy flow analysis for environmental and economic impact assessment of industrial recycling routes for lithium-ion traction batteries, J. Cleaner Production 377, 134344',
+    url: 'https://doi.org/10.1016/j.jclepro.2022.134344',
+  },
+  ember2026: {
+    name: 'Ember (2026), Yearly Electricity Data, CC BY 4.0',
+    url: 'https://ember-energy.org/data/yearly-electricity-data/',
+  },
+  wesselkamper2025: {
+    name: 'Wesselkämper et al. (2025), Recycling or Second Use? Supply Potentials and Climate Effects of End-of-Life Electric Vehicle Batteries, Environ. Sci. Technol. 59, 15751',
+    url: 'https://doi.org/10.1021/acs.est.5c01823',
+  },
+  assumption: { name: 'Assumption (see How this was counted)' },
+  you: { name: 'Your choice' },
+}
+
+export type Value = {
+  value: number
+  unit: string
+  source: SourceId
+  how: 'stated' | 'chart-read' | 'derived'
+  /** Where in the source, e.g. "Table 3" */
+  where?: string
+  note?: string
+}
+
+const blo = (value: number, unit: string, where: string, how: Value['how'] = 'stated', note?: string): Value => ({
+  value,
+  unit,
+  source: 'blomeke2022',
+  how,
+  where,
+  note,
+})
+
+export type RouteId = 'pyro' | 'mechanical' | 'thermal'
+export const ROUTES: Record<RouteId, string> = {
+  pyro: 'Pyrometallurgical + hydrometallurgical',
+  mechanical: 'Mechanical + hydrometallurgical',
+  thermal: 'Thermal-mechanical + hydrometallurgical',
+}
+
+export type Material = 'aluminium' | 'steel' | 'copper' | 'nickelSulphate' | 'cobaltSulphate' | 'manganeseSulphate' | 'lithiumCarbonate' | 'graphite'
+
+/** Blömeke's modelled pack: BatPaC NMC622 pouch cells. */
+export const PACK = {
+  mass: blo(576.38, 'kg', 'Table 2'),
+  capacity: blo(95, 'kWh', 'Section 2.2'),
+}
+
+/** Carbon avoided per kg of primary material replaced (ecoinvent 3.8, IPCC 2013 GWP100). */
+export const PRIMARY_FACTOR: Record<Material, Value> = {
+  aluminium: blo(9.922, 'kg CO₂e/kg', 'Table SM.6.1'),
+  steel: blo(1.741, 'kg CO₂e/kg', 'Table SM.6.1', 'stated', 'Pig iron'),
+  copper: blo(5.865, 'kg CO₂e/kg', 'Table SM.6.1'),
+  nickelSulphate: blo(4.743, 'kg CO₂e/kg', 'Table SM.6.1'),
+  cobaltSulphate: blo(24.299, 'kg CO₂e/kg', 'Table SM.6.1', 'stated', 'Hydrated (CoSO₄·7H₂O); other studies use far lower cobalt factors'),
+  manganeseSulphate: blo(0.81, 'kg CO₂e/kg', 'Table SM.6.1'),
+  lithiumCarbonate: blo(7.635, 'kg CO₂e/kg', 'Table SM.6.1'),
+  graphite: blo(6.131, 'kg CO₂e/kg', 'Table SM.6.1'),
+}
+
+/** Battery materials: the substitution factor applies only to these (Section 4.4). */
+export const SUBSTITUTABLE: Material[] = ['nickelSulphate', 'cobaltSulphate', 'manganeseSulphate', 'lithiumCarbonate', 'graphite']
+
+/** Recovered material, kg per tonne of spent battery (Table 3 baseline outputs ÷ 25,000 t). */
+export const RECOVERED: Record<RouteId, Partial<Record<Material, Value>>> = {
+  pyro: {
+    aluminium: blo(250, 'kg/t', 'Table 3'),
+    steel: blo(62.8, 'kg/t', 'Table 3'),
+    copper: blo(78, 'kg/t', 'Table 3'),
+    nickelSulphate: blo(359.2, 'kg/t', 'Table 3'),
+    cobaltSulphate: blo(126.8, 'kg/t', 'Table 3'),
+  },
+  mechanical: {
+    aluminium: blo(295.6, 'kg/t', 'Table 3'),
+    steel: blo(91.2, 'kg/t', 'Table 3'),
+    copper: blo(83.6, 'kg/t', 'Table 3'),
+    graphite: blo(118, 'kg/t', 'Table 3'),
+    nickelSulphate: blo(318, 'kg/t', 'Table 3'),
+    cobaltSulphate: blo(112.4, 'kg/t', 'Table 3'),
+    manganeseSulphate: blo(68.4, 'kg/t', 'Table 3'),
+    lithiumCarbonate: blo(64.8, 'kg/t', 'Table 3'),
+  },
+  thermal: {
+    aluminium: blo(296.4, 'kg/t', 'Table 3'),
+    steel: blo(91.6, 'kg/t', 'Table 3'),
+    copper: blo(83.2, 'kg/t', 'Table 3'),
+    nickelSulphate: blo(334.4, 'kg/t', 'Table 3'),
+    cobaltSulphate: blo(116.8, 'kg/t', 'Table 3'),
+  },
+}
+
+/** Total share of the pack's mass recovered (bar labels). */
+export const RECOVERY_TOTAL: Record<RouteId, Value> = {
+  pyro: blo(0.5, 'fraction', 'Fig. 7'),
+  mechanical: blo(0.72, 'fraction', 'Fig. 7'),
+  thermal: blo(0.57, 'fraction', 'Fig. 7'),
+}
+
+/** Net result with full substitution, German grid (bar labels). */
+export const NET: Record<RouteId, Value> = {
+  pyro: blo(-5.76, 't CO₂e/t', 'Fig. 8c'),
+  mechanical: blo(-6.7, 't CO₂e/t', 'Fig. 8c'),
+  thermal: blo(-6.94, 't CO₂e/t', 'Fig. 8c'),
+}
+
+/** Net electricity use (Table 3 baseline ÷ 25,000 t). Not split by stage, so all of it moves with the hydromet location. */
+export const ELECTRICITY: Record<RouteId, Value> = {
+  pyro: blo(1564, 'kWh/t', 'Table 3'),
+  mechanical: blo(692, 'kWh/t', 'Table 3'),
+  thermal: blo(656, 'kWh/t', 'Table 3'),
+}
+
+const ember = (value: number, year: number): Value => ({
+  value,
+  unit: 'g CO₂e/kWh',
+  source: 'ember2026',
+  how: 'stated',
+  where: `Power sector CO₂ intensity, ${year}`,
+  note: 'Life-cycle, per kWh generated',
+})
+
+export type RegionId = 'southKorea' | 'china' | 'eu' | 'uk' | 'us'
+export const REGIONS: Record<RegionId, { name: string; grid: Value }> = {
+  southKorea: { name: 'South Korea', grid: ember(417.14, 2025) },
+  china: { name: 'China', grid: ember(526.19, 2025) },
+  eu: { name: 'EU', grid: ember(209.21, 2025) },
+  uk: { name: 'United Kingdom', grid: ember(217.41, 2025) },
+  us: { name: 'United States', grid: ember(384.4, 2025) },
+}
+/** Where most UK black mass goes for hydromet today (DBT/Frazer-Nash 2025; Faraday Insights 20). */
+export const DEFAULT_REGION: RegionId = 'southKorea'
+
+/** Removed when swapping grids, on the same (Ember) basis as the destination. Blömeke used 0.366 kg/kWh (UBA). */
+export const BASE_GRID: Value = ember(355.61, 2020)
+
+export const DEFAULTS = {
+  packKwh: { value: 60, unit: 'kWh', source: 'assumption', how: 'stated', note: 'Typical UK EV; mass scaled linearly from Blömeke’s pack' } satisfies Value,
+  substitution: { value: 1, unit: 'fraction', source: 'blomeke2022', how: 'stated', where: 'Section 4.4' } satisfies Value,
+}
+
+/** Second life: the paper's own California model, cumulative 2025–2050. */
+export const SECOND_LIFE = {
+  secondUseFirst: { value: 55.8, unit: 'Mt CO₂e saved', source: 'wesselkamper2025', how: 'stated', where: 'Fig. 5' } satisfies Value,
+  recyclingFirst: { value: 48.3, unit: 'Mt CO₂e saved', source: 'wesselkamper2025', how: 'stated', where: 'Fig. 5' } satisfies Value,
+}
