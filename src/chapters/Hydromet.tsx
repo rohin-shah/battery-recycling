@@ -2,23 +2,25 @@ import { useState } from 'react'
 import { Figure } from '../figures/Figure'
 import { HYDROMET_STEPS, HydrometFigure } from '../figures/HydrometFigure'
 import { PROCESS } from '../model/data'
-import { Steps } from '../ui/controls'
+import { Scrubber } from '../ui/controls'
 import { Num } from '../ui/Num'
 import { Chapter, Cite, Ink } from './Chapter'
 
-const { digestion, leachPh, lithiumPrecipitation } = PROCESS
+const { digestion } = PROCESS
 
 export function Hydromet() {
-  const [step, setStep] = useState(0)
+  const [progress, setProgress] = useState(0)
+  // The ions glide between states on their own, so the figure takes the nearest step.
+  const step = Math.round(progress)
   return (
     <Chapter
-      title="Why acid works so well"
+      title="Why dissolving it works so well"
       figure={
         <Figure
           label={`Metal ions in acid: ${HYDROMET_STEPS[step].toLowerCase()}`}
           caption={
             <>
-              <Steps label="Step" steps={HYDROMET_STEPS} value={step} onChange={setStep} />
+              <Scrubber label="Step" steps={HYDROMET_STEPS} value={progress} onChange={setProgress} />
               <p className="legend">
                 <Ink c="nickel">nickel</Ink> <Ink c="cobalt">cobalt</Ink> <Ink c="manganese">manganese</Ink> <Ink c="lithium">lithium</Ink>{' '}
                 <Ink c="iron">iron</Ink> <Ink c="aluminium">aluminium</Ink> <Ink c="copper">copper</Ink>
@@ -31,33 +33,30 @@ export function Hydromet() {
       }
     >
       <p>
-        Shredding and sieving sort material by size and density. That can’t pull nickel apart from cobalt: in black mass they’re mixed together in the same
-        microscopic crystals. To separate them you have to take the crystals apart, atom by atom. That’s what hydrometallurgy does, and every route here
-        finishes with it (<Cite source="blomeke2022">Blömeke et al. 2022</Cite>).
+        Shredding and sieving can sort pieces by size and weight, but they can’t separate nickel from cobalt. In black mass, the metals are mixed together
+        inside the same tiny crystals. To separate them, the crystals have to be broken down into single atoms. Dissolving them in acid does exactly that
+        (hydrometallurgy), and every route finishes this way (<Cite source="blomeke2022">Blömeke et al. 2022</Cite>). Drag the slider to follow the metals.
       </p>
       <p>
-        <strong>Leaching.</strong> The black mass is heated with concentrated sulphuric acid to about <Num v={digestion}>{digestion.value} °C</Num>, turning its metals into
-        sulphates, which then dissolve in water: a strongly acidic solution at about <Num v={leachPh}>pH {leachPh.value}</Num>. The solid that was black mass is now a liquid in which
-        every metal atom moves on its own, as an ion. Step the figure forward to see it.
+        <strong>Dissolve.</strong> The black mass is heated with strong sulphuric acid to about <Num v={digestion}>{digestion.value} °C</Num>, then mixed with
+        water. The metals dissolve, like sugar in tea. Each metal atom is now a separate ion, free to move about in the liquid.
       </p>
       <p>
-        <strong>Removing impurities.</strong> Some of what dissolved isn’t wanted. Adding iron powder makes the <Ink c="copper">copper</Ink> come out as metal.
-        Hydrogen peroxide and then sodium hydroxide raise the pH until <Ink c="iron">iron</Ink> and <Ink c="aluminium">aluminium</Ink> drop out as solid
-        hydroxides that can be filtered off.
+        <strong>Remove what isn’t wanted.</strong> Adding iron powder makes the <Ink c="copper">copper</Ink> come out as solid metal. Then the{' '}
+        <Ink c="iron">iron</Ink> and <Ink c="aluminium">aluminium</Ink> are made to form solids too, which are filtered off.
       </p>
       <p>
-        <strong>Solvent extraction</strong> is the key step. An oily organic liquid that doesn’t mix with water is stirred in. It carries a molecule chosen to
-        grab one metal: Cyanex 272 for <Ink c="cobalt">cobalt</Ink>, Cyanex 301 for cobalt and <Ink c="nickel">nickel</Ink>, D2EHPA for{' '}
-        <Ink c="manganese">manganese</Ink>. The metal moves into the oil, the oil is separated off, and dilute acid strips the metal back out. Repeating this
-        separates metals as alike as cobalt and nickel into high-purity streams, one metal each. The extractants are reused.
+        <strong>Pick out each metal.</strong> This is the clever bit. An oil that doesn’t mix with water is stirred in, carrying a chemical that grabs one
+        particular metal and ignores the rest. One oil picks up the <Ink c="cobalt">cobalt</Ink>, another the <Ink c="nickel">nickel</Ink>, another the{' '}
+        <Ink c="manganese">manganese</Ink>. Each oil is then separated off, the metal is washed back out of it, and the oil is used again.
       </p>
       <p>
-        <strong>Lithium comes last.</strong> What’s left is mostly <Ink c="lithium">lithium</Ink> in solution. It’s concentrated by evaporation, then sodium
-        carbonate is added at about <Num v={lithiumPrecipitation}>{lithiumPrecipitation.value} °C</Num> and lithium carbonate precipitates out.
+        <strong>Lithium last.</strong> Mostly <Ink c="lithium">lithium</Ink> is left in the water. Adding sodium carbonate turns it into lithium carbonate, a
+        white solid that settles out.
       </p>
       <p>
-        Finally each metal stream is crystallised into a sulphate salt. That’s why it works: physical sorting can only separate particles, but chemistry can
-        separate atoms, so the products aren’t mixtures but pure salts, ready for making new battery materials.
+        That’s why it works. Sieves can only separate bits; chemistry can separate atoms. So what comes out isn’t a mixture but pure metal salts, good enough
+        to make new batteries.
       </p>
     </Chapter>
   )

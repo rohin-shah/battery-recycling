@@ -17,11 +17,7 @@ const NAMES: Record<Material, string> = {
   copper: 'Copper',
   steel: 'Steel',
 }
-const ROUTE_OPTIONS: [RouteId, string][] = [
-  ['pyro', 'Pyrometallurgical'],
-  ['mechanical', 'Mechanical'],
-  ['thermal', 'Thermal-mechanical'],
-]
+const ROUTE_OPTIONS = Object.entries(ROUTES) as [RouteId, string][]
 const massT = packMass(DEFAULTS.packKwh.value) / 1000
 const massKg = derived(massT * 1000, 'kg', 'Pack mass scaled from Blömeke’s 576 kg, 95 kWh pack (Table 2)')
 const rateValue = (value: number): Value => ({ value, unit: 'share recovered', source: 'blomeke2022', how: 'stated', where: 'Fig. 7' })
@@ -44,16 +40,17 @@ export function Recovered() {
       }
     >
       <p>
-        Here is what comes out of a <Num v={DEFAULTS.packKwh}>{DEFAULTS.packKwh.value} kWh</Num> pack (about <Num v={massKg}>{Math.round(massT * 1000)} kg</Num>), by route (
-        <Cite source="blomeke2022">Blömeke et al. 2022</Cite>). The metals leave as salts, so their masses include the sulphate or carbonate and some water
-        bound into the crystals: a kilogram of <Ink c="nickel">nickel sulphate</Ink> holds well under a kilogram of nickel.
+        Here’s what comes out of a <Num v={DEFAULTS.packKwh}>{DEFAULTS.packKwh.value} kWh</Num> battery, which weighs about{' '}
+        <Num v={massKg}>{Math.round(massT * 1000)} kg</Num> (<Cite source="blomeke2022">Blömeke et al. 2022</Cite>). Switch routes and watch what disappears.
+        The metals come out as salts, so their masses include the other atoms in the salt and some water: a kilogram of{' '}
+        <Ink c="nickel">nickel sulphate</Ink> contains much less than a kilogram of nickel.
       </p>
       <table className="recovered">
         <thead>
           <tr>
-            <th scope="col">Recovered ({ROUTE_OPTIONS.find(([r]) => r === route)![1].toLowerCase()})</th>
+            <th scope="col">Saved by “{ROUTES[route]}”</th>
             <th scope="col">kg</th>
-            <th scope="col">Of what was there</th>
+            <th scope="col">Share saved</th>
           </tr>
         </thead>
         <tbody>
@@ -73,15 +70,14 @@ export function Recovered() {
         </tbody>
       </table>
       <p>
-        Much of the weight is ordinary metal: <Ink c="aluminium">aluminium</Ink>, <Ink c="copper">copper</Ink> and <Ink c="steel">steel</Ink> from the
-        housing, wiring and foils. Switch routes and watch what disappears. The furnace routes keep the <Ink c="nickel">nickel</Ink> and <Ink c="cobalt">cobalt</Ink> but lose the{' '}
-        <Ink c="lithium">lithium</Ink>, <Ink c="manganese">manganese</Ink> and <Ink c="graphite">graphite</Ink> to slag and smoke. Only the mechanical route
-        recovers all of them.
+        Much of the weight is ordinary metal: <Ink c="aluminium">aluminium</Ink>, <Ink c="copper">copper</Ink> and <Ink c="steel">steel</Ink> from the case,
+        wires and foils. The two routes that use a furnace keep the <Ink c="nickel">nickel</Ink> and <Ink c="cobalt">cobalt</Ink>, but lose the{' '}
+        <Ink c="lithium">lithium</Ink>, <Ink c="manganese">manganese</Ink> and <Ink c="graphite">graphite</Ink>. Only shredding saves all of them.
       </p>
       <p>
-        In total that’s {pct(RECOVERY_TOTAL.pyro)} of the pack by mass for the pyrometallurgical route, {pct(RECOVERY_TOTAL.thermal)} for
-        thermal-mechanical and {pct(RECOVERY_TOTAL.mechanical)} for mechanical. The EU’s legal minimum is {pct(EU_MINIMUM)}, so all three pass (<Cite source="blomeke2022">Blömeke et al. 2022</Cite>). Now for the question that matters for the climate:
-        does recovering all this save more carbon than the recycling emits?
+        In total, melting saves {pct(RECOVERY_TOTAL.pyro)} of the battery by mass, baking then shredding {pct(RECOVERY_TOTAL.thermal)}, and shredding{' '}
+        {pct(RECOVERY_TOTAL.mechanical)}. The legal minimum in the EU is {pct(EU_MINIMUM)}, so all three pass (<Cite source="blomeke2022">Blömeke et al. 2022</Cite>
+        ). Now the question that matters for the climate: does saving all this avoid more carbon than the recycling itself gives off?
       </p>
     </Chapter>
   )

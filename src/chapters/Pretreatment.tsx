@@ -7,11 +7,7 @@ import { Choice, Scrubber } from '../ui/controls'
 import { Num } from '../ui/Num'
 import { Chapter, Cite, Ink } from './Chapter'
 
-const ROUTE_OPTIONS: [RouteId, string][] = [
-  ['pyro', 'Pyrometallurgical'],
-  ['mechanical', 'Mechanical'],
-  ['thermal', 'Thermal-mechanical'],
-]
+const ROUTE_OPTIONS = Object.entries(ROUTES) as [RouteId, string][]
 const pct = (v: number) => `${Math.round(v * 100)}%`
 
 export function Pretreatment() {
@@ -23,7 +19,7 @@ export function Pretreatment() {
   const steps = PRETREATMENT[route]
   return (
     <Chapter
-      title="Three ways into the cells"
+      title="Three ways to get the metals out"
       figure={
         <Figure
           label={`${ROUTES[route]} route: ${steps[step].label.toLowerCase()}`}
@@ -57,32 +53,33 @@ export function Pretreatment() {
       }
     >
       <p>
-        Every route ends the same way, dissolving metals in acid (next chapter). They differ in how they get the cells’ coatings into a form the acid can
-        work on, and that choice decides what can be recovered at all (<Cite source="blomeke2022">Blömeke et al. 2022</Cite>).
+        Recyclers use three main routes to get at the metals inside the cells. They all finish the same way, by dissolving the metals in acid (next chapter).
+        Which route is used decides what can be saved (<Cite source="blomeke2022">Blömeke et al. 2022</Cite>). Pick a route, then drag the slider to run it,
+        or tap a step to play it.
       </p>
-      <h3>Pyrometallurgical: melt it</h3>
+      <h3>Melt it (pyrometallurgy)</h3>
       <p>
-        The modules go into a furnace with limestone and sand as slag formers. They are pre-heated, decomposed and then smelted; along the way the plastics and
-        graphite burn away, the electrolyte is driven off, and the off-gas passes through a bag filter that catches the <Ink c="dust">flue dust</Ink>. Two things come out. An <Ink c="steel">alloy</Ink> collects the cobalt, nickel, copper and some of the iron. A <Ink c="slag">slag</Ink>{' '}
-        takes the lithium, manganese, aluminium and about <Num v={PROCESS.slagIron}>{pct(PROCESS.slagIron.value)}</Num> of the iron, and up to <Num v={PROCESS.flueDustLithium}>{pct(PROCESS.flueDustLithium.value)}</Num> of the
-        lithium leaves with the flue dust. Unless the slag is treated too, those are lost: this route recovers <Num v={RECOVERY_TOTAL.pyro}>{pct(RECOVERY_TOTAL.pyro.value)}</Num> of the pack by
-        mass.
+        The modules go into a furnace with limestone and sand. The plastic and graphite burn away, and the smoke passes through a filter that catches its{' '}
+        <Ink c="dust">dust</Ink>. What’s left melts and separates into two layers, like oil on water. The heavy bottom layer is a{' '}
+        <Ink c="steel">metal mix</Ink> of cobalt, nickel and copper. The light top layer is <Ink c="slag">slag</Ink> of lithium, manganese and aluminium. Up to{' '}
+        <Num v={PROCESS.flueDustLithium}>{pct(PROCESS.flueDustLithium.value)}</Num> of the lithium escapes with the smoke and ends up in the filter dust. Unless
+        the slag is processed too, its lithium, manganese and aluminium are lost. This route saves{' '}
+        <Num v={RECOVERY_TOTAL.pyro}>{pct(RECOVERY_TOTAL.pyro.value)}</Num> of the battery by mass.
       </p>
-      <h3>Mechanical: shred it cold</h3>
+      <h3>Shred it (mechanical)</h3>
       <p>
-        The modules are crushed in an inert nitrogen atmosphere, and the process stays far cooler than a furnace. A dryer drives off the <Ink c="electrolyte">electrolyte</Ink>, which is condensed and sold on. A magnet lifts
-        out the <Ink c="steel">steel</Ink>, and an air sifter blows away light aluminium, plastic and electronics. A second shredder breaks up what’s left,
-        and a sieve separates it: a fine dark powder, <Ink c="blackMass">black mass</Ink>, falls through, while the <Ink c="copper">copper</Ink> and{' '}
-        <Ink c="aluminium">aluminium</Ink> foils and the separator stay on top, to be split apart by a second sifter. That powder holds the electrode coatings: nickel, cobalt, manganese, lithium and graphite. Nothing
-        is burned, so all of it can be recovered: <Num v={RECOVERY_TOTAL.mechanical}>{pct(RECOVERY_TOTAL.mechanical.value)}</Num> of the pack by mass.
+        The modules are shredded in nitrogen gas, so nothing can catch fire. A dryer drives off the <Ink c="electrolyte">electrolyte</Ink>, the battery’s
+        liquid, which is collected and reused. A magnet pulls out the <Ink c="steel">steel</Ink>, and a sieve does the rest: the{' '}
+        <Ink c="copper">copper</Ink> and <Ink c="aluminium">aluminium</Ink> foils stay on top, while a fine dark powder called{' '}
+        <Ink c="blackMass">black mass</Ink> falls through. That powder holds the valuable nickel, cobalt, manganese, lithium and graphite. Nothing is burned,
+        so all of them can be saved: <Num v={RECOVERY_TOTAL.mechanical}>{pct(RECOVERY_TOTAL.mechanical.value)}</Num> of the battery by mass.
       </p>
-      <h3>Thermal-mechanical: bake, then shred</h3>
+      <h3>Bake it, then shred it (thermal-mechanical)</h3>
       <p>
-        Here the modules are opened right down to individual cells. The cells are heated in a low-oxygen kiln (pyrolysis) to drive off the volatile compounds
-        that make shredding dangerous. Then they’re shredded, a magnet pulls out the steel, and sieving and sifting split black mass from the foils. In the version modelled here the black mass is then smelted like the first route, so its lithium and
-        manganese end up in slag again: <Num v={RECOVERY_TOTAL.thermal}>{pct(RECOVERY_TOTAL.thermal.value)}</Num> recovered by mass.
+        Here the cells are first baked in an oven with little oxygen, which drives off the chemicals that make shredding risky. Then they’re shredded and
+        sorted into black mass and foils, as above. But in the version studied here, the black mass then goes into a furnace like the first route, so its
+        lithium and manganese end up in slag again: <Num v={RECOVERY_TOTAL.thermal}>{pct(RECOVERY_TOTAL.thermal.value)}</Num> saved by mass.
       </p>
-      <p>Pick a route, then drag the slider to run it step by step, or tap a step to play it. Whichever route you choose, what comes out next goes into acid.</p>
     </Chapter>
   )
 }

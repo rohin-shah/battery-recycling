@@ -5,7 +5,7 @@ import { MathUtils } from 'three'
 import { ENCODING } from './encoding'
 import type { Vec } from './parts'
 
-export const HYDROMET_STEPS = ['Black mass in acid', 'Leached', 'Impurities out', 'Solvent extraction', 'Lithium precipitated']
+export const HYDROMET_STEPS = ['Powder in acid', 'Metals dissolve', 'Unwanted metals out', 'Each metal picked out', 'Lithium last']
 
 type Element = 'nickel' | 'cobalt' | 'manganese' | 'lithium' | 'iron' | 'aluminium' | 'copper'
 const IONS: [Element, number][] = [

@@ -1,46 +1,54 @@
 import { useState } from 'react'
-import { DisassemblyFigure } from '../figures/DisassemblyFigure'
+import { DISASSEMBLY_STEPS, disassemblyReadout, DisassemblyFigure } from '../figures/DisassemblyFigure'
 import { Figure } from '../figures/Figure'
 import { PROCESS } from '../model/data'
-import { Steps } from '../ui/controls'
+import { Scrubber } from '../ui/controls'
 import { Num } from '../ui/Num'
 import { Chapter, Cite, Ink } from './Chapter'
 
-const STEPS = ['Arrives', 'Discharged', 'Opened up']
 const { residualEnergy, peripheryShare, disassemblyHours } = PROCESS
 
 export function Disassembly() {
-  const [step, setStep] = useState(0)
+  const [progress, setProgress] = useState(0)
+  const { chargeLeft, removed } = disassemblyReadout(progress)
   return (
     <Chapter
-      title="First, make it safe and take it apart"
+      title="Make it safe, take it apart"
       figure={
         <Figure
-          label={`A battery pack, ${STEPS[step].toLowerCase()}`}
-          caption={<Steps label="Step" steps={STEPS} value={step} onChange={setStep} />}
+          label={`A battery pack, ${DISASSEMBLY_STEPS[Math.round(progress)].toLowerCase()}`}
+          caption={
+            <>
+              <Scrubber label="Step" steps={DISASSEMBLY_STEPS} value={progress} onChange={setProgress} />
+              <p className="legend" aria-live="polite">
+                <Ink c="energy">Charge left: {Math.round(residualEnergy.value * chargeLeft)} kWh</Ink>{' '}
+                <Ink c="casing">Mass removed so far: {Math.round(peripheryShare.value * removed * 100)}%</Ink>
+              </p>
+              <p className="hint">
+                Layout based on a real Nissan Leaf pack (<Cite source="leafPhotos">photos</Cite>); sizes are illustrative.
+              </p>
+            </>
+          }
         >
-          <DisassemblyFigure step={step} />
+          <DisassemblyFigure progress={progress} />
         </Figure>
       }
     >
-      <p>
-        A spent pack still holds charge. In the model used here it arrives with about <Num v={residualEnergy}>{residualEnergy.value} kWh</Num> left, roughly a third of its capacity (
-        <Cite source="blomeke2022">Blömeke et al. 2022</Cite>). That figure is an assumption, but no pack arrives empty.
-      </p>
-      <p>
-        So packs are first <Ink c="energy">deep-discharged</Ink>, which deactivates the cells and recovers the energy rather than wasting it. Then two workers
-        spend about{' '}
-        <Num v={disassemblyHours}>{disassemblyHours.value} hours</Num> taking the pack apart by hand.
-      </p>
-      <p>
-        Off comes the <Ink c="casing">aluminium and steel housing</Ink>, the battery management <Ink c="copper">electronics</Ink>, cables and connectors. These
-        go to existing scrap recycling. They’re about <Num v={peripheryShare}>{Math.round(peripheryShare.value * 100)}%</Num> of the pack’s mass, so a third of the job is done before any
-        chemistry starts.
-      </p>
-      <p>
-        What’s left is the <Ink c="cell">modules</Ink>, and the valuable part is inside their cells: the cathode and anode coatings that hold the nickel,
-        cobalt, manganese, lithium and graphite. Getting at those is where the three routes part ways.
-      </p>
+      <ul>
+        <li>
+          <Ink c="energy">Discharge it.</Ink> The battery arrives still holding about <Num v={residualEnergy}>{residualEnergy.value} kWh</Num>, enough to be
+          dangerous, so a cable drains it first (<Cite source="blomeke2022">Blömeke et al. 2022</Cite>).
+        </li>
+        <li>
+          <Ink c="casing">Open it up.</Ink> Two workers spend about <Num v={disassemblyHours}>{disassemblyHours.value} hours</Num> taking off the case,
+          electronics and cables by hand. These go to ordinary scrap recycling and make up{' '}
+          <Num v={peripheryShare}>{Math.round(peripheryShare.value * 100)}%</Num> of the battery’s mass.
+        </li>
+        <li>
+          <Ink c="cell">Keep the modules.</Ink> What’s left are boxes of cells holding the valuable metals: nickel, cobalt, manganese and lithium, plus
+          graphite.
+        </li>
+      </ul>
     </Chapter>
   )
 }

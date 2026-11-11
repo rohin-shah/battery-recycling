@@ -1,16 +1,17 @@
+import type { Material } from 'three'
 import { ENCODING } from './encoding'
 import { Pile } from './parts'
 import { moduleLabel, pouchFoil } from './textures'
 
 /** The material being processed, in metres, floor at y = 0. Module and cell sizes are typical, not from a specific pack. */
 
-/** One module, 35 × 15 × 11 cm, labelled, with its two terminals. */
-export function RealModule() {
+/** One module, 35 × 15 × 11 cm, labelled, with its two terminals. Pass a shared `material` to animate many at once. */
+export function RealModule({ material }: { material?: Material }) {
   return (
     <group>
-      <mesh position={[0, 0.055, 0]}>
+      <mesh position={[0, 0.055, 0]} material={material}>
         <boxGeometry args={[0.35, 0.11, 0.15]} />
-        <meshStandardMaterial map={moduleLabel()} roughness={0.6} />
+        {!material && <meshStandardMaterial map={moduleLabel()} roughness={0.6} />}
       </mesh>
       {[
         [-0.13, '#b3261e'],

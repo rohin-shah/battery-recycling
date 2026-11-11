@@ -25,6 +25,7 @@ export const ENCODING = {
   dust: '#9a9c95',
   nitrogen: '#bcd4ec',
   machine: '#a9ada5',
+  cable: '#e07a1f', // high-voltage cables are orange by convention
   heat: '#8f7ff0', // a brighter violet for glowing machines; the dark violet barely shows as light
 } as const
 

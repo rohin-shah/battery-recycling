@@ -6,7 +6,7 @@ import { Slider } from '../ui/controls'
 import { Num } from '../ui/Num'
 import { Chapter, Cite } from './Chapter'
 
-const { leavesCar, leavesStorage, nmcCarLife, secondUseFirst, recyclingFirst } = SECOND_LIFE
+const { leavesCar, leavesStorage, secondUseFirst, recyclingFirst } = SECOND_LIFE
 
 const stageAt = (capacity: number): LifeStage => (capacity >= leavesCar.value ? 'car' : capacity >= leavesStorage.value ? 'storage' : 'recycling')
 
@@ -42,23 +42,17 @@ export function SecondLife() {
         </Figure>
       }
     >
-      <p>A battery wears out slowly: with use, it holds a little less charge each year.</p>
       <p>
-        Studies typically assume a pack is retired from the car once it’s down to about <Num v={leavesCar}>{leavesCar.value}%</Num> of its original capacity. For a
-        nickel-based (NMC) pack that takes <Num v={nmcCarLife}>{nmcCarLife.value} years</Num> on average (<Cite source="wesselkamper2025">Wesselkämper et al. 2025</Cite>).
+        The best thing, as some studies have shown, is for the batteries to be simply extracted from the car, and put into battery storage. Here, they’re not
+        required to be particularly energy dense so they serve a unique purpose of being affordable energy storage for the grid or homes to use on the grid
+        when required.
       </p>
       <p>
-        <Num v={leavesCar}>{leavesCar.value}%</Num> is too little for a car, but plenty for a battery that never moves. Retired packs can be tested and their modules put to work as
-        stationary storage, holding solar power for the evening or steadying the grid, until they fall to about <Num v={leavesStorage}>{leavesStorage.value}%</Num>. Drag the slider to
-        age the pack.
-      </p>
-      <p>
-        Does the detour help the climate? A second-life pack stands in for a new storage battery that would otherwise have been built. In a model of
-        California’s EV batteries to 2050, sending packs to second use first saved more greenhouse gas than recycling them straight away in every
-        scenario tested: <Num v={secondUseFirst}>{secondUseFirst.value}</Num> against <Num v={recyclingFirst}>{recyclingFirst.value}</Num> million tonnes CO₂e (
+        We can use LCA to assert if it’s better for the climate to build a new storage battery or repurpose an old one. One study of California’s EV batteries
+        up to 2050 found that reusing them first saved more greenhouse gas in every case it tested: <Num v={secondUseFirst}>{secondUseFirst.value}</Num>{' '}
+        million tonnes of CO₂e, against <Num v={recyclingFirst}>{recyclingFirst.value}</Num> million tonnes for recycling them straight away (
         <Cite source="wesselkamper2025">Wesselkämper et al. 2025</Cite>).
       </p>
-      <p>This is the waste hierarchy at work: reuse before recycling. But storage batteries wear out too. What happens to them then?</p>
     </Chapter>
   )
 }

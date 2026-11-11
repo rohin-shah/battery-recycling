@@ -1,4 +1,5 @@
 import { Html } from '@react-three/drei'
+import { useEffect, useState } from 'react'
 import type { Vec } from './parts'
 
 /**
@@ -7,6 +8,13 @@ import type { Vec } from './parts'
  * Hide with `show` rather than unmounting: unmounting an HTML label mid-render makes React warn about racing roots.
  */
 export function Tag({ at, show = true, children }: { at: Vec; show?: boolean; children: string }) {
+  // drei attaches the label to the canvas's parent, which isn't in the page on the canvas's first render; wait a tick.
+  const [ready, setReady] = useState(false)
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setReady(true))
+    return () => cancelAnimationFrame(id)
+  }, [])
+  if (!ready) return null
   return (
     <Html position={at} zIndexRange={[5, 0]} style={{ pointerEvents: 'none' }}>
       <span className="tag" aria-hidden style={show ? undefined : { display: 'none' }}>

@@ -8,6 +8,12 @@ export function Method() {
     <section className="method" aria-labelledby="method-h">
       <h2 id="method-h">How this was counted</h2>
 
+      <p className="summary">
+        <strong>In short:</strong> all the recycling numbers come from one detailed study of three real recycling routes in Germany. Recycling is charged
+        for the energy and chemicals it uses, and credited for the mining it saves. Those are shown separately, and the results are scaled to your battery’s
+        size and to the electricity where the metals are separated. The details follow.
+      </p>
+
       <h3>What is counted</h3>
       <p>
         Greenhouse gases in tonnes of CO₂ equivalent (100-year warming, IPCC 2013). Only climate change is counted. Recycling one pack is counted from the
@@ -17,7 +23,7 @@ export function Method() {
 
       <h3>The recycling routes</h3>
       <p>
-        All process figures come from one study of three industrial routes at a <Num v={PLANT}>25,000 tonne</Num>-a-year plant in Germany (
+        All process figures come from one study of three industrial routes (pyrometallurgical, mechanical and thermal-mechanical, simplified in the figures above) at a <Num v={PLANT}>25,000 tonne</Num>-a-year plant in Germany (
         <Cite source="blomeke2022">Blömeke et al. 2022</Cite>). Its pack is a <Num v={PACK.capacity}>95 kWh</Num>, <Num v={PACK.mass}>576 kg</Num> NMC622
         pouch-cell pack. Using one study keeps the routes comparable: they share a background database (ecoinvent 3.8), a plant size and a pack.
       </p>

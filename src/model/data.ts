@@ -4,7 +4,7 @@
  *      'chart-read' = read off a figure; 'derived' = calculated from stated values.
  */
 
-export type SourceId = 'blomeke2022' | 'ember2026' | 'wesselkamper2025' | 'wbar2009' | 'dbt2025' | 'faraday2024' | 'assumption' | 'you'
+export type SourceId = 'blomeke2022' | 'ember2026' | 'wesselkamper2025' | 'wbar2009' | 'dbt2025' | 'faraday2024' | 'birkl2017' | 'wasteRegs2011' | 'leafPhotos' | 'assumption' | 'you'
 
 export const SOURCES: Record<SourceId, { name: string; url?: string }> = {
   blomeke2022: {
@@ -30,6 +30,18 @@ export const SOURCES: Record<SourceId, { name: string; url?: string }> = {
   faraday2024: {
     name: 'Leong, Faraday Institution (2024), Faraday Insights 20: Developing a UK lithium-ion battery recycling industry (grey literature)',
     url: 'https://www.faraday.ac.uk/wp-content/uploads/2024/07/Faraday_Insights_20_FINAL.pdf',
+  },
+  birkl2017: {
+    name: 'Birkl, Roberts, McTurk, Bruce & Howey (2017), Degradation diagnostics for lithium ion cells, J. Power Sources 341, 373–386, CC BY 4.0',
+    url: 'https://doi.org/10.1016/j.jpowsour.2016.12.011',
+  },
+  wasteRegs2011: {
+    name: 'The Waste (England and Wales) Regulations 2011 (SI 2011/988), regulation 12: the waste hierarchy',
+    url: 'https://www.legislation.gov.uk/uksi/2011/988/regulation/12',
+  },
+  leafPhotos: {
+    name: 'Nissan Leaf battery pack photos by Mario Roberto Duran Ortiz (CC BY-SA 3.0) and Gereon Meyer (CC BY-SA 4.0), Wikimedia Commons: the layout the pack figure follows',
+    url: 'https://commons.wikimedia.org/wiki/File:Nissan_Leaf_battery_pack_DC_03_2011_1629.jpg',
   },
   assumption: { name: 'Assumption (see How this was counted)' },
   you: { name: 'Your choice' },
@@ -58,10 +70,11 @@ const blo = (value: number, unit: string, where: string, how: Value['how'] = 'st
 export const derived = (value: number, unit: string, note: string): Value => ({ value, unit, source: 'blomeke2022', how: 'derived', note })
 
 export type RouteId = 'pyro' | 'mechanical' | 'thermal'
+/** Plain names for the reader; the technical names (pyrometallurgical, mechanical, thermal-mechanical) are in the text. */
 export const ROUTES: Record<RouteId, string> = {
-  pyro: 'Pyrometallurgical + hydrometallurgical',
-  mechanical: 'Mechanical + hydrometallurgical',
-  thermal: 'Thermal-mechanical + hydrometallurgical',
+  pyro: 'Melt',
+  mechanical: 'Shred',
+  thermal: 'Bake, then shred',
 }
 
 export type Material = 'aluminium' | 'steel' | 'copper' | 'nickelSulphate' | 'cobaltSulphate' | 'manganeseSulphate' | 'lithiumCarbonate' | 'graphite'

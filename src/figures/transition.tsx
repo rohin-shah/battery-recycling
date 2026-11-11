@@ -29,6 +29,9 @@ export function StepClock({ progress, children }: { progress: number; children: 
   return <StepContext.Provider value={clock}>{children}</StepContext.Provider>
 }
 
+/** Back from a clock to the scrubber position it came from. */
+export const progressOf = ({ step, t }: Clock) => (step === 0 ? 0 : step - 1 + t)
+
 /** The live clock: `t` runs 0 → 1 through the transition into `step`, and stays at 1 after. */
 export function useClock() {
   const c = useContext(StepContext)

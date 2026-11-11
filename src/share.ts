@@ -1,9 +1,17 @@
 import { DEFAULT_REGION, DEFAULTS, REGIONS, ROUTES, type RegionId, type RouteId } from './model/data'
 
+/** The reader's answer to "what happens to it?"; null until they pick one. */
+export const GUESSES = {
+  landfill: 'It goes to landfill',
+  burned: 'It’s burned',
+  recycled: 'It’s recycled',
+  reused: 'It’s reused, then recycled',
+} as const
+export type Guess = keyof typeof GUESSES
+
 /** Everything the reader chose. It all lives in the link, so a shared link opens the same build. */
 export type Build = {
-  /** Share of the pack's mass the reader guessed comes back, in %; null until they lock it in. */
-  guess: number | null
+  guess: Guess | null
   packKwh: number
   route: RouteId
   region: RegionId
@@ -12,7 +20,6 @@ export type Build = {
 
 /** Slider ranges [min, max, step]; links are clamped and snapped to these too. */
 export const LIMITS = {
-  guess: [0, 100, 1],
   packKwh: [30, 110, 1],
   substitution: [0, 1, 0.05],
 } as const
@@ -25,7 +32,7 @@ export const DEFAULT_BUILD: Build = {
   substitution: DEFAULTS.substitution.value,
 }
 
-const OPTIONS = { route: Object.keys(ROUTES), region: Object.keys(REGIONS) }
+const OPTIONS = { route: Object.keys(ROUTES), region: Object.keys(REGIONS), guess: Object.keys(GUESSES) }
 
 export function toQuery(build: Build): string {
   return new URLSearchParams(Object.entries(build).filter(([, v]) => v !== null).map(([k, v]) => [k, String(v)])).toString()
