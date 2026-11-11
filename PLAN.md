@@ -4,7 +4,7 @@ PRD: "20261012 EV Emissions" Google Doc, Metals Recycling tab (private).
 
 ## What we're building
 
-A long-form, interactive explainer for readers with A-level STEM. It follows a spent UK EV battery from the car to recovered salts, explains why hydrometallurgy works at the level of ions, then lets readers compare the climate-change impact of recycling routes for their own pack. Every number is sourced. The site is standalone, links both ways with evorpetrol.co.uk, and is published once, when every chapter is finished.
+A long-form, interactive explainer for the same readers as evorpetrol: anyone who passed GCSE maths and science. Plain words, technical terms introduced once in brackets, masses and percentages kept. It follows a spent UK EV battery from the car to recovered salts, explains simply why dissolving the metals works, then lets readers compare the climate-change impact of recycling routes for their own pack. Every number is sourced. The site is standalone, links both ways with evorpetrol.co.uk, and is published once, when every chapter is finished.
 
 Out of scope: economics, other impact categories, landfill as an option, a simplified mode, fallbacks without WebGL, uncertainty bands, and direct recycling in the calculator (prose mention only).
 
@@ -24,6 +24,7 @@ Out of scope: economics, other impact categories, landfill as an option, a simpl
 | Substitution | Advanced slider, default 1 (Blömeke sensitivities: 0.75 → +20%, 0.5 → +41% recycling GWP) |
 | Second life | Process chapter before recycling. One sourced result: Wesselkämper 2025's own California model to 2050, where second use first saved more than recycling straight away in every scenario (55.8 vs 48.3 Mt CO₂e). Its cited 45–70 kg CO₂e/kWh is not used (derived from a secondary review with a broken citation). Not in the calculator |
 | Data values | From the supplementary files first. Values read off charts are labelled "chart-read" |
+| Figures | Simplified to what serves the goal (the journey, why it works, the climate impact). Chapter 3 routes cut to 3–4 key steps each. Continuous scrubbers play each step; labels sit in the scene; a person and a phone give scale |
 | Simulations | Illustrative and interactive (drag, rotate, scrub). Real numbers only where sourced, e.g. mass flows and recovery rates from Blömeke Fig. 7. The ion-level figures are schematics you can manipulate |
 | Tone | Sceptical, informed reader. No hype or emojis. Methods section in the passive voice ("How this was counted"). Every number is tappable to its source |
 | Sharing | All state in URL parameters (evorpetrol's `share.ts` pattern), including the reader's guess. No backend |
@@ -88,7 +89,7 @@ One slice per chapter, each with an interactive figure that adds a single concep
 1. Waste hierarchy and second life.
 2. Discharge and disassembly.
 3. Pretreatment routes: pyro, mechanical, thermal-mechanical (scrub through each).
-4. Hydrometallurgy at ion level: leaching, solvent extraction, precipitation. Why it works.
+4. Dissolving the metals: dissolve, remove what isn’t wanted, pick out each metal, lithium last. Why it works.
 5. Recovered salts and ions, with the recovery rate for each route.
 - **Done when:** each chapter reads well on its own, and the whole page holds frame rate on a phone.
 
@@ -113,3 +114,14 @@ One slice per chapter, each with an interactive figure that adds a single concep
 
 ## Later
 - Split the larger chapter figures into smaller, single-idea inline figures (Ciechanowski-style), once the current figures are settled.
+
+## Revised approach (11 Nov 2026)
+
+The phases above are superseded for the figures. See the PRD's "Revised approach" section and CHECKLIST.md.
+
+- Three topics, each a short sequence of three to five small figures: why batteries lose health, pyrometallurgy, hydrometallurgy.
+- Each figure: one idea, the reader controls a physical quantity, the result is computed from approved sourced data. Fixed view; nothing appears or disappears within a figure.
+- Built in code with a shared look pass (lighting, shadows, bevels, cutaways); Blender is the fallback.
+- Pilot: the hydrometallurgy pH figure, with a one-page spec and an approved still before building.
+- Copy is handwritten by Rohin.
+- Open: whether the other sections stay as text or are cut.
