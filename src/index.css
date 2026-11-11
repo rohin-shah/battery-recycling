@@ -3,129 +3,36 @@
   --bg: #f7f8f4;
   --text: #1b2620;
   --muted: color-mix(in srgb, var(--text) 65%, transparent);
-  --card: #ffffff;
   --line: color-mix(in srgb, var(--text) 14%, transparent);
-  --forest: #285943;
-  --sage: #acb876;
-  --lime: #9bc53d;
   --teal: #7cb4b8;
-  --violet: #4e4187;
-  /* One colour per concept, everywhere on the page */
-  --process: var(--violet);
-  --credit: var(--lime);
-  --net: var(--forest);
   font: 17px/1.6 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   color: var(--text);
   background: var(--bg);
 }
 @media (prefers-color-scheme: dark) {
-  /* The darkest palette colours lose contrast on a dark card, so lighter tints stand in */
-  :root { --bg: #121815; --text: #eef1ea; --card: #1c241f; --net: #5fa07f; --process: #9488d6; }
+  :root { --bg: #121815; --text: #eef1ea; }
 }
 body { margin: 0; }
-main { max-width: 1080px; margin: 0 auto; padding: 16px 16px 48px; }
-/* Prose and cards keep a readable measure; chapters use the full width for text beside figure */
-main > :not(.chapter) { max-width: 680px; margin-left: auto; margin-right: auto; }
-h1 { font-size: 2rem; line-height: 1.2; letter-spacing: -0.5px; margin: 24px 0 8px; }
-h2 { font-size: 1.15rem; margin: 0 0 12px; }
+main { max-width: 1080px; margin: 0 auto; padding: 16px 16px 64px; }
+/* Prose keeps a readable measure; figures are allowed to be wider */
+main > * { max-width: 680px; margin-left: auto; margin-right: auto; }
+h1 { font-size: 2rem; line-height: 1.2; letter-spacing: -0.5px; margin: 24px auto 8px; }
+h2 { font-size: 1.45rem; line-height: 1.25; margin: 48px auto 8px; }
+h3 { font-size: 1.15rem; margin: 32px auto 4px; }
+h4 { font-size: 1rem; margin: 24px auto 0; }
+p { margin-top: 8px; margin-bottom: 12px; }
+main > ul { padding-left: 1.2em; box-sizing: border-box; }
+li { margin: 6px 0; }
 a { color: inherit; }
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin: 20px 0; }
-.hint, .caption { display: block; font-size: 0.85rem; color: var(--muted); margin: 4px 0 12px; }
+button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
 
-.slider { display: grid; gap: 4px; margin: 0 0 12px; }
-.slider input { width: 100%; accent-color: var(--forest); }
-.choice { border: 0; padding: 0; margin: 0 0 12px; display: flex; flex-wrap: wrap; gap: 6px; }
-.choice legend { padding: 0; margin-bottom: 6px; }
-.choice button, .go {
-  font: inherit; font-size: 0.9rem; color: inherit; background: var(--card);
-  border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; cursor: pointer;
-}
-.choice button[aria-pressed='true'] { background: var(--forest); border-color: var(--forest); color: #fff; }
-.go { background: var(--forest); color: #fff; border-color: var(--forest); padding: 8px 16px; }
-.go:disabled { opacity: 0.6; cursor: default; }
-.go.secondary { background: transparent; color: inherit; border-color: var(--line); }
-button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
-details { margin: 0 0 12px; }
-summary { cursor: pointer; margin-bottom: 8px; }
+/* Citations: quiet, in square brackets, linking to the source list */
+.cite { font-size: 0.82em; color: var(--muted); white-space: normal; }
+.cite a { text-decoration-color: var(--line); text-underline-offset: 2px; }
+.sources { list-style: none; padding-left: 0 !important; font-size: 0.85rem; color: var(--muted); }
+.sources li { margin: 8px 0; overflow-wrap: anywhere; scroll-margin-top: 16px; }
+.sources li:target { color: var(--text); }
+.sources b { color: var(--text); font-weight: 600; }
 
-.bars { display: grid; gap: 10px; margin-top: 16px; }
-.bar { display: grid; grid-template-columns: 9.5em 1fr 3.5em; align-items: center; gap: 8px; font-size: 0.9rem; }
-.bar-track { height: 14px; border-radius: 7px; background: var(--line); overflow: hidden; }
-.bar-fill { display: block; height: 100%; border-radius: 7px; transition: width 0.3s ease; }
-.bar-value { text-align: right; font-variant-numeric: tabular-nums; }
-.process .bar-fill { background: var(--process); }
-.credit .bar-fill { background: var(--credit); }
-.net .bar-fill { background: var(--net); }
-@media (max-width: 420px) {
-  .bar { grid-template-columns: 1fr 3.5em; }
-  .bar-label { grid-column: 1 / -1; }
-}
-@media (prefers-reduced-motion: reduce) { .bar-fill { transition: none; } }
-
-/* Figures: each has its own canvas, created while it is near the screen */
-.chapter { display: grid; gap: 16px; margin: 56px 0; }
-.chapter .prose { max-width: 680px; margin: 0 auto; }
-/* Phone: the figure stays pinned above the text it illustrates */
-.fig { margin: 0; padding: 8px 0; }
-.chapter .fig { position: sticky; top: 0; z-index: 1; background: var(--bg); }
-.fig-view {
-  /* Always light, in both themes: the figure colours (black mass especially) are tuned for one background */
-  height: 36vh; min-height: 220px; border-radius: 12px; background: #f4f5f0; border: 1px solid var(--line);
-
-}
-.fig-view:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
-figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
-/* Wide screens: text on the left, figure beside it and pinned while the text scrolls */
-@media (min-width: 900px) {
-  .chapter { grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
-  .chapter .prose { order: 1; margin: 0; padding: 20vh 0; }
-  .chapter .fig { order: 2; top: 12vh; background: none; }
-  .fig-view { height: 70vh; }
-}
-.cite { color: var(--muted); }
-.fig .slider { margin: 8px 0 4px; }
-.stages { display: flex; gap: 6px; list-style: none; padding: 0; margin: 4px 0 0; font-size: 0.8rem; }
-.stages li { flex: 1 1 0; min-width: 0; overflow-wrap: anywhere; hyphens: auto; text-align: center; padding: 4px; border-radius: 6px; border: 1px solid var(--line); }
-.stages li[aria-current='step'] { background: var(--forest); border-color: var(--forest); color: #fff; }
-.prose h3 { font-size: 1rem; margin: 20px 0 4px; }
-.ink { white-space: nowrap; }
-.ink i { display: inline-block; width: 0.6em; height: 0.6em; border-radius: 50%; margin-right: 0.25em; border: 1px solid var(--line); vertical-align: 0.05em; }
-.legend { font-size: 0.8rem; margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 4px 10px; }
-.fig .choice { margin: 8px 0 4px; }
-.recovered { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 6px; font-variant-numeric: tabular-nums; }
-.recovered th, .recovered td { text-align: left; padding: 2px 4px; font-weight: normal; }
-.recovered thead th { color: var(--muted); }
-.recovered td { text-align: right; }
-.recovered tr.lost { color: var(--muted); }
-
-/* Tap-to-source numbers */
-.num {
-  font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer;
-  text-decoration: underline dotted color-mix(in srgb, var(--text) 50%, transparent); text-underline-offset: 3px;
-}
-.num:hover { text-decoration-style: solid; }
-.source-card {
-  max-width: min(420px, calc(100vw - 32px)); margin: auto; padding: 16px; border-radius: 12px;
-  border: 1px solid var(--line); background: var(--card); color: var(--text);
-  box-shadow: 0 8px 30px rgb(0 0 0 / 0.2); font-size: 0.9rem; line-height: 1.5;
-}
-.source-card:popover-open { display: grid; gap: 8px; }
-.source-card::backdrop { background: rgb(0 0 0 / 0.25); }
-.source-card .unit { font-weight: normal; color: var(--muted); }
-.source-card .close { justify-self: end; font: inherit; font-size: 0.85rem; background: none; border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; color: inherit; cursor: pointer; }
-.note { font-size: 0.85rem; background: color-mix(in srgb, var(--teal) 12%, transparent); border-left: 3px solid var(--teal); padding: 8px 12px; margin: 0 0 12px; border-radius: 0 8px 8px 0; }
-.bar-value .num { font-weight: inherit; }
-.method { margin-top: 48px; font-size: 0.95rem; }
-.method h3 { font-size: 1rem; margin: 20px 0 4px; }
-.method ul { padding-left: 1.2em; }
-.sources { font-size: 0.85rem; }
-.stages li button { font: inherit; color: inherit; background: none; border: 0; padding: 0; width: 100%; cursor: pointer; }
-/* In-scene labels: a pill above its point, with a leader line down to it */
-.tag {
-  position: absolute; left: 0; bottom: 0; transform: translate(-50%, -14px); white-space: nowrap;
-  font: 600 11px/1.2 system-ui, -apple-system, sans-serif; color: #1b2620; background: rgb(255 255 255 / 0.9);
-  border: 1px solid rgb(0 0 0 / 0.15); border-radius: 999px; padding: 2px 7px; pointer-events: none;
-}
-.tag::after { content: ''; position: absolute; left: 50%; top: 100%; width: 1px; height: 12px; background: rgb(0 0 0 / 0.45); }
-.fig-view { position: relative; overflow: hidden; }
-.method .summary { background: color-mix(in srgb, var(--teal) 10%, transparent); padding: 10px 12px; border-radius: 8px; }
+/* Space held for a figure while its code loads */
+.hm-loading { max-width: 980px; height: 520px; margin: 20px auto; border-radius: 14px; background: #0f1512; }

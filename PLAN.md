@@ -119,7 +119,7 @@ One slice per chapter, each with an interactive figure that adds a single concep
 
 The phases above are superseded for the figures. See the PRD's "Revised approach" section and CHECKLIST.md.
 
-- Three topics, each a short sequence of three to five small figures: why batteries lose health, pyrometallurgy, hydrometallurgy.
+- Two topics, each a short sequence of three to five small figures: why batteries lose health, and hydrometallurgy. (Pyrometallurgy was dropped as a figure topic on 11 Nov 2026; at most a one-line mention in the text.)
 - Each figure: one idea, the reader controls a physical quantity, the result is computed from approved sourced data. Fixed view; nothing appears or disappears within a figure.
 - Built in code with a shared look pass (lighting, shadows, bevels, cutaways); Blender is the fallback.
 - Pilot: the hydrometallurgy pH figure, with a one-page spec and an approved still before building.

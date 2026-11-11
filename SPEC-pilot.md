@@ -63,6 +63,10 @@ Each dissolved metal ion bonds with the partner it "prefers". That preference is
 - A small first figure shows the acid dissolving the powder (not built yet).
 - Hydroxide beads were tried in Figure A and removed (Rohin: too complicated). The bonding lives in the equations toggle and the text only. For the record: nickel, cobalt and lithium losses are co-precipitation (Chernyaev 2021), so they sink without hydroxide.
 
+## The thread to explore (Rohin, 11 Nov 2026)
+
+Why acids dissolve metal, and why that is what lets us settle metals out so precisely. Acid pulls the metals out of the solid and into the liquid; taking the acid away lets them go back to solid, and each metal lets go at its own acidity. The dissolve figure and Figures A and B should read as one story on one acidity scale: dissolve everything, then bring the metals back one group at a time.
+
 ## Still open
 
 - Whether each figure also shows the reagents used and the carbon they add.

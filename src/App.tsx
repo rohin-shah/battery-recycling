@@ -1,155 +1,165 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { calculate } from './model/engine'
-import { Cite } from './chapters/Chapter'
-import { Method } from './Method'
-import { derived, PACK, RECOVERY_TOTAL, REGIONS, ROUTES, type RegionId, type RouteId } from './model/data'
-import { type Build, fromQuery, GUESSES, type Guess, LIMITS, toQuery } from './share'
-import { Choice, Slider } from './ui/controls'
-import { Num } from './ui/Num'
+import { Fragment, lazy, type ReactNode, Suspense } from 'react'
+import { SOURCES, type SourceId } from './sources'
 
-const t = (v: number) => `${v.toLocaleString('en-GB', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} t`
-const pct = (v: number) => `${Math.round(v)}%`
-const range = (k: keyof typeof LIMITS) => ({ min: LIMITS[k][0], max: LIMITS[k][1], step: LIMITS[k][2] })
+// The figures bring three.js with them, so they load after the text.
+const figure = (name: 'DissolveFigure' | 'ImpurityFigure' | 'MixedFigure') => lazy(() => import('./hydromet/Figures').then((m) => ({ default: m[name] })))
+const DissolveFigure = figure('DissolveFigure')
+const ImpurityFigure = figure('ImpurityFigure')
+const MixedFigure = figure('MixedFigure')
 
-const Chapters = lazy(() => import('./chapters/Chapters'))
-const Intro = lazy(() => import('./chapters/Intro'))
-
-const REVEAL: Record<Guess, string> = {
-  landfill: 'That’s against the law in the UK. EV batteries may not be landfilled.',
-  burned: 'That’s against the law in the UK. EV batteries may not be burned.',
-  recycled: 'Close. It is recycled in the end, but reusing it for storage first saves more greenhouse gas.',
-  reused: 'Right. Reusing it for storage first saves the most greenhouse gas, and then it’s recycled.',
-}
-
-const ROUTE_OPTIONS = Object.entries(ROUTES) as [RouteId, string][]
-const REGION_OPTIONS = (Object.keys(REGIONS) as RegionId[]).map((r): [RegionId, string] => [r, REGIONS[r].name])
-
-export default function App() {
-  const [build, setBuild] = useState<Build>(() => fromQuery(window.location.search))
-  const [copied, setCopied] = useState(false)
-  const set = (patch: Partial<Build>) => setBuild((b) => ({ ...b, ...patch }))
-
-  const link = `${window.location.origin}${window.location.pathname}?${toQuery(build)}`
-  useEffect(() => window.history.replaceState(null, '', link), [link])
-
-  const r = useMemo(() => calculate(build), [build])
-  const scale = Math.max(r.process, r.credit)
-
-  const share = async () => {
-    const text = 'Your EV battery isn’t going in the bin. So what happens to it?'
-    if (navigator.share) {
-      // Cancelling the share sheet rejects; nothing to do.
-      await navigator.share({ title: 'Where does your EV battery go?', text, url: link }).catch(() => {})
-      return
-    }
-    await navigator.clipboard.writeText(link)
-    setCopied(true)
-  }
-
+/** Citations in square brackets, each linking to its entry in the source list: <C refs="harper2019, blomeke2022:Table 2" />. */
+function C({ refs }: { refs: string }) {
+  const items = refs.split(refs.includes('|') ? '|' : ',').map((r) => r.trim().split(':') as [SourceId, string | undefined])
   return (
-    <main>
-      <header>
-        <h1>Your battery isn’t going in the bin.</h1>
-        <p>
-          UK law stipulates that your EV battery won’t go to the bin when it has served its purpose in your car (
-          <Cite source="wbar2009">Waste Batteries and Accumulators Regulations 2009, reg. 56</Cite>).
-        </p>
-      </header>
-      <Suspense fallback={null}>
-        <Intro part="ageing" />
-      </Suspense>
-
-      <section className="card" aria-labelledby="guess-h">
-        <h2 id="guess-h">If it’s not going in the bin, what happens to it?</h2>
-        <Choice label="My guess" value={build.guess ?? ('' as Guess)} options={Object.entries(GUESSES) as [Guess, string][]} onChange={(guess) => set({ guess })} />
-        {build.guess && <p className="hint">Locked in. The answer is at the end.</p>}
-      </section>
-      <Suspense fallback={null}>
-        <Intro part="funnel" />
-      </Suspense>
-
-      <Suspense fallback={null}>
-        <Chapters />
-      </Suspense>
-
-      <section className="card" aria-labelledby="calc-h">
-        <h2 id="calc-h">Your battery</h2>
-        <Slider
-          label="Pack size"
-          value={build.packKwh}
-          {...range('packKwh')}
-          format={(v) => `${v} kWh`}
-          hint={
-            <>
-              About <Num v={derived(r.massKg, 'kg', 'Scaled linearly from Blömeke’s 576 kg, 95 kWh pack (Table 2)')}>{Math.round(r.massKg)} kg</Num>, scaled from a{' '}
-              <Num v={PACK.capacity}>95 kWh</Num> NMC pack
-            </>
-          }
-          onChange={(packKwh) => set({ packKwh })}
-        />
-        <Choice label="Recycling route" value={build.route} options={ROUTE_OPTIONS} onChange={(route) => set({ route })} />
-        <Choice label="Where the metals are separated" value={build.region} options={REGION_OPTIONS} onChange={(region) => set({ region })} />
-        <aside className="note">
-          <strong>Where UK batteries go.</strong> The UK doesn’t yet have a large plant that can turn black mass into pure metals. UK batteries are
-          discharged, taken apart and shredded here, and the black mass is shipped abroad (<Cite source="dbt2025">DBT 2025</Cite>), mostly to Asia (
-          <Cite source="faraday2024">Faraday Institution 2024</Cite>). South Korea, where recyclers such as SungEel HiTech do this, is the default. Both
-          sources are government and industry reports, not peer-reviewed studies.
-        </aside>
-        <details>
-          <summary>Advanced</summary>
-          <Slider
-            label="Recovered battery metals replace mined ones"
-            value={build.substitution}
-            {...range('substitution')}
-            format={(v) => `${Math.round(v * 100)}%`}
-            hint="100% means every tonne recovered avoids a tonne mined. Applies to nickel, cobalt, manganese, lithium and graphite."
-            onChange={(substitution) => set({ substitution })}
-          />
-        </details>
-
-        <div className="bars">
-          <Bar kind="process" label="Emitted by recycling" value={r.process} scale={scale} note="Blömeke’s process emissions for this route (Fig. 8c), scaled to your pack, with its electricity (Table 3) moved to the chosen grid (Ember)" />
-          <Bar kind="credit" label="Avoided by not mining" value={r.credit} scale={scale} note="Recovered mass (Table 3) × carbon of the primary material it replaces (Table SM.6.1), scaled to your pack" />
-          <Bar kind="net" label={r.net <= 0 ? 'Net saving' : 'Net emitted'} value={Math.abs(r.net)} scale={scale} note="Emitted minus avoided" />
-        </div>
-        <p className="caption">Tonnes of greenhouse gases (as CO₂e) for this battery. “Avoided” assumes the recycled metals are used instead of newly mined ones.</p>
-      </section>
-
-      {build.guess !== null && (
-        <section className="card reveal" aria-live="polite">
-          <h2>So what does happen to it?</h2>
-          <p>
-            You picked <strong>“{GUESSES[build.guess]}”</strong>. {REVEAL[build.guess]}
-          </p>
-          <p>
-            When it is recycled, the route chosen above saves{' '}
-            <strong>
-              <Num v={RECOVERY_TOTAL[build.route]}>{pct(RECOVERY_TOTAL[build.route].value * 100)}</Num>
-            </strong>{' '}
-            of the battery’s mass, about <Num v={derived(r.recoveredKg, 'kg', 'Pack mass × the route’s total recovery rate (Fig. 7)')}>{Math.round(r.recoveredKg)} kg</Num>.
-          </p>
-        </section>
-      )}
-
-      <Method />
-
-      <button type="button" className="go secondary" onClick={share}>
-        {copied ? 'Link copied' : 'Share'}
-      </button>
-    </main>
+    <span className="cite">
+      [
+      {items.map(([id, detail], i) => (
+        <Fragment key={id + (detail ?? '')}>
+          {i > 0 && '; '}
+          <a href={`#source-${id}`}>
+            {SOURCES[id].short}
+            {detail && `, ${detail}`}
+          </a>
+        </Fragment>
+      ))}
+      ]
+    </span>
   )
 }
 
-function Bar({ kind, label, value, scale, note }: { kind: 'process' | 'credit' | 'net'; label: string; value: number; scale: number; note: string }) {
+const Figure = ({ children }: { children: ReactNode }) => <Suspense fallback={<div className="hm-loading" />}>{children}</Suspense>
+
+export default function App() {
   return (
-    <div className={`bar ${kind}`}>
-      <span className="bar-label">{label}</span>
-      <span className="bar-track">
-        <span className="bar-fill" style={{ width: `${(Math.max(0, value) / scale) * 100}%` }} />
-      </span>
-      <strong className="bar-value">
-        <Num v={derived(value, 't CO₂e', note)}>{t(value)}</Num>
-      </strong>
-    </div>
+    <main>
+      <h1>End of life in your EV</h1>
+      <p>
+        Your battery might be considered spent when it has less than 80% of the energy it once could <C refs="argonne2020, wesselkamper2025" />, i.e., it
+        becomes less and less usable as a means to move things. Ideally, the battery might be taken straight out of your car—physically unplugged,
+        unbolted and replugged and bolted into an energy storage facility. That’s because storing energy and releasing it doesn’t have to be as
+        demanding as something moving humans and things about <C refs="nrel2015, harper2019" />. This process can genuinely work as one Californian
+        study showed—particularly if similar batteries are grouped <C refs="lacap2022" />.
+      </p>
+
+      <h2>Why do lithium-ion batteries die?</h2>
+      <p>
+        A battery works by shuttling lithium back and forth between its two sides. When you charge a battery, this forces lithium ions to find a place
+        on one side (the anode). Think of the graphite anode like a sponge where the lithium ions fill the gaps. The ions are then released to the
+        other side, generating electricity. A battery fades in three main ways <C refs="birkl2017" />.
+      </p>
+      <ul>
+        <li>
+          Lithium gets locked away: every charge, a little lithium reacts and forms a crust on the anode (sponge side) of the battery meaning that the
+          ion can never move again.
+        </li>
+        <li>If you charge too fast or too cold, lithium ions can coat the anode instead of being stored on that side, some of them permanently.</li>
+        <li>The anode breaks up: the particles that hold lithium swell and shrink every cycle until they crack, leaving fewer places for lithium to sit.</li>
+      </ul>
+      <p>
+        In each scenario, nothing has left the battery: every atom of metal is still in there but perhaps not in the right place or performing the
+        best function.
+      </p>
+
+      <h2>Okay but what happens when it can’t store enough energy to be useful as energy storage?</h2>
+      <p>
+        Then it has to be recycled–it’s law in lots of places <C refs="eu2023:Articles 61 and 70 | uk2009:regulations 35, 36 and 56" />. The good thing
+        about that is that humans have gotten quite good at recycling batteries.
+      </p>
+
+      <h3>Collection and dismantling</h3>
+      <p>
+        This stage might be overlooked often but a battery can only be recycled if it arrives at a recycling facility in the first place, i.e., it has
+        been collected properly. There, the battery packs are physically dismantled. This is mostly done by humans today, with robots being piloted,
+        and very much depends on where in the world and the type of battery that it is <C refs="harper2019" />.
+      </p>
+
+      <h3>What are batteries made of at this point?</h3>
+      <p>
+        Batteries constitute an array of modules which constitute an array of cells <C refs="argonne2020, harper2019" />. Cells are made of a mixture
+        of chemicals like nickel, cobalt, manganese, lithium, iron, aluminium, copper, plastics and carbon <C refs="blomeke2022:Table 2" />. These
+        early stages of the recycling process are designed to clean the cells as much as possible to isolate the things that we really want to
+        recover—i.e., the metals. “Things we really want to recover” is largely driven by market forces: it’s what is economical to recover, not
+        necessarily what’s best for the environment <C refs="harper2019" />.
+      </p>
+
+      <h3>Shredding</h3>
+      <p>
+        The cells are then shredded into a metal powdery mix. In some plants the flammable parts of the cell are burned off first{' '}
+        <C refs="blomeke2022" />. The copper foil, aluminium foil and plastic is relatively easily mechanically recovered at this point: magnets pull
+        out the steel, air jets separate light pieces from heavy ones and a sieve lets the fine powder through while holding back the flakes of foil
+        and plastic <C refs="blomeke2022" />. There are four separated products at this stage: the shredded metals “black mass”, the plastics, the
+        shredded copper &amp; aluminium foil and the steel. The black mass is the thing that contains the metals that make lithium ion batteries worth
+        recycling: cobalt, lithium, nickel etc.
+      </p>
+
+      <h3>Hydrometallurgy</h3>
+      <h4>A brief introduction to hydrometallurgy</h4>
+      <p>
+        Why it’s called hydrometallurgy can be slightly unintuitive: “hydro” means water; everything here happens with the metals dissolved in a liquid
+        that’s essentially spicy water. Acids can be thought of as water with extra hydrogen ions floating about.
+      </p>
+      <Figure>
+        <DissolveFigure />
+      </Figure>
+
+      <h4>The process</h4>
+      <p>
+        The black mass is subjected to a series of steps. Firstly it’s bathed in warm acid. This dissolves all of the metals (98–99% of them in a lab
+        test <C refs="chen2018" />
+        ). Graphite and other impurities don’t dissolve so can be filtered off (like a coffee filter lol) <C refs="blomeke2022:Figure 5" />. This is
+        because the metals are generally bonded to oxygen. The oxygen atoms love that there are all those hydrogen ions floating about, and split up
+        from the metal—leaving the metal floating about (dissolved) with new water molecules instead. The carbon in the graphite is largely unfazed by
+        the hydrogen so stays as graphite.
+      </p>
+      <p>
+        Then the metal containing acid is purified using sodium hydroxide to grab the aluminium, and iron is added to trade places with copper{' '}
+        <C refs="blomeke2022:Figure 5, chernyaev2021" />. This is almost entirely efficient: about 98% of the iron and aluminium is removed, though
+        about 9% of the nickel goes with them <C refs="chernyaev2021" />. Adding sodium hydroxide is like adding half of water. This means any
+        hydrogen floating about is very attracted to it and makes more water—and therefore less acid which can hold less dissolved metal.
+      </p>
+      <Figure>
+        <ImpurityFigure />
+      </Figure>
+      <p>
+        The less metal containing acid still has lithium, nickel, cobalt and manganese in it. These are extracted by adding sodium hydroxide and
+        carbonate <C refs="chen2018, dittmer2026" />. A US national lab model, based on what commercial plants achieve, puts this stage at 98% for the
+        nickel, cobalt and manganese and 90% for the lithium <C refs="dai2019" />. Counting every loss from battery pack to finished product, one
+        detailed study of a whole plant puts it at about 83% and 72% <C refs="blomeke2022:Figure 7" />. Real plants differ in the order and method of
+        these steps. We’re now left with a waste water containing sodium sulfate <C refs="lee2025" /> that is relatively inert. The water is often
+        evaporated off leaving behind the salt.
+      </p>
+      <Figure>
+        <MixedFigure />
+      </Figure>
+
+      <h3>What next?</h3>
+      <p>
+        Well now we’re left with the metals to make fresh batteries—and most of the mass of the valuable metals that we started with in a battery{' '}
+        <C refs="blomeke2022:Figure 7" />. These are made into brand-new cells so the new battery starts with all of its lithium free to move again.
+      </p>
+
+      <h3>What did we lose?</h3>
+      <p>
+        We often lose plastics, graphite and some lithium in the initial processing and throughout. Unfortunately, these aren’t economic to recover at
+        a quality good enough to put into batteries <C refs="harper2019" />. The graphite that is recovered is contaminated with metals, liquid and
+        glue, so it isn’t battery-grade <C refs="rey2021" />.
+      </p>
+
+      <h2>What about the environment then?</h2>
+      <p>
+        Minviro’s whitepaper on the topic showed that the climate change impacts of recycled battery-grade nickel sulfate are lower than that of it
+        produced using the dominant mining process <C refs="minviro2026" />. This can be as little as 1/5th of the impact to around 1/3rd. It’s not a
+        clear cut story for all metals, lithium is more varied when considering climate change impact alone—but this ignores things like water use.
+      </p>
+
+      <h2>Sources</h2>
+      <ul className="sources">
+        {(Object.keys(SOURCES) as SourceId[]).map((id) => (
+          <li key={id} id={`source-${id}`}>
+            <b>{SOURCES[id].short}:</b> {SOURCES[id].full} {SOURCES[id].url && <a href={SOURCES[id].url}>{SOURCES[id].url}</a>}
+          </li>
+        ))}
+      </ul>
+    </main>
   )
 }

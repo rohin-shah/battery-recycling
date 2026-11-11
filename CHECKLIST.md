@@ -1,71 +1,50 @@
-# Getting the simulations right: checklist
+# Battery recycling site: checklist
 
-Work top to bottom. Each item says what you provide and what Claude does with it. Nothing new gets built until step 6.
+Revised 12 Nov 2026. The copy is final and the page and its three figures are built; what is left is review.
 
-## 1. Set the ceiling (decided 11 Nov 2026)
+## 1. Review what was built overnight (needs Rohin)
 
-- [x] **Asset rule.** Proper 3D models are allowed.
-- [x] **Count against quality.** Three figures, each excellent: (1) why batteries lose health, (2) how pyrometallurgy works, (3) how hydrometallurgy works.
-- [x] **Geometry sources.** Any reference may be used for what things look like. Numbers stay peer-reviewed.
-- [ ] **What happens to the rest of the page** (second life, taking the pack apart, the shred route, what comes back, the calculator): text only, or cut?
+Built on 11–12 Nov 2026 and committed locally; nothing is pushed, so the live site is unchanged.
 
-## Decided since (11 Nov 2026)
+- [ ] **Read the page.** `npm run dev`, then http://localhost:5173/. It is the Final Copy tab, with every old figure and the calculator removed.
+- [ ] **Try the three figures** on desktop and on your phone:
+  1. Acid dissolving the black mass (slider: acid strength; measured, Chen and Ho 2018).
+  2. Clearing out the impurities (slider: pH 1–5.5; measured, Chernyaev 2021).
+  3. Settling out nickel, cobalt and manganese (slider: pH 5.5–10.5; calculated).
+- [ ] **Confirm the solubility constants for figure 3.** Nickel −15.2, cobalt −14.9, manganese −12.8 (log Ksp) were entered from memory of Martell & Smith; they need checking against the book or another published table.
+- [ ] **Confirm the nickel claim in the environment paragraph.** "As little as 1/5th of the impact to around 1/3rd": the public whitepaper page gives no numbers, and the charts in the draft read nearer one-third to about equal, depending on the mined route.
+- [ ] **Slips fixed in the copy** (say if any should go back):
+  - "i.e., it makes it less and less usable" → "it becomes less and less usable"
+  - "Why do Lithium Ion batteries die?" → "lithium-ion"
+  - "unphased" → "unfazed"
+  - "grab the Aluminium and iron is added" → "grab the aluminium, and iron is added"
+  - "less acid which can hold less dissolved acid" → "less dissolved metal"
+  - "nickel etc.." → "nickel etc."
+  - Question marks added to two headings; "Collection and Dismantling" → "Collection and dismantling"
+  - Citation added for the Minviro whitepaper.
+- [ ] **Placement of the precipitation figures.** Your single marker became two figures: the impurity one after the purification paragraph, the nickel–cobalt–manganese one after the next paragraph.
+- [ ] **Push when happy.** Pushing deploys to the live site.
 
-- [x] **Build route.** Figures built in code with a proper look pass (lighting, shadows, bevels, cutaways). Blender only if that falls short.
-- [x] **Figure style.** The reader controls a physical quantity and the result is computed from sourced data; no multi-step timelines.
-- [x] **Shape.** Each topic is a short sequence of three to five small figures, about 10 to 12 in total.
-- [x] **Pilot (step 3).** The hydrometallurgy pH figure.
-- [x] **PRD updated** with the revised approach.
-- [x] **Targets received (step 2).** 3Blue1Brown (linked scene and chart), Into the Breach (fixed isometric diorama), Teenage Engineering (boxed labels with leader lines); annotated screenshot: flat, odd-looking ion textures.
-- [x] **Dark figure panels**, on a light page.
-- [x] **Pilot data approved.** Chernyaev 2021 (measured, pH 3.5–5.5), Dittmer 2026 (route and end point), Martell & Smith solubility constants (calculated, pH 6–10.5). Full pH sweep, ending in the mixed metals for new cathode material.
-- [x] **Pilot spec (step 4).** In SPEC-pilot.md. Decided: two figures (A: impurity window, pH 1–5.5; B: pH 5.5–11 on the filtered solution), smooth stylised 3D, slider reads "more acidic ↔ less acidic" with the pH number.
-- [x] **The idea underneath.** Ions bond with the partner they prefer; that selectivity is what the figures must show.
-- [ ] **Approve a first look at Figure A (step 5).** Rough local preview built at pilot.html; still to add: the bonding partners (hydroxide) and the look you want.
-- [x] **No hydroxide beads.** Tried in Figure A and removed as too complicated; the figure shows metals only.
-- [x] **Equations.** Behind a "Show the equations" toggle on each figure.
-- [x] **Dissolve figure.** Add a small first figure showing the acid dissolving the powder.
-- [x] **Rest of the page.** Stays as text (no figures).
-- [ ] **Open:** reagents used and carbon readout on each figure?
+## 2. Loose ends (Claude, on Rohin's say-so)
 
-## 2. Show the target (references, ~20 minutes)
+- [ ] **Citations not checked first-hand:** Blömeke's table and figure numbers, Dittmer 2026 for hydroxide settling, Birkl 2017, the Argonne second-life FAQ, NREL 2015.
+- [ ] **Sources list** still includes Hanna 2025, Tao 2021 and Latini 2022, which the final copy no longer cites. Remove them or leave them.
+- [ ] **Not checked on the figures:** reduced-motion setting, keyboard use of the sliders, a real phone (only phone width in the browser).
+- [ ] **`motion` package** is no longer used and could be removed.
 
-- [ ] **Two or three figures you love**, by link or screenshot, each with one line on why (cutaway, materials, labels, motion, what you can change).
-  - Claude: writes down the common qualities as a short style brief for you to correct.
-- [ ] **One annotated screenshot** of a current figure, marking what's wrong.
-  - Claude: turns your marks into a list of rules to apply everywhere.
+## Decided
 
-## 3. Pick the pilot figure (decision, ~5 minutes)
-
-- [x] **Choose one figure** to build to a finished standard first: the hydrometallurgy pH figure.
-
-## 4. Specify the pilot (one page, ~30 minutes, together)
-
-- [ ] **Learning goal.** One sentence: what should the reader understand afterwards?
-- [ ] **What the reader changes.** The parameter or control, and what it should reveal (not just a timeline).
-- [ ] **What's in frame.** The object, the scale, and what stays fixed.
-- [ ] **Storyboard.** A pen sketch of the start, middle and end frames; a phone photo is fine.
-- [ ] **What to model.** Which real cell or pack.
-  - Claude: drafts the whole one-page spec first (data sources included) for you to correct, so you react rather than write from scratch.
-
-## 5. Agree the look before building (~15 minutes)
-
-- [ ] **Approve a still.** Claude produces one static frame of the pilot in the target style.
-- [ ] **Approve the interaction.** Claude produces a rough, ugly version that only shows the behaviour.
-
-## 6. Build and review the pilot
-
-- [ ] **Claude builds it**; you review on your phone and desktop.
-- [ ] **Feedback as annotated screenshots or a screen recording**, until you're happy.
-- [ ] **Write down what made it good**: this becomes the bar for every other figure.
-
-## 7. Roll out
-
-- [ ] **Repeat steps 4 to 6** for each remaining figure, in page order.
-- [ ] **Handwrite the copy** per section in the skeleton doc; Claude applies it and checks every number against its source.
-
-## Parked until the pilot is approved
-
-- Committing the current uncommitted work (GCSE rewrite, fixed views, new figures).
-- Fixing clutter in the current figures.
-- Chapters 1, 4 and 5, which still break the "nothing appears or disappears" rule.
+- **Copy first, then figures.** Rohin handwrites; Claude redrafts with minimal changes and sources every claim.
+- **A generic process, not one plant.** Each step must have its own published source, even if steps come from different papers. Numbers stay tied to the study they came from ("in one detailed study").
+- **Chemistry:** NMC. Hydroxide and carbonate route in the copy (Chen and Ho 2018; Dittmer 2026). Blömeke's whole-plant figures (83% nickel, cobalt, manganese; 72% lithium; net 6.7 t CO₂e saved per tonne of pack) come from a plant that separates the metals with oils.
+- **Recovery rates quoted both ways:** 98% and 90% at the chemistry stage (Argonne EverBatt), 83% and 72% from pack to product (Blömeke).
+- **Dropped loose ends:** whether EV batteries count as "industrial" under UK rules; "relatively inert" for sodium sulfate stays as Rohin's wording.
+- **Sources:** new ones are run by Rohin first. Confidential client reports are never used; only their published reference lists. PDFs stay out of the public repo.
+- **Approved sources so far:** Blömeke 2022, Chernyaev 2021, Dittmer 2026, Birkl 2017, Wesselkämper 2025, Martell & Smith constants, Argonne second-life FAQ, Saxena 2015, NREL 2015, Lacap 2022 (UC Davis / CEC), Harper 2019, EU Regulation 2023/1542, UK SI 2009/890, Lee 2025, Fernandez-Torres 2012, Hanna 2025, Liu 2023, Tao 2021, Chen and Ho 2018, Latini 2022, Rey 2021, Dai 2019 (EverBatt).
+- **Awaiting approval:** Lander 2021, IEA 2024, European Commission 2026 targets review, Perocillo 2025, Jung 2021, Li et al. 2026.
+- **Figures:** proper 3D allowed; built in code with a look pass; dark panels on a light page; fixed isometric view; nothing spins, appears or disappears; reader controls a physical quantity; result computed from sourced data; one idea per figure; about three to five small figures per topic.
+- **Style targets:** 3Blue1Brown (scene linked to chart), Into the Breach (fixed diorama), Teenage Engineering (boxed labels, one accent colour).
+- **Pilot:** hydrometallurgy pH figure in two parts. A: impurity window, pH 1–5.5, measured. B: pH 5.5–11, calculated. Slider reads "more acidic ↔ less acidic" with the pH number. Metals "dissolve" and "settle out".
+- **Ions in the figures (final copy, 11 Nov):** hydrogen ions and hydroxide ions are shown as small beads; they wait in a dosing tube and become water when they meet. Hydroxide is not drawn attached to each metal (tried earlier and dropped as too complicated); that bonding is behind the "Show the equations" toggle.
+- **Rest of the page** stays as text.
+- **Audience:** anyone who passed GCSE maths and science. Masses and percentages kept. British English.
