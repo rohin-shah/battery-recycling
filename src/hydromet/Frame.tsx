@@ -92,10 +92,13 @@ function VerticalSlider({ slider }: { slider: Slider }) {
       </span>
       <span>{slider.left}</span>
       <b>{slider.text}</b>
-      {slider.note && (
-        <em className="hm-note" style={{ color: slider.tone }}>
-          {slider.note}
-        </em>
+      {/* A fixed-height box for the note, text kept to its bottom edge, so a longer or shorter note never resizes the slider */}
+      {slider.note !== undefined && (
+        <span className="hm-note-box">
+          <em className="hm-note" style={{ color: slider.tone }}>
+            {slider.note}
+          </em>
+        </span>
       )}
     </label>
   )

@@ -12,7 +12,14 @@ import { LIQUID_TOP, R, TANK, TUBE, tubeAngle, type Vec } from './layout'
 
 /** Where a bead should be for a slider value: either a place of its own, or riding on another bead. */
 /** `jig` is how far a loose bead wanders and `pace` how fast; `speed` is how quickly a bead closes on where it should be. */
-export type Aim = { color: string; speed?: number } & ({ to: Vec; jig?: number; pace?: number } | { on: number; offset: Vec })
+/**
+ * `wait`: don't head for `to` until the beads listed have reached where they are riding (within a small distance); keep
+ * still at `hold` until then. Used so a metal ion only settles once its hydroxides have actually bonded to it.
+ */
+export type Aim = { color: string; speed?: number } & (
+  | { to: Vec; jig?: number; pace?: number; wait?: { for: number[]; hold: Vec } }
+  | { on: number; offset: Vec }
+)
 export type Bead = { size: number; aim: (value: number) => Aim }
 
 const still = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -30,22 +37,41 @@ export function Beads({ beads, value, follow = [] }: { beads: Bead[]; value: num
     return () => cancelAnimationFrame(id)
   }, [])
   const state = useRef<Vec[] | null>(null)
+  const released = useRef(new Set<number>())
   const [o, c] = useMemo(() => [new Object3D(), new Color()], [])
   useFrame(({ clock }, dt) => {
     const m = mesh.current
     if (!m) return
     const t = clock.elapsedTime
     const calm = still()
-    const aims = beads.map((b) => b.aim(value))
+    const raw = beads.map((b) => b.aim(value))
     // First frame: start every bead where it belongs, so nothing flies in.
     if (!state.current) {
-      const start: Vec[] = aims.map((a) => ('to' in a ? [...a.to] : [0, 0, 0]))
-      aims.forEach((a, i) => {
+      const start: Vec[] = raw.map((a) => ('to' in a ? [...a.to] : [0, 0, 0]))
+      raw.forEach((a, i) => {
         if ('on' in a) start[i] = [start[a.on][0] + a.offset[0], start[a.on][1] + a.offset[1], start[a.on][2] + a.offset[2]]
       })
       state.current = start
     }
     const s = state.current
+    const arrived = (k: number) => {
+      const a = raw[k]
+      if (!('on' in a)) return true
+      return Math.hypot(...[0, 1, 2].map((d) => s[k][d] - (s[a.on][d] + a.offset[d]))) < 0.05
+    }
+    // Once a waiting bead is let go it stays let go, until its aim stops asking it to wait (slider moved back). Without
+    // this latch it would flick between `hold` and `to` every frame as the beads it waits for fall behind it.
+    const aims: Aim[] = raw.map((a, i) => {
+      if (!('to' in a) || !a.wait) {
+        released.current.delete(i)
+        return a
+      }
+      if (released.current.has(i) || a.wait.for.every(arrived)) {
+        released.current.add(i)
+        return a
+      }
+      return { ...a, to: a.wait.hold, jig: 0 }
+    })
     // Beads with a place of their own move first; riders then follow whatever they sit on.
     for (const riders of [false, true]) {
       aims.forEach((a, i) => {
