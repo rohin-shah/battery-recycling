@@ -1,7 +1,7 @@
 import { ContactShadows, Environment, Html, Lightformer, OrthographicCamera } from '@react-three/drei'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
-import { Color, type Group, LatheGeometry, MathUtils, Object3D, Vector2, type InstancedMesh } from 'three'
+import { Color, type Group, LatheGeometry, MathUtils, Object3D, Vector2, Vector3, type InstancedMesh } from 'three'
 import { LIQUID_TOP, R, TANK, TUBE, tubeAngle, type Vec } from './layout'
 
 /**
@@ -30,6 +30,8 @@ export type Follow = { id: string; bead: number; text: string | null; below?: bo
 export function Beads({ beads, value, follow = [] }: { beads: Bead[]; value: number; follow?: Follow[] }) {
   const mesh = useRef<InstancedMesh>(null)
   const tags = useRef<(Group | null)[]>([])
+  const tagText = useRef<(HTMLSpanElement | null)[]>([])
+  const v = useMemo(() => new Vector3(), [])
   // Tags mount a frame late: drei's Html needs the canvas attached first.
   const [ready, setReady] = useState(false)
   useEffect(() => {
@@ -39,7 +41,7 @@ export function Beads({ beads, value, follow = [] }: { beads: Bead[]; value: num
   const state = useRef<Vec[] | null>(null)
   const released = useRef(new Set<number>())
   const [o, c] = useMemo(() => [new Object3D(), new Color()], [])
-  useFrame(({ clock }, dt) => {
+  useFrame(({ clock, camera }, dt) => {
     const m = mesh.current
     if (!m) return
     const t = clock.elapsedTime
@@ -90,7 +92,12 @@ export function Beads({ beads, value, follow = [] }: { beads: Bead[]; value: num
       m.setMatrixAt(i, o.matrix)
       m.setColorAt(i, c.set(aims[i].color))
     })
-    follow.forEach((f, i) => tags.current[i]?.position.set(s[f.bead][0], s[f.bead][1], s[f.bead][2]))
+    follow.forEach((f, i) => {
+      tags.current[i]?.position.set(s[f.bead][0], s[f.bead][1], s[f.bead][2])
+      // Tags on beads near the right edge sit to their left instead, so they aren't cut off.
+      const el = tagText.current[i]
+      if (el) el.classList.toggle('flip', v.set(s[f.bead][0], s[f.bead][1], s[f.bead][2]).project(camera).x > 0.35)
+    })
     m.instanceMatrix.needsUpdate = true
     if (m.instanceColor) m.instanceColor.needsUpdate = true
   })
@@ -104,7 +111,11 @@ export function Beads({ beads, value, follow = [] }: { beads: Bead[]; value: num
         follow.map((f, i) => (
         <group key={f.id} ref={(g) => void (tags.current[i] = g)}>
           <Html zIndexRange={[5, 0]} style={{ pointerEvents: 'none' }}>
-            {f.text && <span className={f.below ? 'hm-follow below' : 'hm-follow'}>{f.text}</span>}
+            {f.text && (
+              <span ref={(el) => void (tagText.current[i] = el)} className={f.below ? 'hm-follow below' : 'hm-follow'}>
+                {f.text}
+              </span>
+            )}
           </Html>
         </group>
       ))}

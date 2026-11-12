@@ -75,7 +75,8 @@ export default function App() {
       <h4>A brief introduction to hydrometallurgy</h4>
       <p>
         Why it’s called hydrometallurgy can be slightly unintuitive: “hydro” means water; everything here happens with the metals dissolved in a liquid
-        that’s essentially spicy water. Acids can be thought of as water with extra hydrogen ions floating about.
+        that’s essentially spicy water. Acids can be thought of as water with extra hydrogen ions floating about. Add some acid to the water to spice
+        it up and see what happens.
       </p>
       <Figure>
         <DissolveFigure />
@@ -83,28 +84,29 @@ export default function App() {
 
       <h4>The process</h4>
       <p>
-        The black mass is subjected to a series of steps. Firstly it’s bathed in warm acid. This dissolves all of the metals. Graphite and other impurities don’t dissolve so can be filtered off.
-        This is
-        because the metals are generally bonded to oxygen. The oxygen atoms love that there are all those hydrogen ions floating about, and split up
-        from the metal—leaving the metal floating about (dissolved) with new water molecules instead. The carbon in the graphite is largely unfazed by
-        the hydrogen so stays as graphite.
-      </p>
-      <p>
-        Then the metal containing acid is purified using sodium hydroxide to grab the aluminium, and iron is added to trade places with copper. This is almost entirely efficient: about 98% of the iron and aluminium is removed, though
-        about 9% of the nickel goes with them. Adding sodium hydroxide is like adding half of water. This means any
-        hydrogen floating about is very attracted to it and makes more water—and therefore less acid which can hold less dissolved metal. Once
-        the hydrogen is used up, the hydroxide grabs the metal ions instead, making solid metal hydroxides that settle out.
+        The black mass is subjected to a series of steps. Firstly it’s bathed in warm acid. This dissolves all of the metals. Graphite and other
+        impurities don’t dissolve so can be filtered off. This is because the metals are generally bonded to oxygen. The oxygen atoms love that there
+        are all those hydrogen ions floating about, and split up from the metal—leaving the metal floating about (dissolved) with new water molecules
+        instead. The carbon in the graphite is largely unfazed by the hydrogen so it stays as graphite. Here’s an acidic solution with metals
+        dissolved. Adjust the acidity by adding sodium hydroxide and watch how it splits and makes new water + metallic hydroxides. Find the sweet spot
+        to isolate the iron and aluminium.
       </p>
       <Figure>
         <ImpurityFigure />
       </Figure>
       <p>
+        Then the metal containing acid is purified using sodium hydroxide to grab the aluminium, and iron is added to trade places with copper. This is
+        almost entirely efficient: about 98% of the iron and aluminium is removed, though about 9% of the nickel goes with them. Adding sodium
+        hydroxide is like adding half of water. This means any hydrogen floating about is very attracted to it and makes more water—and therefore less
+        acid which can hold less dissolved metal. Once the hydrogen is used up, the hydroxide grabs the metal ions instead, making solid metal
+        hydroxides that settle out.
+      </p>
+      <p>
         The less metal containing acid still has lithium, nickel, cobalt and manganese in it. These are extracted by adding sodium hydroxide and
-        carbonate. A US national lab model, based on what commercial plants achieve, puts this stage at 98% for the
-        nickel, cobalt and manganese and 90% for the lithium. Counting every loss from battery pack to finished product, one
-        detailed study of a whole plant puts it at about 83% and 72%. Real plants differ in the order and method of
-        these steps. We’re now left with a waste water containing sodium sulfate that is relatively inert. The water is often
-        evaporated off leaving behind the salt.
+        carbonate. A US national lab model, based on what commercial plants achieve, puts this stage at 98% for the nickel, cobalt and manganese and 90%
+        for the lithium. Real plants differ in the order and method of these steps. We’re now left with a waste water containing sodium sulfate that
+        is relatively inert. The water is often evaporated off leaving behind the salt. Use the slider to add hydroxide ions through sodium hydroxide
+        to neutralise the acid and settle out the nickel, cobalt and manganese.
       </p>
       <Figure>
         <MixedFigure />

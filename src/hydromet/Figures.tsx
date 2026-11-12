@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { IMPURITY_PH, interpolate, METALS, sweetSpot, MIXED_METALS, MIXED_PH, settled, settledMixed, type Metal, type MixedMetal } from './data'
 import { backlash, thumbAt } from './backlash'
-import { clickSteps } from './click'
+import { clickSteps, cue } from './click'
 import { Chart, Frame } from './Frame'
-import { COLOUR, drift, tipped, TUBE, type Vec } from './layout'
+import { COLOUR, drift, hash, tipped, TUBE, type Vec } from './layout'
 import { setImpurityPH, setMixedPH, useImpurityPH, useMixedPH } from './ph'
 import { type Bead, Beads, type Follow, Stage } from './scene'
 import './hydromet.css'
@@ -149,7 +149,7 @@ function acidTags(a: number): Follow[] {
     { id: 'sulfate', bead: S, text: a >= addedAt(0) ? 'Sulfate' : null, below: true },
     { id: 'water', bead: H + MOLECULES * 2, text: 'Water (H₂O)' },
     // Graphite: named as carbon, and once the particle has started to dissolve, called out as untouched.
-    { id: 'graphite', bead: GRAPHITE, text: gone(0, a) ? 'Graphite: unchanged' : 'Graphite (carbon)' },
+    { id: 'graphite', bead: GRAPHITE, text: gone(0, a) ? 'Graphite: unchanged' : 'Graphite (carbon)', below: true },
     // The oxygen the text talks about: part of the particle, until the hydrogen ions take it away as new water.
     { id: 'oxygen', bead: O, text: gone(0, a) ? 'New water (H₂O)' : 'Oxygen atom, in the particle' },
     // The particle's tag starts on the piece that comes free first and goes with it, so the reader sees it leave; once
@@ -219,6 +219,15 @@ const NA_ON_OH: Vec = [0, -0.085, 0]
  */
 const onFloor = (s: number, count: number): Vec => [(s - (count - 1) / 2) * 0.3, 0.1, 0]
 const high = ([x, y, z]: Vec): Vec => [x, y + 0.3, z]
+/**
+ * Place `n` in an even spread across the liquid, `width` wide, above the settled row: the R2 low-discrepancy sequence,
+ * so dissolved ions fill the space evenly instead of clumping in the middle as a random scatter does.
+ */
+const spot = (n: number, width: number): Vec => {
+  const fx = (0.5 + (n + 1) * 0.7548776662) % 1
+  const fy = (0.5 + (n + 1) * 0.5698402910) % 1
+  return [(fx - 0.5) * width, 0.62 + fy * 0.72, (hash(n, 9) - 0.5) * 0.5]
+}
 
 /** Slot `k` in the dosing vial: four sodium hydroxide units to a ring, turned with the vial. */
 function vialSlot(k: number, progress: number): Vec {
@@ -241,6 +250,8 @@ function settleScene<M extends string>(
   /** Extra pH values to give their own share of the slider, such as the edges of a window to mark. */
   marks: number[] = [],
   waters = 2,
+  /** If set, dissolved ions spread evenly across this width instead of scattering at random. */
+  spread = 0,
 ) {
   const ks = (from: number, to: number) => Array.from({ length: Math.max(0, to - from) }, (_, i) => from + i)
   const metals = metalBeads(counts, order)
@@ -248,6 +259,7 @@ function settleScene<M extends string>(
   const at = firstMove(metals, share, range)
   const slot = new Array<number>(n)
   metals.map((_, i) => i).sort((a, b) => at[a] - at[b] || a - b).forEach((i, s) => (slot[i] = s))
+  const place = (n: number, scatter: Vec) => (spread ? spot(n, spread) : high(scatter))
   const colour = (j: number) => COLOUR[metals[j].metal as keyof typeof COLOUR]
   const settling = at.filter(Number.isFinite).length
   const valence = (j: number) => VALENCE[metals[j].metal]
@@ -285,15 +297,15 @@ function settleScene<M extends string>(
       // Settles only once its hydroxides have reached it and bonded; until then it holds still where it was.
       aim: (pH) =>
         pH >= at[j]
-          ? { to: onFloor(slot[j], settling), color: colour(j), speed: 2.2, wait: { for: bonders(j), hold: high(drift(j)) } }
-          : { to: high(drift(j)), jig: 0.06, color: colour(j) },
+          ? { to: onFloor(slot[j], settling), color: colour(j), speed: 2.2, wait: { for: bonders(j), hold: place(j, drift(j)) } }
+          : { to: place(j, drift(j)), jig: 0.06, color: colour(j) },
     })),
     ...ks(0, hydrogenIons).map((i): Bead => ({
       size: HYDROGEN_ION,
       aim: (pH) =>
         out(meets(i), pH)
           ? { on: OH + meets(i), offset: ON_OXYGEN[1], color: COLOUR.hydrogen, speed: 1.4 }
-          : { to: high(drift(i, 31)), jig: 0.32, pace: 1.7, color: COLOUR.hydrogenIon, speed: 2 },
+          : { to: place(10 + i, drift(i, 31)), jig: 0.32, pace: 1.7, color: COLOUR.hydrogenIon, speed: 2 },
     })),
     ...ks(0, N).map((k): Bead => ({
       size: OXYGEN,
@@ -301,16 +313,16 @@ function settleScene<M extends string>(
         const job = jobs[k]
         if (!out(k, pH)) return { to: vialSlot(k, tilt(pH)), color: COLOUR.oxygen }
         if (job.metal !== undefined) return { on: job.metal, offset: onMetal(valence(job.metal), job.place ?? 0), color: COLOUR.oxygen, speed: 2.6 }
-        return { to: high(drift(k, 41)), jig: 0.06, color: COLOUR.oxygen, speed: 1.6 }
+        return { to: place(20 + k, drift(k, 41)), jig: 0.06, color: COLOUR.oxygen, speed: 1.6 }
       },
     })),
     ...ks(0, N).map((k): Bead => ({ size: HYDROGEN, aim: () => ({ on: OH + k, offset: ON_OXYGEN[0], color: COLOUR.hydrogen }) })),
     ...ks(0, N).map((k): Bead => ({
       size: SODIUM,
       aim: (pH) =>
-        out(k, pH) ? { to: high(drift(k, 51)), jig: 0.2, pace: 1.2, color: COLOUR.sodium, speed: 1.6 } : { on: OH + k, offset: NA_ON_OH, color: COLOUR.sodium },
+        out(k, pH) ? { to: place(40 + k, drift(k, 51)), jig: 0.2, pace: 1.2, color: COLOUR.sodium, speed: 1.6 } : { on: OH + k, offset: NA_ON_OH, color: COLOUR.sodium },
     })),
-    ...ks(0, sulfates).map((s): Bead => ({ size: SULFATE, aim: () => ({ to: high(drift(s, 61)), jig: 0.05, color: COLOUR.sulfate }) })),
+    ...ks(0, sulfates).map((s): Bead => ({ size: SULFATE, aim: () => ({ to: place(60 + s, drift(s, 61)), jig: 0.05, color: COLOUR.sulfate }) })),
     ...water(waters, 21, W),
   ]
 
@@ -380,6 +392,7 @@ const shared = { track: [0, 2] as [number, number] }
 const SWEET = sweetSpot()
 /** Points across the sweet spot, so it gets a good stretch of the slider rather than a sliver. */
 const SWEET_MARKS = [0, 1, 2, 3, 4].map((i) => SWEET[0] + (i / 4) * (SWEET[1] - SWEET[0]))
+const stageAt = (pH: number) => (pH < SWEET[0] ? 'early' : pH <= SWEET[1] ? 'sweet' : 'late')
 const STAGES = {
   early: { tone: '#f2a33a', note: 'Impurities still dissolved' },
   sweet: { tone: '#9bc53d', note: 'Sweet spot: impurities out, little nickel lost' },
@@ -390,22 +403,25 @@ const IMPURITY_COUNT: Record<Metal, number> = { iron: 1, aluminium: 1, nickel: 2
 
 export function ImpurityFigure() {
   const pH = clamp(useImpurityPH(), IMPURITY_PH)
-  const scene = useMemo(() => settleScene(IMPURITY_COUNT, METALS, settled, IMPURITY_PH, 2, 3, IMPURITY_PH[1], SWEET_MARKS), [])
+  const scene = useMemo(() => settleScene(IMPURITY_COUNT, METALS, settled, IMPURITY_PH, 2, 3, IMPURITY_PH[1], SWEET_MARKS, 2, 1.9), [])
   const pos = scene.toPos(pH)
-  const stage = pH < SWEET[0] ? 'early' : pH <= SWEET[1] ? 'sweet' : 'late'
+  const stage = stageAt(pH)
   const [thumb, setThumb] = useState<number | null>(null)
   const setPos = (v: number) => {
     setThumb(v)
     const shown = backlash(pos, v, [0, 1])
     if (shown === pos) return
     const next = scene.fromPos(shown)
-    clickSteps(scene.steps, pH, next)
+    const nextStage = stageAt(next)
+    // Steps knock brightly inside the sweet spot and dully past it; crossing into either plays its own cue.
+    clickSteps(scene.steps, pH, next, nextStage === 'sweet' ? 'good' : nextStage === 'late' ? 'bad' : 'neutral')
+    if (nextStage !== stage && nextStage !== 'early') cue(nextStage === 'sweet' ? 'good' : 'bad')
     setImpurityPH(next)
   }
   return (
     <Frame
       view={
-        <Stage label={`Dissolved battery metals at pH ${pH.toFixed(1)}`} vessel="tank" focus={0.8} shift={0} zoomIn={1.6} closeIn={0.45} floor labels={[]} progress={pos}>
+        <Stage label={`Dissolved battery metals at pH ${pH.toFixed(1)}`} vessel="tank" focus={0.8} shift={0.15} zoomIn={1.6} closeIn={0.3} floor labels={[]} progress={pos}>
           <Beads beads={scene.beads} value={pH} follow={scene.tags(pH, ['iron', 'aluminium', 'nickel'], (m) => NAME[m])} />
         </Stage>
       }
@@ -460,7 +476,7 @@ export function MixedFigure() {
   return (
     <Frame
       view={
-        <Stage label={`Nickel, cobalt, manganese and lithium in solution at pH ${pH.toFixed(1)}`} vessel="tank" focus={0.8} shift={0} zoomIn={1.6} closeIn={0.45} floor labels={[]} progress={pos}>
+        <Stage label={`Nickel, cobalt, manganese and lithium in solution at pH ${pH.toFixed(1)}`} vessel="tank" focus={0.8} shift={0.3} zoomIn={1.6} closeIn={0.45} floor labels={[]} progress={pos}>
           <Beads beads={scene.beads} value={pH} follow={scene.tags(pH, MIXED_METALS, (m) => NAME[m])} />
         </Stage>
       }

@@ -4,9 +4,17 @@ main > .hm { max-width: 980px; }
 .hm-panel { padding: 14px; border-radius: 14px; background: #0f1512; color: #e9efe9; border: 1px solid #26332c; }
 .hm figcaption { margin-top: 8px; font-size: 0.82rem; line-height: 1.45; opacity: 0.75; }
 .hm-stage { display: grid; gap: 12px; }
-.hm-main { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+/* The 3D view runs the full width, under the slider; the slider sits on the right, drawn behind the scene so ions
+   and tags float in front of it instead of being cut off. The view takes no clicks, so the slider still works. */
+.hm-main { position: relative; }
+.hm-main .hm-view, .hm-main .hm-view * { pointer-events: none !important; }
+.hm-main .hm-view { z-index: 1; }
+.hm-main .hm-vslider { position: absolute; top: 0; right: 0; bottom: 0; }
+/* The slider's words sit above the scene; only the track sits behind it */
+.hm-main .hm-vslider > :not(.hm-vtrack) { position: relative; z-index: 2; }
+.hm-main .hm-vtrack { z-index: 0; }
 .hm-solo { max-width: 720px; margin: 0 auto; }
-.hm-view { position: relative; height: 300px; overflow: hidden; }
+.hm-view { position: relative; height: 300px; overflow: visible; }
 @media (min-width: 820px) {
   .hm-stage:not(.hm-solo) { grid-template-columns: 1.3fr 1fr; align-items: center; }
   .hm-view { height: 460px; }
@@ -74,3 +82,7 @@ main > .hm { max-width: 980px; }
 .hm-chart .band rect { fill: rgba(155, 197, 61, 0.14); }
 .hm-chart .band text { fill: #9bc53d; font-weight: 600; }
 .hm-note-box { display: flex; align-items: flex-end; justify-content: center; height: 4.2em; font-size: 12px; flex: none; }
+/* A tag flipped to the left of its bead */
+.hm-follow.flip { left: auto; right: 10px; text-align: right; }
+.hm-follow.flip::before { left: auto; right: -6px; transform: rotate(40deg); }
+.hm-follow.flip.below::before { transform: rotate(-40deg); }
