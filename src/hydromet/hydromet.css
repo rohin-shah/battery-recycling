@@ -52,4 +52,8 @@ main > .hm { max-width: 980px; }
 }
 .hm-follow::before { content: ''; position: absolute; left: -6px; bottom: -4px; width: 10px; height: 1px; background: #e9efe9; transform: rotate(-40deg); }
 .hm-follow.below { bottom: auto; top: 8px; }
+/* New tags fade in rather than pop */
+.hm-follow { animation: hm-tag-in 0.4s ease-out; }
+@keyframes hm-tag-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .hm-follow { animation: none; } }
 .hm-follow.below::before { bottom: auto; top: -4px; transform: rotate(40deg); }

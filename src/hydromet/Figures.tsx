@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { IMPURITY_PH, METALS, MIXED_METALS, MIXED_PH, settled, settledMixed, type Metal, type MixedMetal } from './data'
+import { clickSteps } from './click'
 import { Chart, Frame } from './Frame'
 import { COLOUR, drift, inTube, pile, R, tipped, TUBE, type Vec } from './layout'
 import { setSharedPH, useSharedPH } from './ph'
@@ -126,19 +127,39 @@ function acidBeads(): Bead[] {
 }
 
 /**
- * Tags that ride with the beads of the first reaction, saying what each is at that moment: one hydrogen ion from the
- * vial to the particle, the oxygen it takes away as water, and the piece of particle left dissolved.
+ * Tags that ride with one bead of each kind, so everything on screen is named at every point of the slider. Each tag
+ * sits on the bead doing the most at that moment: the acid still in the vial; the hydrogen ion due to react next; the
+ * first sulfate poured in; a water molecule (and, once one has formed, the new one); the first piece of particle to
+ * come free, and the rest of the particle once it has.
  */
 function acidTags(a: number): Follow[] {
+  const range = (n: number) => Array.from({ length: n }, (_, i) => i)
+  const inVial = range(MOLECULES).find((m) => a < addedAt(m))
+  const ion = range(MOLECULES).find((m) => a >= addedAt(m) && !(m < PAIRS && gone(m, a)))
+  const holding = range(PAIRS).reverse().find((j) => !gone(j, a))
   return [
-    { bead: H, text: a < addedAt(0) ? 'Acid' : gone(0, a) ? null : 'Hydrogen ion' },
-    { bead: O, text: gone(0, a) ? 'Water' : null },
-    { bead: 0, text: gone(0, a) ? 'Dissolved particle' : 'Soluble particle', below: true },
+    { id: 'acid', bead: S + (inVial ?? 0), text: inVial === undefined ? null : 'Acid' },
+    { id: 'ion', bead: H + (ion ?? 0) * 2, text: ion === undefined ? null : 'Hydrogen ion' },
+    { id: 'sulfate', bead: S, text: a >= addedAt(0) ? 'Sulfate' : null, below: true },
+    { id: 'water', bead: H + MOLECULES * 2, text: 'Water' },
+    { id: 'new water', bead: O, text: gone(0, a) ? 'New water' : null },
+    // The particle's tag starts on the piece that comes free first and goes with it, so the reader sees it leave; only
+    // then does the rest of the particle get a tag of its own.
+    { id: 'freed', bead: 0, text: gone(0, a) ? 'Dissolved particle' : 'Soluble particle', below: true },
+    { id: 'particle', bead: holding ?? 0, text: gone(0, a) && holding !== undefined ? 'Soluble particle' : null, below: true },
   ]
 }
 
+/** The slider values where something happens: a molecule pours in, or a piece of particle comes free. */
+const POURS = Array.from({ length: MOLECULES }, (_, m) => addedAt(m))
+const FREES = Array.from({ length: PAIRS }, (_, j) => dissolvesAt(j))
+
 export function DissolveFigure() {
-  const [acid, setAcid] = useState(0)
+  const [acid, setValue] = useState(0)
+  const setAcid = (v: number) => {
+    clickSteps([{ points: POURS, pitch: 1600 }, { points: FREES, pitch: 700 }], acid, v)
+    setValue(v)
+  }
   const beads = useMemo(() => acidBeads(), [])
   const added = Array.from({ length: MOLECULES }, (_, m) => acid >= addedAt(m)).filter(Boolean).length
   return (

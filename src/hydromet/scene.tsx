@@ -18,7 +18,7 @@ export type Bead = { size: number; aim: (value: number) => Aim }
 const still = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 /** A label that rides along with one bead, so the reader can follow that bead as it moves; no text hides it. */
-export type Follow = { bead: number; text: string | null; below?: boolean }
+export type Follow = { id: string; bead: number; text: string | null; below?: boolean }
 
 export function Beads({ beads, value, follow = [] }: { beads: Bead[]; value: number; follow?: Follow[] }) {
   const mesh = useRef<InstancedMesh>(null)
@@ -76,7 +76,7 @@ export function Beads({ beads, value, follow = [] }: { beads: Bead[]; value: num
       </instancedMesh>
       {ready &&
         follow.map((f, i) => (
-        <group key={f.bead} ref={(g) => void (tags.current[i] = g)}>
+        <group key={f.id} ref={(g) => void (tags.current[i] = g)}>
           <Html zIndexRange={[5, 0]} style={{ pointerEvents: 'none' }}>
             {f.text && <span className={f.below ? 'hm-follow below' : 'hm-follow'}>{f.text}</span>}
           </Html>
