@@ -12,7 +12,7 @@ const Figure = ({ children }: { children: ReactNode }) => <Suspense fallback={<d
 export default function App() {
   return (
     <main>
-      <h1>End of life in your EV</h1>
+      <h1>Throwing your EV battery in the bin</h1>
       <p>
         Your battery might be considered spent when it has less than 80% of the energy it once could, i.e., it
         becomes less and less usable as a means to move things. Ideally, the battery might be taken straight out of your car—physically unplugged,
@@ -21,30 +21,13 @@ export default function App() {
         study showed—particularly if similar batteries are grouped.
       </p>
 
-      <h2>Why do lithium-ion batteries die?</h2>
-      <p>
-        A battery works by shuttling lithium back and forth between its two sides. When you charge a battery, this forces lithium ions to find a place
-        on one side (the anode). Think of the graphite anode like a sponge where the lithium ions fill the gaps. The ions are then released to the
-        other side, generating electricity. A battery fades in three main ways.
-      </p>
-      <ul>
-        <li>
-          Lithium gets locked away: every charge, a little lithium reacts and forms a crust on the anode (sponge side) of the battery meaning that the
-          ion can never move again.
-        </li>
-        <li>If you charge too fast or too cold, lithium ions can coat the anode instead of being stored on that side, some of them permanently.</li>
-        <li>The anode breaks up: the particles that hold lithium swell and shrink every cycle until they crack, leaving fewer places for lithium to sit.</li>
-      </ul>
-      <p>
-        In each scenario, nothing has left the battery: every atom of metal is still in there but perhaps not in the right place or performing the
-        best function.
-      </p>
-
       <h2>Okay but what happens when it can’t store enough energy to be useful as energy storage?</h2>
       <p>
         Then it has to be recycled–it’s law in lots of places. The good thing
         about that is that humans have gotten quite good at recycling batteries.
       </p>
+
+      <h2>An introduction to hydrometallurgy</h2>
 
       <h3>Collection and dismantling</h3>
       <p>
@@ -128,7 +111,7 @@ export default function App() {
       <p>
         Minviro’s whitepaper on the topic showed that the climate change impacts of recycled battery-grade nickel sulfate are lower than that of it
         produced using the dominant mining process. This can be as little as 1/5th of the impact to around 1/3rd. It’s not a
-        clear cut story for all metals, lithium is more varied when considering climate change impact alone—but this ignores things like water use.
+        clear cut story for all metals, lithium is more varied when considering climate change impact alone—but this ignores things like water use. However, in each recycled case, we’re not extracting finite resources of these metal ores.
       </p>
 
       <h2>Sources</h2>
@@ -139,6 +122,25 @@ export default function App() {
           </li>
         ))}
       </ul>
+
+      <h2>Bonus: Why do lithium-ion batteries die?</h2>
+      <p>
+        A battery works by shuttling lithium back and forth between its two sides. When you charge a battery, this forces lithium ions to find a place
+        on one side (the anode). Think of the graphite anode like a sponge where the lithium ions fill the gaps. The ions are then released to the
+        other side, generating electricity. A battery fades in three main ways.
+      </p>
+      <ul>
+        <li>
+          Lithium gets locked away: every charge, a little lithium reacts and forms a crust on the anode (sponge side) of the battery meaning that the
+          ion can never move again.
+        </li>
+        <li>If you charge too fast or too cold, lithium ions can coat the anode instead of being stored on that side, some of them permanently.</li>
+        <li>The anode breaks up: the particles that hold lithium swell and shrink every cycle until they crack, leaving fewer places for lithium to sit.</li>
+      </ul>
+      <p>
+        In each scenario, nothing has left the battery: every atom of metal is still in there but perhaps not in the right place or performing the
+        best function.
+      </p>
     </main>
   )
 }

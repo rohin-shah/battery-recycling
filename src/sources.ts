@@ -41,11 +41,6 @@ export const SOURCES = {
     full: 'Regulation (EU) 2023/1542 concerning batteries and waste batteries, OJ L 191, 28.7.2023.',
     url: 'https://eur-lex.europa.eu/eli/reg/2023/1542/oj',
   },
-  hanna2025: {
-    short: 'Hanna 2025',
-    full: 'Hanna, Somers & Anctil (2025), Life Cycle Assessment of Lithium-Ion Battery Recycling: Evaluating the Impact of Recycling Methods and Location, Environmental Science & Technology 59, 14432–14443.',
-    url: 'https://doi.org/10.1021/acs.est.4c13838',
-  },
   harper2019: {
     short: 'Harper 2019',
     full: 'Harper, Sommerville, Kendrick et al. (2019), Recycling lithium-ion batteries from electric vehicles, Nature 575, 75–86.',
@@ -55,11 +50,6 @@ export const SOURCES = {
     short: 'Lacap 2022',
     full: 'Lacap, Rahman & Park (2022), Demonstration of Community-Scale Low-Cost Highly Efficient Photovoltaic and Energy Management System, California Energy Commission, CEC-500-2022-006.',
     url: 'https://www.energy.ca.gov/sites/default/files/2022-09/CEC-500-2022-006.pdf',
-  },
-  latini2022: {
-    short: 'Latini 2022',
-    full: 'Latini, Vaccari, Lagnoni et al. (2022), A comprehensive review and classification of unit operations with assessment of outputs quality in lithium-ion battery recycling, Journal of Power Sources 546, 231979.',
-    url: 'https://doi.org/10.1016/j.jpowsour.2022.231979',
   },
   lee2025: {
     short: 'Lee 2025',
@@ -85,11 +75,6 @@ export const SOURCES = {
     short: 'Rey 2021',
     full: 'Rey, Vallejo, Santiago, Iturrondobeitia & Lizundia (2021), Environmental Impacts of Graphite Recycling from Spent Lithium-Ion Batteries Based on Life Cycle Assessment, ACS Sustainable Chemistry & Engineering 9, 14488–14501.',
     url: 'https://doi.org/10.1021/acssuschemeng.1c04938',
-  },
-  tao2021: {
-    short: 'Tao 2021',
-    full: 'Tao, Rahn, Archer & You (2021), Second life and recycling: Energy and environmental sustainability perspectives for high-performance lithium-ion batteries, Science Advances 7, eabi7633.',
-    url: 'https://doi.org/10.1126/sciadv.abi7633',
   },
   uk2009: {
     short: 'UK 2009',
