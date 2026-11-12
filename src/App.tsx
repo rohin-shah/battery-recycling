@@ -1,4 +1,4 @@
-import { Fragment, lazy, type ReactNode, Suspense } from 'react'
+import { lazy, type ReactNode, Suspense } from 'react'
 import { SOURCES, type SourceId } from './sources'
 
 // The figures bring three.js with them, so they load after the text.
@@ -7,26 +7,6 @@ const DissolveFigure = figure('DissolveFigure')
 const ImpurityFigure = figure('ImpurityFigure')
 const MixedFigure = figure('MixedFigure')
 
-/** Citations in square brackets, each linking to its entry in the source list: <C refs="harper2019, blomeke2022:Table 2" />. */
-function C({ refs }: { refs: string }) {
-  const items = refs.split(refs.includes('|') ? '|' : ',').map((r) => r.trim().split(':') as [SourceId, string | undefined])
-  return (
-    <span className="cite">
-      [
-      {items.map(([id, detail], i) => (
-        <Fragment key={id + (detail ?? '')}>
-          {i > 0 && '; '}
-          <a href={`#source-${id}`}>
-            {SOURCES[id].short}
-            {detail && `, ${detail}`}
-          </a>
-        </Fragment>
-      ))}
-      ]
-    </span>
-  )
-}
-
 const Figure = ({ children }: { children: ReactNode }) => <Suspense fallback={<div className="hm-loading" />}>{children}</Suspense>
 
 export default function App() {
@@ -34,18 +14,18 @@ export default function App() {
     <main>
       <h1>End of life in your EV</h1>
       <p>
-        Your battery might be considered spent when it has less than 80% of the energy it once could <C refs="argonne2020, wesselkamper2025" />, i.e., it
+        Your battery might be considered spent when it has less than 80% of the energy it once could, i.e., it
         becomes less and less usable as a means to move things. Ideally, the battery might be taken straight out of your car—physically unplugged,
         unbolted and replugged and bolted into an energy storage facility. That’s because storing energy and releasing it doesn’t have to be as
-        demanding as something moving humans and things about <C refs="nrel2015, harper2019" />. This process can genuinely work as one Californian
-        study showed—particularly if similar batteries are grouped <C refs="lacap2022" />.
+        demanding as something moving humans and things about. This process can genuinely work as one Californian
+        study showed—particularly if similar batteries are grouped.
       </p>
 
       <h2>Why do lithium-ion batteries die?</h2>
       <p>
         A battery works by shuttling lithium back and forth between its two sides. When you charge a battery, this forces lithium ions to find a place
         on one side (the anode). Think of the graphite anode like a sponge where the lithium ions fill the gaps. The ions are then released to the
-        other side, generating electricity. A battery fades in three main ways <C refs="birkl2017" />.
+        other side, generating electricity. A battery fades in three main ways.
       </p>
       <ul>
         <li>
@@ -62,7 +42,7 @@ export default function App() {
 
       <h2>Okay but what happens when it can’t store enough energy to be useful as energy storage?</h2>
       <p>
-        Then it has to be recycled–it’s law in lots of places <C refs="eu2023:Articles 61 and 70 | uk2009:regulations 35, 36 and 56" />. The good thing
+        Then it has to be recycled–it’s law in lots of places. The good thing
         about that is that humans have gotten quite good at recycling batteries.
       </p>
 
@@ -70,24 +50,23 @@ export default function App() {
       <p>
         This stage might be overlooked often but a battery can only be recycled if it arrives at a recycling facility in the first place, i.e., it has
         been collected properly. There, the battery packs are physically dismantled. This is mostly done by humans today, with robots being piloted,
-        and very much depends on where in the world and the type of battery that it is <C refs="harper2019" />.
+        and very much depends on where in the world and the type of battery that it is.
       </p>
 
       <h3>What are batteries made of at this point?</h3>
       <p>
-        Batteries constitute an array of modules which constitute an array of cells <C refs="argonne2020, harper2019" />. Cells are made of a mixture
-        of chemicals like nickel, cobalt, manganese, lithium, iron, aluminium, copper, plastics and carbon <C refs="blomeke2022:Table 2" />. These
+        Batteries constitute an array of modules which constitute an array of cells. Cells are made of a mixture
+        of chemicals like nickel, cobalt, manganese, lithium, iron, aluminium, copper, plastics and carbon. These
         early stages of the recycling process are designed to clean the cells as much as possible to isolate the things that we really want to
         recover—i.e., the metals. “Things we really want to recover” is largely driven by market forces: it’s what is economical to recover, not
-        necessarily what’s best for the environment <C refs="harper2019" />.
+        necessarily what’s best for the environment.
       </p>
 
       <h3>Shredding</h3>
       <p>
-        The cells are then shredded into a metal powdery mix. In some plants the flammable parts of the cell are burned off first{' '}
-        <C refs="blomeke2022" />. The copper foil, aluminium foil and plastic is relatively easily mechanically recovered at this point: magnets pull
+        The cells are then shredded into a metal powdery mix. In some plants the flammable parts of the cell are burned off first. The copper foil, aluminium foil and plastic is relatively easily mechanically recovered at this point: magnets pull
         out the steel, air jets separate light pieces from heavy ones and a sieve lets the fine powder through while holding back the flakes of foil
-        and plastic <C refs="blomeke2022" />. There are four separated products at this stage: the shredded metals “black mass”, the plastics, the
+        and plastic. There are four separated products at this stage: the shredded metals “black mass”, the plastics, the
         shredded copper &amp; aluminium foil and the steel. The black mass is the thing that contains the metals that make lithium ion batteries worth
         recycling: cobalt, lithium, nickel etc.
       </p>
@@ -105,16 +84,14 @@ export default function App() {
       <h4>The process</h4>
       <p>
         The black mass is subjected to a series of steps. Firstly it’s bathed in warm acid. This dissolves all of the metals (98–99% of them in a lab
-        test <C refs="chen2018" />
-        ). Graphite and other impurities don’t dissolve so can be filtered off (like a coffee filter lol) <C refs="blomeke2022:Figure 5" />. This is
+        test). Graphite and other impurities don’t dissolve so can be filtered off (like a coffee filter lol). This is
         because the metals are generally bonded to oxygen. The oxygen atoms love that there are all those hydrogen ions floating about, and split up
         from the metal—leaving the metal floating about (dissolved) with new water molecules instead. The carbon in the graphite is largely unfazed by
         the hydrogen so stays as graphite.
       </p>
       <p>
-        Then the metal containing acid is purified using sodium hydroxide to grab the aluminium, and iron is added to trade places with copper{' '}
-        <C refs="blomeke2022:Figure 5, chernyaev2021" />. This is almost entirely efficient: about 98% of the iron and aluminium is removed, though
-        about 9% of the nickel goes with them <C refs="chernyaev2021" />. Adding sodium hydroxide is like adding half of water. This means any
+        Then the metal containing acid is purified using sodium hydroxide to grab the aluminium, and iron is added to trade places with copper. This is almost entirely efficient: about 98% of the iron and aluminium is removed, though
+        about 9% of the nickel goes with them. Adding sodium hydroxide is like adding half of water. This means any
         hydrogen floating about is very attracted to it and makes more water—and therefore less acid which can hold less dissolved metal.
       </p>
       <Figure>
@@ -122,10 +99,10 @@ export default function App() {
       </Figure>
       <p>
         The less metal containing acid still has lithium, nickel, cobalt and manganese in it. These are extracted by adding sodium hydroxide and
-        carbonate <C refs="chen2018, dittmer2026" />. A US national lab model, based on what commercial plants achieve, puts this stage at 98% for the
-        nickel, cobalt and manganese and 90% for the lithium <C refs="dai2019" />. Counting every loss from battery pack to finished product, one
-        detailed study of a whole plant puts it at about 83% and 72% <C refs="blomeke2022:Figure 7" />. Real plants differ in the order and method of
-        these steps. We’re now left with a waste water containing sodium sulfate <C refs="lee2025" /> that is relatively inert. The water is often
+        carbonate. A US national lab model, based on what commercial plants achieve, puts this stage at 98% for the
+        nickel, cobalt and manganese and 90% for the lithium. Counting every loss from battery pack to finished product, one
+        detailed study of a whole plant puts it at about 83% and 72%. Real plants differ in the order and method of
+        these steps. We’re now left with a waste water containing sodium sulfate that is relatively inert. The water is often
         evaporated off leaving behind the salt.
       </p>
       <Figure>
@@ -134,21 +111,20 @@ export default function App() {
 
       <h3>What next?</h3>
       <p>
-        Well now we’re left with the metals to make fresh batteries—and most of the mass of the valuable metals that we started with in a battery{' '}
-        <C refs="blomeke2022:Figure 7" />. These are made into brand-new cells so the new battery starts with all of its lithium free to move again.
+        Well now we’re left with the metals to make fresh batteries—and most of the mass of the valuable metals that we started with in a battery. These are made into brand-new cells so the new battery starts with all of its lithium free to move again.
       </p>
 
       <h3>What did we lose?</h3>
       <p>
         We often lose plastics, graphite and some lithium in the initial processing and throughout. Unfortunately, these aren’t economic to recover at
-        a quality good enough to put into batteries <C refs="harper2019" />. The graphite that is recovered is contaminated with metals, liquid and
-        glue, so it isn’t battery-grade <C refs="rey2021" />.
+        a quality good enough to put into batteries. The graphite that is recovered is contaminated with metals, liquid and
+        glue, so it isn’t battery-grade.
       </p>
 
       <h2>What about the environment then?</h2>
       <p>
         Minviro’s whitepaper on the topic showed that the climate change impacts of recycled battery-grade nickel sulfate are lower than that of it
-        produced using the dominant mining process <C refs="minviro2026" />. This can be as little as 1/5th of the impact to around 1/3rd. It’s not a
+        produced using the dominant mining process. This can be as little as 1/5th of the impact to around 1/3rd. It’s not a
         clear cut story for all metals, lithium is more varied when considering climate change impact alone—but this ignores things like water use.
       </p>
 

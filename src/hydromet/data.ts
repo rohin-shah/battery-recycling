@@ -1,5 +1,5 @@
 /**
- * Sourced data behind the three hydrometallurgy figures. Every number here is either measured (read from a published
+ * Sourced data behind hydrometallurgy figures 2 and 3. Every number here is either measured (read from a published
  * chart or table) or calculated from published constants; the comments say which.
  */
 
@@ -15,30 +15,6 @@ export function interpolate(points: readonly (readonly [number, number])[], x: n
   }
   return points[points.length - 1][1]
 }
-
-// ───────────────────────────── Figure 1: dissolving ─────────────────────────────
-
-/**
- * % of each metal dissolved out of NMC cathode powder against sulfuric acid strength (mol/L), with 10% hydrogen
- * peroxide, 120 minutes, 25 °C. Measured by Chen & Ho (2018), Metals 8, 321, Fig. 3a, CC BY 4.0. The cobalt values at
- * 0.25 and 2.0 M and the 2.0 M values for the others are stated in the text; the rest are read off the chart, about
- * ±2 points. Below 0.25 M nothing was measured: the line is drawn straight to zero at no acid.
- */
-export type LeachMetal = 'lithium' | 'nickel' | 'cobalt' | 'manganese'
-export const LEACH_METALS: LeachMetal[] = ['lithium', 'nickel', 'cobalt', 'manganese']
-export const ACID_MIN = 0
-export const ACID_MAX = 2
-export const ACID_MEASURED_FROM = 0.25
-
-const LEACHED: Record<LeachMetal, [number, number][]> = {
-  lithium: [[0, 0], [0.25, 50], [0.5, 76], [1, 92.5], [2, 94.0]],
-  nickel: [[0, 0], [0.25, 65], [0.5, 80], [1, 90], [2, 91.4]],
-  cobalt: [[0, 0], [0.25, 43.7], [0.5, 71], [1, 91], [2, 91.6]],
-  manganese: [[0, 0], [0.25, 64], [0.5, 80], [1, 90], [2, 91.8]],
-}
-
-/** % of a metal dissolved at an acid strength (mol/L). */
-export const leached = (metal: LeachMetal, acid: number) => interpolate(LEACHED[metal], acid)
 
 // ───────────────────────────── Figure 2: clearing out the impurities ─────────────────────────────
 

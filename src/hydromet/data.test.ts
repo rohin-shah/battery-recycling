@@ -1,14 +1,5 @@
 import { expect, test } from 'vitest'
-import { leached, settled, settledMixed } from './data'
-
-test('dissolving follows the measured points (Chen & Ho 2018)', () => {
-  expect(leached('cobalt', 0)).toBe(0)
-  expect(leached('cobalt', 0.25)).toBe(43.7)
-  expect(leached('cobalt', 2)).toBe(91.6)
-  expect(leached('lithium', 2)).toBe(94)
-  expect(leached('nickel', 0.375)).toBeCloseTo(72.5, 5) // halfway between 65 and 80
-  expect(leached('manganese', 5)).toBe(91.8) // held at the last point used
-})
+import { settled, settledMixed } from './data'
 
 test('impurity removal follows the measured points (Chernyaev 2021)', () => {
   expect(settled('iron', 1)).toBe(0)

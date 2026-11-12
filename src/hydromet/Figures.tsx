@@ -1,10 +1,8 @@
 import { useMemo, useState } from 'react'
-import {
-  ACID_MAX, ACID_MEASURED_FROM, ACID_MIN, IMPURITY_PH, LEACH_METALS, leached, METALS, MIXED_METALS, MIXED_PH, settled, settledMixed,
-  type LeachMetal, type Metal, type MixedMetal,
-} from './data'
+import { IMPURITY_PH, METALS, MIXED_METALS, MIXED_PH, settled, settledMixed, type Metal, type MixedMetal } from './data'
 import { Chart, Frame } from './Frame'
 import { COLOUR, drift, inTube, pile, R, TUBE, type Vec } from './layout'
+import { setSharedPH, useSharedPH } from './ph'
 import { type Bead, Beads, Stage } from './scene'
 import './hydromet.css'
 
@@ -41,121 +39,128 @@ function water(n: number, salt: number, base: number): Bead[] {
   return [...oxygens, ...hydrogens]
 }
 
-// ───────────────────────────── Figure 1: acid dissolving the metals ─────────────────────────────
+// ───────────────────────────── Figure 1: making an acid, and a metal oxide dissolving in it ─────────────────────────────
 
-const LEACH_COUNT: Record<LeachMetal, number> = { lithium: 12, nickel: 5, cobalt: 4, manganese: 3 } // by atoms in the powder Chen & Ho tested
-const FREE_IONS = 16
+/**
+ * Illustrative, not measured. Sulfuric acid molecules go into water and split into two hydrogen ions and a sulfate;
+ * a small grain of metal oxide sits on the bottom. The oxide only gives way in strong acid: Chen & Ho (2018) dissolved
+ * battery cathode powder in 0.25 to 2 mol/L sulfuric acid, roughly pH 0.5 and below.
+ */
+const ACID_PH: [number, number] = [0, 7]
+const MOLECULES = 12 // sulfuric acid molecules in the tube
+const OXIDES = 8 // metal–oxygen pairs in the grain
+const DISSOLVES_FROM = 2 // pH at which the first pair gives way
+const SULFATE = 0.075
+const COLOUR_METAL = '#4fb3a9'
+const COLOUR_SULFATE = '#e0b84a'
 
-function dissolveBeads(): Bead[] {
-  const metals = metalBeads(LEACH_COUNT, LEACH_METALS)
-  const n = metals.length
-  const at = firstMove(metals, leached, [ACID_MIN, ACID_MAX])
-  // The last to dissolve sit at the bottom middle of the heap; the first sit on its top and edges.
-  const slot = new Array<number>(n)
-  metals.map((_, i) => i).sort((a, b) => at[b] - at[a] || a - b).forEach((i, s) => (slot[i] = s))
-  const gone = (j: number, acid: number) => metals[j].rank < leached(metals[j].metal, acid) / 100
-  const O = n // index of the first oxygen
+/** pH at which molecule `m` goes into the water: evenly spread from water (pH 7) to strong acid (pH 0). */
+const addedAt = (m: number) => ACID_PH[1] - ((m + 0.5) / MOLECULES) * (ACID_PH[1] - ACID_PH[0])
+/** pH at which oxide pair `j` dissolves: the top layer first. */
+const dissolvesAt = (j: number) => DISSOLVES_FROM - ((j + 0.5) / OXIDES) * DISSOLVES_FROM
+
+/** A small block of metal and oxygen on the beaker floor, 4 × 2 × 2, alternating like a salt crystal. */
+function grainSites() {
+  const s = 0.15
+  const metals: Vec[] = []
+  const oxygens: Vec[] = []
+  for (let iy = 1; iy >= 0; iy--)
+    for (let iz = 0; iz < 2; iz++)
+      for (let ix = 0; ix < 4; ix++) {
+        const p: Vec = [(ix - 1.5) * s, 0.14 + iy * s, (iz - 0.5) * s]
+        ;((ix + iy + iz) % 2 ? oxygens : metals).push(p)
+      }
+  return { metals, oxygens }
+}
+
+/** Place `m` in the dosing tube: three molecules to a ring. */
+function tubeSlot(m: number): Vec {
+  const a = (m % 3) * ((Math.PI * 2) / 3) + Math.floor(m / 3) * 0.6
+  return [TUBE[0] + Math.cos(a) * 0.075, TUBE[1] + 0.1 + Math.floor(m / 3) * 0.12, TUBE[2] + Math.sin(a) * 0.075]
+}
+const H_ON_SULFATE: Vec[] = [[0.075, 0.03, 0], [-0.075, 0.03, 0]]
+
+function acidBeads(): Bead[] {
+  const { metals, oxygens } = grainSites()
+  const O = OXIDES // index of the first oxygen
+  const S = OXIDES * 2 // index of the first sulfate
+  const gone = (j: number, pH: number) => pH <= dissolvesAt(j)
   return [
-    // Metals: packed in the solid, then loose in the liquid.
-    ...metals.map((m, j): Bead => ({
+    ...metals.map((p, j): Bead => ({
       size: METAL,
-      aim: (acid) => (gone(j, acid) ? { to: drift(j), jig: 0.035, color: COLOUR[m.metal] } : { to: pile(slot[j] * 2), color: COLOUR[m.metal] }),
+      aim: (pH) => (gone(j, pH) ? { to: drift(j, 3), jig: 0.035, color: COLOUR_METAL } : { to: p, color: COLOUR_METAL }),
     })),
-    // Each metal's oxygen: beside it in the solid, then carried off as water.
-    ...metals.map((_, j): Bead => ({
+    ...oxygens.map((p, j): Bead => ({
       size: OXYGEN,
-      aim: (acid) => (gone(j, acid) ? { to: drift(j, 7), jig: 0.03, color: COLOUR.oxygen } : { to: pile(slot[j] * 2 + 1), color: COLOUR.oxygen }),
+      aim: (pH) => (gone(j, pH) ? { to: drift(j, 7), jig: 0.03, color: COLOUR.oxygen } : { to: p, color: COLOUR.oxygen }),
     })),
-    // Two hydrogen ions per oxygen: waiting in the acid tube, then bonded to that oxygen as water.
-    ...Array.from({ length: n * 2 }, (_, k): Bead => {
-      const j = Math.floor(k / 2)
+    // Sulfate: in the tube as part of a molecule, then loose in the water.
+    ...Array.from({ length: MOLECULES }, (_, m): Bead => ({
+      size: SULFATE,
+      aim: (pH) => (pH <= addedAt(m) ? { to: drift(m, 13), jig: 0.04, color: COLOUR_SULFATE } : { to: tubeSlot(m), color: COLOUR_SULFATE }),
+    })),
+    // Hydrogen: on its sulfate in the tube; split off as a loose ion in the water; then, for the first pairs, taken by an
+    // oxygen of the grain to make water.
+    ...Array.from({ length: MOLECULES * 2 }, (_, k): Bead => {
+      const m = Math.floor(k / 2)
       return {
         size: HYDROGEN,
-        aim: (acid) => (gone(j, acid) ? { on: O + j, offset: ON_OXYGEN[k % 2], color: COLOUR.hydrogen } : { to: inTube(k), color: COLOUR.hydrogenIon }),
+        aim: (pH) => {
+          if (m < OXIDES && gone(m, pH)) return { on: O + m, offset: ON_OXYGEN[k % 2], color: COLOUR.hydrogen }
+          if (pH <= addedAt(m)) return { to: drift(k, 17), jig: 0.07, color: COLOUR.hydrogenIon }
+          return { on: S + m, offset: H_ON_SULFATE[k % 2], color: COLOUR.hydrogenIon }
+        },
       }
     }),
-    // Spare hydrogen ions: the stronger the acid, the more of them are loose in the liquid.
-    ...Array.from({ length: FREE_IONS }, (_, k): Bead => ({
-      size: HYDROGEN,
-      aim: (acid) =>
-        acid > ((k + 0.5) / FREE_IONS) * ACID_MAX ? { to: drift(k, 11), jig: 0.07, color: COLOUR.hydrogenIon } : { to: inTube(n * 2 + k), color: COLOUR.hydrogenIon },
-    })),
-    ...water(8, 21, n * 4 + FREE_IONS),
+    ...water(6, 21, S + MOLECULES + MOLECULES * 2),
   ]
 }
 
-/** Flakes of graphite in the heap. They are never touched by the acid, so they never move. */
-function Graphite() {
-  return (
-    <>
-      {[0, 1, 2, 3, 4].map((i) => {
-        const a = i * 1.2566 + 0.5
-        return (
-          <mesh key={i} position={[Math.cos(a) * 0.66, 0.115 + (i % 2) * 0.03, Math.sin(a) * 0.66]} rotation={[0.25 * Math.sin(i * 2.1), a, 0.2 * Math.cos(i * 1.7)]}>
-            <cylinderGeometry args={[0.13, 0.13, 0.035, 6]} />
-            <meshStandardMaterial color="#3a3f42" roughness={0.35} metalness={0.5} />
-          </mesh>
-        )
-      })}
-    </>
-  )
-}
-
 export function DissolveFigure() {
-  const [acid, setAcid] = useState(ACID_MIN)
-  const beads = useMemo(() => dissolveBeads(), [])
-  const total = LEACH_METALS.reduce((s, m) => s + LEACH_COUNT[m], 0)
-  const overall = LEACH_METALS.reduce((s, m) => s + leached(m, acid) * LEACH_COUNT[m], 0) / total
+  const [pH, setPH] = useState(ACID_PH[1])
+  const beads = useMemo(() => acidBeads(), [])
+  const added = Array.from({ length: MOLECULES }, (_, m) => pH <= addedAt(m)).filter(Boolean).length
+  const dissolved = Array.from({ length: OXIDES }, (_, j) => pH <= dissolvesAt(j)).filter(Boolean).length
   return (
     <Frame
       view={
         <Stage
-          label={`A beaker of battery powder in ${acid === 0 ? 'water' : `acid of strength ${acid.toFixed(2)} moles per litre`}`}
+          label={`A grain of metal oxide in water${added ? ` with ${added} molecules of sulfuric acid added, pH ${pH.toFixed(1)}` : ''}`}
+          zoomIn={1.45} focus={1.15}
           labels={[
-            { at: [0.17, TUBE[1] + 0.34, 0], text: 'Acid: hydrogen ions' },
-            { at: [R + 0.1, 1.0, 0], text: 'Dissolved metals' },
-            { at: [R + 0.1, 0.16, 0], text: 'Black mass' },
+            { at: [0.2, TUBE[1] + 0.42, 0], text: 'Sulfuric acid' },
+            { at: [R + 0.1, 1.0, 0], text: 'Water' },
+            { at: [R + 0.1, 0.2, 0], text: 'Metal oxide' },
           ]}
         >
-          <Beads beads={beads} value={acid} />
-          <Graphite />
+          <Beads beads={beads} value={pH} />
         </Stage>
       }
-      chart={
-        <Chart
-          label="Share of each metal dissolved, against the strength of the acid"
-          series={LEACH_METALS.map((m) => ({ name: m, color: COLOUR[m], y: (x) => leached(m, x) }))}
-          range={[ACID_MIN, ACID_MAX]} ticks={[0, 0.5, 1, 1.5, 2]} left="water" right="stronger acid (mol/L)" value={acid}
-          shade={[ACID_MIN, ACID_MEASURED_FROM]}
-        />
-      }
-      keyTitle="Share dissolved"
       keys={[
-        ...LEACH_METALS.map((m) => ({ name: NAME[m], color: COLOUR[m], note: pct(leached(m, acid)) })),
+        { name: 'Metal', color: COLOUR_METAL },
         { name: 'Oxygen', color: COLOUR.oxygen },
         { name: 'Hydrogen ion', color: COLOUR.hydrogenIon },
-        { name: 'Water', color: COLOUR.hydrogen },
-        { name: 'Graphite', color: '#5a6064' },
+        { name: 'Sulfate', color: COLOUR_SULFATE },
+        { name: 'Hydrogen in water', color: COLOUR.hydrogen },
       ]}
       readouts={[
-        { name: 'Metals dissolved', value: pct(overall) },
-        { name: 'Graphite dissolved', value: '0%' },
-        { name: 'Acid strength, mol/L', value: acid.toFixed(2) },
+        { name: 'pH', value: pH.toFixed(1) },
+        { name: 'Loose hydrogen ions', value: String(added * 2 - dissolved * 2) },
+        { name: 'Metal dissolved', value: `${dissolved} of ${OXIDES}` },
       ]}
       equations={[
+        'Sulfuric acid splits up in water: H₂SO₄ → 2 H⁺ + SO₄²⁻',
         'metal oxide + hydrogen ions → dissolved metal + water',
         'MO + 2 H⁺ → M²⁺ + H₂O',
-        'In practice, with hydrogen peroxide to help: 2 LiCoO₂ + 6 H⁺ + H₂O₂ → 2 Li⁺ + 2 Co²⁺ + 4 H₂O + O₂',
       ]}
       slider={{
-        left: 'water', right: 'stronger acid', text: acid === 0 ? 'no acid' : `${acid.toFixed(2)} mol/L sulfuric acid`,
-        min: ACID_MIN, max: ACID_MAX, step: 0.01, value: acid, set: setAcid, label: 'Acid strength',
+        left: 'more acidic', right: 'less acidic', text: pH >= ACID_PH[1] ? 'pH 7, plain water' : `pH ${pH.toFixed(1)}`,
+        min: ACID_PH[0], max: ACID_PH[1], step: 0.05, value: pH, set: setPH, label: 'Acidity (pH)',
       }}
       caption={
         <>
-          Measured from 0.25 mol/L upwards by Chen &amp; Ho (2018), Metals 8, 321, CC BY 4.0 (with 10% hydrogen peroxide, two hours, 25 °C). Below
-          that, in the shaded part of the chart, the lines are drawn straight to zero. Bead counts are illustrative; the mix of metals follows the
-          powder they tested.
+          Illustrative. Each step down in pH means ten times more hydrogen ions, so the bead counts are not to scale. The metal oxide only gives way in
+          strong acid: Chen &amp; Ho (2018) dissolved battery cathode powder in 0.25 to 2 mol/L sulfuric acid, around pH 0.5 and below.
         </>
       }
     />
@@ -209,6 +214,15 @@ const ION_KEYS = [
   { name: 'Hydroxide ion', color: COLOUR.oxygen },
 ]
 const acidity = { left: 'more acidic', right: 'less acidic' }
+const clamp = (v: number, [lo, hi]: [number, number]) => Math.min(hi, Math.max(lo, v))
+/** Figures 2 and 3 share one pH scale; each slider shows the whole scale and the part it covers. */
+const shared = (step: 1 | 2) => ({
+  track: [IMPURITY_PH[0], MIXED_PH[1]] as [number, number],
+  steps: [
+    { from: IMPURITY_PH[0], to: IMPURITY_PH[1], text: 'Clearing the impurities', active: step === 1 },
+    { from: MIXED_PH[0], to: MIXED_PH[1], text: 'Recovering the metals', active: step === 2 },
+  ],
+})
 const settleLabels = (sludge: string) => [
   { at: [0.17, TUBE[1] + 0.34, 0] as Vec, text: 'Sodium hydroxide' },
   { at: [R + 0.1, 1.0, 0] as Vec, text: 'Still dissolved' },
@@ -220,7 +234,7 @@ const settleLabels = (sludge: string) => [
 const IMPURITY_COUNT: Record<Metal, number> = { iron: 10, aluminium: 14, nickel: 16, cobalt: 10, manganese: 10, lithium: 12 }
 
 export function ImpurityFigure() {
-  const [pH, setPH] = useState(IMPURITY_PH[0])
+  const pH = clamp(useSharedPH(), IMPURITY_PH)
   const beads = useMemo(() => settleBeads(IMPURITY_COUNT, METALS, settled, (m) => COLOUR[m], IMPURITY_PH, 20, 20, IMPURITY_PH[1]), [])
   return (
     <Frame
@@ -244,7 +258,7 @@ export function ImpurityFigure() {
         { name: 'Cobalt lost with them', value: pct(settled('cobalt', pH)) },
       ]}
       equations={['H⁺ + OH⁻ → H₂O', 'Fe³⁺ + 3 OH⁻ → Fe(OH)₃ (solid)', 'Al³⁺ + 3 OH⁻ → Al(OH)₃ (solid)']}
-      slider={{ ...acidity, text: `pH ${pH.toFixed(1)}`, min: IMPURITY_PH[0], max: IMPURITY_PH[1], step: 0.05, value: pH, set: setPH, label: 'Acidity (pH)' }}
+      slider={{ ...acidity, text: `pH ${pH.toFixed(1)}`, min: IMPURITY_PH[0], max: IMPURITY_PH[1], step: 0.05, value: pH, set: setSharedPH, label: 'Acidity (pH)', ...shared(1) }}
       caption={
         <>
           Measured by Chernyaev, Wilson &amp; Lundström (2021), Scientific Reports 11, 23283, CC BY 4.0. The nickel, cobalt and lithium that sink here
@@ -261,7 +275,7 @@ export function ImpurityFigure() {
 const MIXED_COUNT: Record<MixedMetal, number> = { nickel: 16, cobalt: 10, manganese: 10, lithium: 12 }
 
 export function MixedFigure() {
-  const [pH, setPH] = useState(MIXED_PH[0])
+  const pH = clamp(useSharedPH(), MIXED_PH)
   const beads = useMemo(() => settleBeads(MIXED_COUNT, MIXED_METALS, settledMixed, (m) => COLOUR[m], MIXED_PH, 3, 27, 6.6), [])
   return (
     <Frame
@@ -285,7 +299,7 @@ export function MixedFigure() {
         { name: 'Manganese settled', value: pct(settledMixed('manganese', pH)) },
       ]}
       equations={['Ni²⁺ + 2 OH⁻ → Ni(OH)₂ (solid)', 'Co²⁺ + 2 OH⁻ → Co(OH)₂ (solid)', 'Mn²⁺ + 2 OH⁻ → Mn(OH)₂ (solid)', 'Lithium hydroxide dissolves, so lithium stays in the liquid']}
-      slider={{ ...acidity, text: `pH ${pH.toFixed(1)}`, min: MIXED_PH[0], max: MIXED_PH[1], step: 0.05, value: pH, set: setPH, label: 'Acidity (pH)' }}
+      slider={{ ...acidity, text: `pH ${pH.toFixed(1)}`, min: MIXED_PH[0], max: MIXED_PH[1], step: 0.05, value: pH, set: setSharedPH, label: 'Acidity (pH)', ...shared(2) }}
       caption={
         <>
           Calculated, not measured: from how little of each metal hydroxide can stay dissolved (solubility constants from Martell &amp; Smith, 1976),

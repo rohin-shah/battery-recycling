@@ -42,6 +42,15 @@ export function Chart({
   )
 }
 
+/**
+ * The slider. `track` is the full scale drawn, when it is wider than the range this figure lets the reader use
+ * (`min` to `max`); `steps` label parts of that scale, so one quantity can carry on from figure to figure.
+ */
+export type Slider = {
+  left: string; right: string; text: string; min: number; max: number; step: number; value: number; set: (v: number) => void; label: string
+  track?: [number, number]; steps?: { from: number; to: number; text: string; active?: boolean }[]
+}
+
 export type KeyItem = { name: string; color: string; note?: string }
 export type Readout = { name: string; value: string }
 
@@ -49,11 +58,14 @@ export type Readout = { name: string; value: string }
 export function Frame({
   view, chart, keyTitle, keys, readouts, equations, slider, caption,
 }: {
-  view: ReactNode; chart: ReactNode; keyTitle: string; keys: KeyItem[]; readouts: Readout[]; equations: string[]
-  slider: { left: string; right: string; text: string; min: number; max: number; step: number; value: number; set: (v: number) => void; label: string }
+  view: ReactNode; chart?: ReactNode; keyTitle?: string; keys: KeyItem[]; readouts: Readout[]; equations: string[]
+  slider: Slider
   caption: ReactNode
 }) {
   const [open, setOpen] = useState(false)
+  const { min, max } = slider
+  const [from, to] = slider.track ?? [min, max]
+  const at = (v: number) => `${((v - from) / (to - from)) * 100}%`
   return (
     <figure className="hm">
       <div className="hm-panel">
@@ -64,13 +76,22 @@ export function Frame({
               {slider.left} <b>{slider.text}</b> {slider.right}
             </span>
             <input
-              type="range" min={slider.min} max={slider.max} step={slider.step} value={slider.value} aria-label={slider.label}
-              onChange={(e) => slider.set(Number(e.target.value))}
+              type="range" min={from} max={to} step={slider.step} value={slider.value} aria-label={slider.label}
+              onChange={(e) => slider.set(Math.min(max, Math.max(min, Number(e.target.value))))}
             />
+            {slider.steps && (
+              <span className="hm-steps" aria-hidden>
+                {slider.steps.map((st) => (
+                  <i key={st.text} className={st.active ? 'on' : undefined} style={{ left: at(st.from), width: `calc(${at(st.to)} - ${at(st.from)})` }}>
+                    {st.text}
+                  </i>
+                ))}
+              </span>
+            )}
           </label>
           <div className="hm-side">
             {chart}
-            <p className="hm-key-title">{keyTitle}</p>
+            {keyTitle && <p className="hm-key-title">{keyTitle}</p>}
             <ul className="hm-key">
               {keys.map((k) => (
                 <li key={k.name}>

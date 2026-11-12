@@ -91,7 +91,7 @@ function Beaker() {
 
 export type SceneLabel = { at: Vec; text: string }
 
-function Scene({ labels, children }: { labels: SceneLabel[]; children: ReactNode }) {
+function Scene({ labels, zoomIn, focus, children }: { labels: SceneLabel[]; zoomIn: number; focus: number; children: ReactNode }) {
   // Labels mount a frame late: drei's Html needs the canvas attached first.
   const [ready, setReady] = useState(false)
   useEffect(() => {
@@ -100,11 +100,11 @@ function Scene({ labels, children }: { labels: SceneLabel[]; children: ReactNode
   }, [])
   // Narrow panels: zoom out and slide the scene left so the labels fit beside the beaker.
   const width = useThree((t) => t.size.width)
-  const zoom = Math.min(124, width * (width < 420 ? 0.22 : 0.24))
+  const zoom = Math.min(124, width * (width < 420 ? 0.22 : 0.24)) * zoomIn
   const k = width < 420 ? 0.62 : 0.3 // shift along the camera's right-hand axis
   return (
     <>
-      <OrthographicCamera key={k} makeDefault position={[6 + k, 4.6, 6 - k]} zoom={zoom} onUpdate={(c) => c.lookAt(k, 0.86, -k)} />
+      <OrthographicCamera key={`${k} ${focus}`} makeDefault position={[6 + k, 4.6 + focus - 0.86, 6 - k]} zoom={zoom} onUpdate={(c) => c.lookAt(k, focus, -k)} />
       {/* Studio lighting built in the scene, so nothing is downloaded */}
       <Environment resolution={256} frames={1}>
         <Lightformer form="rect" intensity={4} position={[0, 6, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[8, 8, 1]} />
@@ -114,7 +114,7 @@ function Scene({ labels, children }: { labels: SceneLabel[]; children: ReactNode
       <directionalLight position={[3, 6, 2]} intensity={1.2} />
       {/* Slab */}
       <mesh position={[0, -0.12, 0]}>
-        <boxGeometry args={[2.5, 0.24, 2.5]} />
+        <boxGeometry args={[2.15, 0.24, 2.15]} />
         <meshStandardMaterial color="#2b3a34" roughness={0.7} />
       </mesh>
       <ContactShadows position={[0, 0.005, 0]} scale={4} blur={2.4} opacity={0.55} frames={1} />
@@ -136,7 +136,7 @@ function Scene({ labels, children }: { labels: SceneLabel[]; children: ReactNode
 }
 
 /** The 3D view. The canvas only exists while the figure is on or near the screen. */
-export function Stage({ label, labels, children }: { label: string; labels: SceneLabel[]; children: ReactNode }) {
+export function Stage({ label, labels, zoomIn = 1.35, focus = 1.05, children }: { label: string; labels: SceneLabel[]; zoomIn?: number; focus?: number; children: ReactNode }) {
   const box = useRef<HTMLDivElement>(null)
   const [near, setNear] = useState(false)
   useEffect(() => {
@@ -150,7 +150,7 @@ export function Stage({ label, labels, children }: { label: string; labels: Scen
     <div ref={box} className="hm-view" role="img" aria-label={label}>
       {near && (
         <Canvas dpr={[1, 2]} gl={{ antialias: true }} flat aria-hidden>
-          <Scene labels={labels}>{children}</Scene>
+          <Scene labels={labels} zoomIn={zoomIn} focus={focus}>{children}</Scene>
         </Canvas>
       )}
     </div>

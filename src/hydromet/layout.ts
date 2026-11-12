@@ -4,7 +4,7 @@ export type Vec = [number, number, number]
 
 export const R = 0.9 // beaker inner radius
 export const LIQUID_TOP = 1.45
-export const TUBE: Vec = [0, 2.1, 0]
+export const TUBE: Vec = [0, 1.62, 0]
 
 /** Bead colours. Metals are stronger than the page palette so they stay distinct on the dark panel. */
 export const COLOUR = {

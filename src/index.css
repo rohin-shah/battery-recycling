@@ -26,9 +26,6 @@ li { margin: 6px 0; }
 a { color: inherit; }
 button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
 
-/* Citations: quiet, in square brackets, linking to the source list */
-.cite { font-size: 0.82em; color: var(--muted); white-space: normal; }
-.cite a { text-decoration-color: var(--line); text-underline-offset: 2px; }
 .sources { list-style: none; padding-left: 0 !important; font-size: 0.85rem; color: var(--muted); }
 .sources li { margin: 8px 0; overflow-wrap: anywhere; scroll-margin-top: 16px; }
 .sources li:target { color: var(--text); }
