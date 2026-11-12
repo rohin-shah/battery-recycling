@@ -39,12 +39,15 @@ export function pile(s: number, perLayer = 36, radius = R - 0.3, lift = 0.13): V
   return [Math.cos(a) * r, 0.15 + Math.floor(s / perLayer) * lift, Math.sin(a) * r]
 }
 
-/** How far the dosing tube tips over (radians) by the end of the slider's travel. */
-export const TILT = 0.85
+/**
+ * The dosing tube's angle from upright (radians) for `progress` (0 to 1) along the slider: it starts lying on its side,
+ * holding everything in, and turns mouth-down as it empties.
+ */
+export const tubeAngle = (progress: number) => (Math.PI / 2) * (1 - progress)
 
-/** A point in the dosing tube, once the tube has tipped over by `progress` (0 to 1) of its full tilt, about its mouth. */
+/** A point in the dosing tube, turned with the tube about its mouth. */
 export function tipped([x, y, z]: Vec, progress: number): Vec {
-  const t = TILT * progress
+  const t = tubeAngle(progress)
   const dx = x - TUBE[0]
   const dy = y - TUBE[1]
   return [TUBE[0] + dx * Math.cos(t) - dy * Math.sin(t), TUBE[1] + dx * Math.sin(t) + dy * Math.cos(t), z]

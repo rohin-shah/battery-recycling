@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import '../index.css'
 import { DissolveFigure, ImpurityFigure, MixedFigure } from '../hydromet/Figures'
 
+
 // Local preview of the hydrometallurgy figures on their own (pilot.html); not part of the site build.
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

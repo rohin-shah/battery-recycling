@@ -2,7 +2,7 @@ import { ContactShadows, Environment, Html, Lightformer, OrthographicCamera } fr
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { Color, type Group, LatheGeometry, MathUtils, Object3D, Vector2, type InstancedMesh } from 'three'
-import { LIQUID_TOP, R, TANK, TILT, TUBE, type Vec } from './layout'
+import { LIQUID_TOP, R, TANK, TUBE, tubeAngle, type Vec } from './layout'
 
 /**
  * The shared stage for the hydrometallurgy figures: a glass beaker on a slab, seen from one fixed isometric viewpoint
@@ -180,7 +180,7 @@ function Scene({
       camera.zoom = v.zoom
       camera.updateProjectionMatrix()
     }
-    if (tube.current) tube.current.rotation.z = TILT * shown.current
+    if (tube.current) tube.current.rotation.z = tubeAngle(shown.current)
   })
   return (
     <>
@@ -204,8 +204,8 @@ function Scene({
       )}
       <ContactShadows position={[0, 0.005, 0]} scale={4} blur={2.4} opacity={0.55} frames={1} />
       {/* Dosing tube */}
-      {/* Dosing tube: tips over about its mouth as the slider moves up */}
-      <group ref={tube} position={TUBE} rotation={[0, 0, TILT * progress]}>
+      {/* Dosing tube: lies on its side at first and turns mouth-down as the slider moves up */}
+      <group ref={tube} position={TUBE} rotation={[0, 0, tubeAngle(progress)]}>
         <mesh position={[0, 0.31, 0]}>
           <cylinderGeometry args={[0.17, 0.17, 0.62, 40, 1, true]} />
           <meshPhysicalMaterial color="#cfe6ea" transparent opacity={0.2} roughness={0.05} clearcoat={1} depthWrite={false} side={2} />

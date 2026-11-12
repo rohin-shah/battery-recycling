@@ -48,8 +48,8 @@ function water(n: number, salt: number, base: number): Bead[] {
  * last stretch of the slider (Chen & Ho 2018 needed 0.25 to 2 mol/L sulfuric acid to dissolve battery cathode powder).
  * Few beads, so each one can be followed.
  */
-const MOLECULES = 6 // sulfuric acid molecules in the tube
-const PAIRS = 4 // particle–oxygen pairs in the particle; the first PAIRS molecules' hydrogen ions take their oxygens
+const MOLECULES = 3 // sulfuric acid molecules in the tube
+const PAIRS = 2 // particle–oxygen pairs in the particle; the first PAIRS molecules' hydrogen ions take their oxygens
 const DISSOLVES_FROM = 5 / 7 // share of the acid added before the particle starts to give way
 const SULFATE = 0.075
 const HYDROGEN_ION = 0.042 // drawn larger here, so the reader can follow them
@@ -59,22 +59,21 @@ const COLOUR_SULFATE = '#e0b84a'
 
 /** How much acid (0 to 1) is in when molecule `m` goes into the water. */
 const addedAt = (m: number) => (m + 0.5) / MOLECULES
-/** How much acid is in when pair `j` comes away: the top layer first. */
+/** How much acid is in when pair `j` comes away, one after another. */
 const dissolvesAt = (j: number) => DISSOLVES_FROM + ((j + 0.5) / PAIRS) * (1 - DISSOLVES_FROM)
 const gone = (j: number, a: number) => a >= dissolvesAt(j)
 const taken = (j: number, a: number) => a >= dissolvesAt(j) - LAND
 
-/** The particle on the tank floor, 2 × 2 × 2, alternating like a salt crystal. */
+/** The particle on the tank floor, 2 × 2 in one layer, alternating like a salt crystal. */
 function particleSites() {
   const s = 0.16
   const cores: Vec[] = []
   const oxygens: Vec[] = []
-  for (let iy = 1; iy >= 0; iy--)
-    for (let iz = 0; iz < 2; iz++)
-      for (let ix = 0; ix < 2; ix++) {
-        const p: Vec = [(ix - 0.5) * s, 0.14 + iy * s, (iz - 0.5) * s]
-        ;((ix + iy + iz) % 2 ? oxygens : cores).push(p)
-      }
+  for (let iz = 0; iz < 2; iz++)
+    for (let ix = 0; ix < 2; ix++) {
+      const p: Vec = [(ix - 0.5) * s, 0.14, (iz - 0.5) * s]
+      ;((ix + iz) % 2 ? oxygens : cores).push(p)
+    }
   return { cores, oxygens }
 }
 
@@ -122,7 +121,7 @@ function acidBeads(): Bead[] {
         },
       }
     }),
-    ...water(3, 21, H + MOLECULES * 2),
+    ...water(2, 21, H + MOLECULES * 2),
   ]
 }
 
@@ -157,7 +156,7 @@ const FREES = Array.from({ length: PAIRS }, (_, j) => dissolvesAt(j))
 export function DissolveFigure() {
   const [acid, setValue] = useState(0)
   const setAcid = (v: number) => {
-    clickSteps([{ points: POURS, pitch: 1600 }, { points: FREES, pitch: 700 }], acid, v)
+    clickSteps([{ points: POURS, pitch: 1000 }, { points: FREES, pitch: 440 }], acid, v)
     setValue(v)
   }
   const beads = useMemo(() => acidBeads(), [])
@@ -245,7 +244,7 @@ const shared = (step: 1 | 2) => ({
   ],
 })
 const settleLabels = (sludge: string) => [
-  { at: [0.17, TUBE[1] + 0.34, 0] as Vec, text: 'Sodium hydroxide' },
+  { at: [0.12, TUBE[1] + 0.12, 0] as Vec, text: 'Sodium hydroxide' },
   { at: [R + 0.1, 1.0, 0] as Vec, text: 'Still dissolved' },
   { at: [R + 0.1, 0.16, 0] as Vec, text: sludge },
 ]
