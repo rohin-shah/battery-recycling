@@ -1,40 +1,58 @@
-import { type ReactNode, useState } from 'react'
+import { type CSSProperties, type ReactNode, useState } from 'react'
 
 /** One line on a chart: a colour and a function from the slider value to a percentage. */
 export type Series = { name: string; color: string; y: (x: number) => number }
 
 const W = 320
-const H = 190
+const H = 196
+const LEFT = 42 // room for the y-axis title and percentages
+const ZOOM = 0.55 // how much of the x-range is cut away at the top of the slider
 
-/** Percentage against the slider's quantity, with a marker at the reader's value. */
+/**
+ * Percentage against the slider's quantity, with a marker at the reader's value. As the slider moves up (`zoom` from
+ * 0 to 1) the chart closes in on the reader's value, in step with the 3D view, showing a narrower stretch of the x-axis.
+ */
 export function Chart({
-  series, range, ticks, left, right, value, label, shade,
+  series, range, left, right, value, label, yTitle, zoom = 0, band,
 }: {
-  series: Series[]; range: [number, number]; ticks: number[]; left: string; right: string; value: number; label: string
-  /** An x-range to mark as not measured. */
-  shade?: [number, number]
+  series: Series[]; range: [number, number]; left: string; right: string; value: number; label: string; yTitle: string; zoom?: number
+  /** A stretch of the x-axis to mark, with its name. */
+  band?: { from: number; to: number; text: string }
 }) {
-  const x = (v: number) => 34 + ((v - range[0]) / (range[1] - range[0])) * (W - 44)
-  const y = (pct: number) => 12 + ((100 - pct) / 100) * (H - 40)
-  const xs = Array.from({ length: 121 }, (_, i) => range[0] + (i / 120) * (range[1] - range[0]))
+  const span = (range[1] - range[0]) * (1 - ZOOM * zoom)
+  const lo = Math.min(Math.max(value - span / 2, range[0]), range[1] - span)
+  const hi = lo + span
+  const x = (v: number) => LEFT + ((v - lo) / span) * (W - LEFT - 4)
+  const y = (pct: number) => 8 + ((100 - pct) / 100) * (H - 44)
+  const xs = Array.from({ length: 121 }, (_, i) => lo + (i / 120) * span)
+  const step = span > 3 ? 1 : 0.5
+  const ticks = Array.from({ length: Math.floor(hi / step) - Math.ceil(lo / step) + 1 }, (_, i) => (Math.ceil(lo / step) + i) * step)
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="hm-chart" role="img" aria-label={label}>
-      {shade && <rect x={x(shade[0])} y={10} width={x(shade[1]) - x(shade[0])} height={H - 36} className="shade" />}
+      <text x={8} y={y(50)} textAnchor="middle" transform={`rotate(-90 8 ${y(50)})`} className="title">
+        {yTitle}
+      </text>
+      {band && band.to > lo && band.from < hi && (
+        <g className="band">
+          <rect x={x(Math.max(band.from, lo))} y={4} width={x(Math.min(band.to, hi)) - x(Math.max(band.from, lo))} height={H - 36} />
+          <text x={(x(Math.max(band.from, lo)) + x(Math.min(band.to, hi))) / 2} y={y(50) - 4} textAnchor="middle">{band.text}</text>
+        </g>
+      )}
       {[0, 50, 100].map((p) => (
         <g key={p}>
-          <line x1={34} x2={W - 10} y1={y(p)} y2={y(p)} className="grid" />
-          <text x={28} y={y(p) + 3} textAnchor="end">{p}%</text>
+          <line x1={LEFT} x2={W} y1={y(p)} y2={y(p)} className="grid" />
+          <text x={LEFT - 5} y={y(p) + 3} textAnchor="end">{p}%</text>
         </g>
       ))}
       {ticks.map((p) => (
-        <text key={p} x={x(p)} y={H - 12} textAnchor="middle">{p}</text>
+        <text key={p} x={x(p)} y={H - 18} textAnchor={x(p) > W - 12 ? 'end' : 'middle'}>{p}</text>
       ))}
-      <text x={34} y={H - 1}>{left}</text>
-      <text x={W - 10} y={H - 1} textAnchor="end">{right}</text>
+      <text x={LEFT} y={H - 3}>{left}</text>
+      <text x={W} y={H - 3} textAnchor="end">{right}</text>
       {series.map((s) => (
         <polyline key={s.name} fill="none" stroke={s.color} strokeWidth={1.6} strokeLinejoin="round" points={xs.map((p) => `${x(p)},${y(s.y(p))}`).join(' ')} />
       ))}
-      <line x1={x(value)} x2={x(value)} y1={8} y2={H - 26} className="cursor" />
+      <line x1={x(value)} x2={x(value)} y1={4} y2={H - 32} className="cursor" />
       {series.map((s) => (
         <circle key={s.name} cx={x(value)} cy={y(s.y(value))} r={3.5} fill={s.color} stroke="#0f1512" />
       ))}
@@ -44,11 +62,13 @@ export function Chart({
 
 /**
  * The slider's settings. `track` is the full scale drawn, when it is wider than the range this figure lets the reader use
- * (`min` to `max`); `steps` label parts of that scale, so one quantity can carry on from figure to figure.
+ * (`min` to `max`): the rest of the rail is greyed out, so one quantity can carry on from figure to figure.
  */
 export type Slider = {
   left: string; right: string; text: string; min: number; max: number; step: number; value: number; set: (v: number) => void; label: string
-  track?: [number, number]; steps?: { from: number; to: number; text: string; active?: boolean }[]
+  track?: [number, number]
+  /** The whole slider's colour now, and a line saying what that colour means. */
+  tone?: string; note?: string
 }
 
 /**
@@ -62,19 +82,21 @@ function VerticalSlider({ slider }: { slider: Slider }) {
   return (
     <label className="hm-vslider">
       <span>{slider.right}</span>
-      <span className="hm-vtrack">
+      <span className="hm-vtrack" style={{ ...(slider.tone && { '--tone': slider.tone }), '--from': at(min), '--to': at(max) } as CSSProperties}>
+        <i className="rail" aria-hidden />
         <input
-          type="range" min={from} max={to} step={slider.step} value={slider.value} aria-label={slider.label} aria-valuetext={slider.text}
+          type="range" min={from} max={to} step={slider.step} value={slider.value} aria-label={slider.label}
+          aria-valuetext={slider.note ? `${slider.text}: ${slider.note}` : slider.text}
           onChange={(e) => slider.set(Math.min(max, Math.max(min, Number(e.target.value))))}
         />
-        {slider.steps?.map((st) => (
-          <i key={st.text} className={st.active ? 'on' : undefined} style={{ bottom: at(st.from), height: `calc(${at(st.to)} - ${at(st.from)})` }}>
-            <em>{st.text}</em>
-          </i>
-        ))}
       </span>
       <span>{slider.left}</span>
       <b>{slider.text}</b>
+      {slider.note && (
+        <em className="hm-note" style={{ color: slider.tone }}>
+          {slider.note}
+        </em>
+      )}
     </label>
   )
 }

@@ -140,12 +140,14 @@ const container = false
 
 export type SceneLabel = { at: Vec; text: string }
 
-const ZOOM_IN = 0.9 // extra zoom at the top of the slider: nearly twice as close
 const FOCUS_IN = 0.8 // height in the liquid the camera closes in on
 
 function Scene({
-  labels, zoomIn, focus, vessel, progress, shift, children,
-}: { labels: SceneLabel[]; zoomIn: number; focus: number; vessel: Vessel; progress: number; shift?: number; children: ReactNode }) {
+  labels, zoomIn, focus, vessel, progress, shift, closeIn, floor, children,
+}: {
+  labels: SceneLabel[]; zoomIn: number; focus: number; vessel: Vessel; progress: number; shift?: number; closeIn: number; floor: boolean
+  children: ReactNode
+}) {
   // Labels mount a frame late: drei's Html needs the canvas attached first.
   const [ready, setReady] = useState(false)
   useEffect(() => {
@@ -156,14 +158,14 @@ function Scene({
   const { width, height } = useThree((t) => t.size)
   const tank = vessel === 'tank'
   // The tank is seen almost face on, filling the panel with room on the right for labels.
-  const zoom = tank ? Math.min(width / (width < 420 ? 3.4 : 3.9), height / 2.4) : Math.min(124, width * (width < 420 ? 0.22 : 0.24)) * zoomIn
+  const zoom = (tank ? Math.min(width / (width < 420 ? 3.4 : 3.9), height / 2.4) : Math.min(124, width * (width < 420 ? 0.22 : 0.24))) * zoomIn
   const k = tank ? (shift ?? (width < 420 ? 0.85 : 0.62)) : width < 420 ? 0.62 : 0.3 // shift along the camera's right-hand axis
   // As the slider moves up, the camera closes in on the middle of the liquid, in step with the slider.
   const view = (p: number) => {
     const s = k * (1 - p)
     const f = focus + (FOCUS_IN - focus) * p
     return {
-      zoom: zoom * (1 + ZOOM_IN * p),
+      zoom: zoom * (1 + closeIn * p),
       eye: (tank ? [1.4 + s, f + 0.9, 7] : [6 + s, 4.6 + f - 0.86, 6 - s]) as Vec,
       target: (tank ? [s, f, 0] : [s, f, -s]) as Vec,
     }
@@ -202,6 +204,13 @@ function Scene({
           {tank ? <Tank /> : <Beaker />}
         </>
       )}
+      {/* The floor, so it is plain where things have settled */}
+      {floor && (
+        <mesh position={[0, -0.03, 0]}>
+          <boxGeometry args={[2.4, 0.06, 1.1]} />
+          <meshStandardMaterial color="#2a3a33" roughness={0.8} />
+        </mesh>
+      )}
       <ContactShadows position={[0, 0.005, 0]} scale={4} blur={2.4} opacity={0.55} frames={1} />
       {/* Dosing tube */}
       {/* Dosing tube: lies on its side at first and turns mouth-down as the slider moves up */}
@@ -224,11 +233,15 @@ function Scene({
 
 /** The 3D view. The canvas only exists while the figure is on or near the screen. */
 export function Stage({
-  label, labels, zoomIn = 1.35, focus = 1.05, vessel = 'beaker', progress = 0, shift, children,
+  label, labels, zoomIn = 1.35, focus = 1.05, vessel = 'beaker', progress = 0, shift, closeIn = 0.9, floor = false, children,
 }: {
   label: string; labels: SceneLabel[]; zoomIn?: number; focus?: number; vessel?: Vessel; progress?: number
   /** How far to slide the view sideways, leaving room on the right for tags. */
-  shift?: number; children: ReactNode
+  shift?: number
+  /** Extra zoom at the top of the slider: 0.9 is nearly twice as close. */
+  closeIn?: number
+  /** Draw a floor for settled solids to sit on. */
+  floor?: boolean; children: ReactNode
 }) {
   const box = useRef<HTMLDivElement>(null)
   const [near, setNear] = useState(false)
@@ -243,7 +256,7 @@ export function Stage({
     <div ref={box} className="hm-view" role="img" aria-label={label}>
       {near && (
         <Canvas dpr={[1, 2]} gl={{ antialias: true }} flat aria-hidden>
-          <Scene labels={labels} zoomIn={zoomIn} focus={focus} vessel={vessel} progress={progress} shift={shift}>{children}</Scene>
+          <Scene labels={labels} zoomIn={zoomIn} focus={focus} vessel={vessel} progress={progress} shift={shift} closeIn={closeIn} floor={floor}>{children}</Scene>
         </Canvas>
       )}
     </div>

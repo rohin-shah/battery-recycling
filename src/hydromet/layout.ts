@@ -34,13 +34,6 @@ export function drift(k: number, salt = 0): Vec {
   return [Math.cos(a) * r, 0.42 + hash(k, 3 + salt) * (LIQUID_TOP - 0.58), Math.sin(a) * r]
 }
 
-/** Slot `s` in a compact pile on the beaker floor, filling from the middle outwards, `perLayer` to a layer. */
-export function pile(s: number, perLayer = 36, radius = R - 0.3, lift = 0.13): Vec {
-  const a = s * 2.39996
-  const r = Math.sqrt(((s % perLayer) + 0.5) / perLayer) * radius
-  return [Math.cos(a) * r, 0.15 + Math.floor(s / perLayer) * lift, Math.sin(a) * r]
-}
-
 /**
  * The dosing tube's angle from upright (radians) for `progress` (0 to 1) along the slider: it starts lying on its side,
  * holding everything in, and turns mouth-down as it empties.

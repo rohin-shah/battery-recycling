@@ -44,6 +44,21 @@ export const settled = (metal: Metal, pH: number) =>
     pH,
   )
 
+/**
+ * The sweet spot for clearing the impurities, read from the curves above: from where 95% of both the iron and the
+ * aluminium has settled, up to where 15% of the nickel has gone with them. The thresholds are our judgement on
+ * Chernyaev's data, not a published recommendation; they put the window around pH 4, where the 98% / 9% figures in
+ * the text sit.
+ */
+export const IMPURITIES_OUT = 95
+export const NICKEL_LOSS_LIMIT = 15
+export function sweetSpot(): [number, number] {
+  const pHs = Array.from({ length: 451 }, (_, i) => IMPURITY_PH[0] + i * 0.01)
+  const lo = pHs.find((p) => Math.min(settled('iron', p), settled('aluminium', p)) >= IMPURITIES_OUT) ?? IMPURITY_PH[1]
+  const hi = [...pHs].reverse().find((p) => settled('nickel', p) <= NICKEL_LOSS_LIMIT) ?? IMPURITY_PH[0]
+  return [lo, hi]
+}
+
 // ───────────────────────────── Figure 3: the valuable metals ─────────────────────────────
 
 /**
@@ -58,7 +73,7 @@ export const settled = (metal: Metal, pH: number) =>
  */
 export type MixedMetal = 'nickel' | 'cobalt' | 'manganese' | 'lithium'
 export const MIXED_METALS: MixedMetal[] = ['nickel', 'cobalt', 'manganese', 'lithium']
-export const MIXED_PH: [number, number] = [5.5, 10.5]
+export const MIXED_PH: [number, number] = [4, 10.5] // picks up where impurity removal stops
 
 const HYDROXIDE: Record<Exclude<MixedMetal, 'lithium'>, { logKsp: number; gPerL: number; gPerMol: number }> = {
   nickel: { logKsp: -15.2, gPerL: 11, gPerMol: 58.69 },

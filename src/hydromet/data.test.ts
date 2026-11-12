@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { settled, settledMixed } from './data'
+import { settled, settledMixed, sweetSpot } from './data'
 
 test('impurity removal follows the measured points (Chernyaev 2021)', () => {
   expect(settled('iron', 1)).toBe(0)
@@ -23,4 +23,12 @@ test('hydroxides settle in the order nickel, cobalt, manganese; lithium never do
   expect(settledMixed('nickel', 7.76)).toBeCloseTo(99, 0)
   expect(settledMixed('manganese', 11)).toBeGreaterThan(99.99)
   expect(settledMixed('lithium', 11)).toBe(0)
+})
+
+test('the impurity sweet spot sits around pH 4', () => {
+  const [lo, hi] = sweetSpot()
+  expect(lo).toBeGreaterThan(3.9)
+  expect(lo).toBeLessThan(4)
+  expect(hi).toBeGreaterThan(4.1)
+  expect(hi).toBeLessThan(4.2)
 })

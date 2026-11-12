@@ -83,8 +83,8 @@ export default function App() {
 
       <h4>The process</h4>
       <p>
-        The black mass is subjected to a series of steps. Firstly it’s bathed in warm acid. This dissolves all of the metals (98–99% of them in a lab
-        test). Graphite and other impurities don’t dissolve so can be filtered off (like a coffee filter lol). This is
+        The black mass is subjected to a series of steps. Firstly it’s bathed in warm acid. This dissolves all of the metals. Graphite and other impurities don’t dissolve so can be filtered off.
+        This is
         because the metals are generally bonded to oxygen. The oxygen atoms love that there are all those hydrogen ions floating about, and split up
         from the metal—leaving the metal floating about (dissolved) with new water molecules instead. The carbon in the graphite is largely unfazed by
         the hydrogen so stays as graphite.
@@ -92,7 +92,8 @@ export default function App() {
       <p>
         Then the metal containing acid is purified using sodium hydroxide to grab the aluminium, and iron is added to trade places with copper. This is almost entirely efficient: about 98% of the iron and aluminium is removed, though
         about 9% of the nickel goes with them. Adding sodium hydroxide is like adding half of water. This means any
-        hydrogen floating about is very attracted to it and makes more water—and therefore less acid which can hold less dissolved metal.
+        hydrogen floating about is very attracted to it and makes more water—and therefore less acid which can hold less dissolved metal. Once
+        the hydrogen is used up, the hydroxide grabs the metal ions instead, making solid metal hydroxides that settle out.
       </p>
       <Figure>
         <ImpurityFigure />

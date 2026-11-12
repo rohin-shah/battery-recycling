@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
-import { IMPURITY_PH, METALS, MIXED_METALS, MIXED_PH, settled, settledMixed, type Metal, type MixedMetal } from './data'
+import { IMPURITY_PH, interpolate, METALS, sweetSpot, MIXED_METALS, MIXED_PH, settled, settledMixed, type Metal, type MixedMetal } from './data'
 import { clickSteps } from './click'
 import { Chart, Frame } from './Frame'
-import { COLOUR, drift, pile, tipped, TUBE, type Vec } from './layout'
-import { setSharedPH, useSharedPH } from './ph'
+import { COLOUR, drift, tipped, TUBE, type Vec } from './layout'
+import { setImpurityPH, setMixedPH, useImpurityPH, useMixedPH } from './ph'
 import { type Bead, Beads, type Follow, Stage } from './scene'
 import './hydromet.css'
 
@@ -139,11 +139,12 @@ function acidTags(a: number): Follow[] {
     { id: 'acid', bead: S + (inVial ?? 0), text: inVial === undefined ? null : 'Acid' },
     { id: 'ion', bead: H + (ion ?? 0) * 2, text: ion === undefined ? null : 'Hydrogen ion' },
     { id: 'sulfate', bead: S, text: a >= addedAt(0) ? 'Sulfate' : null, below: true },
-    { id: 'water', bead: H + MOLECULES * 2, text: 'Water' },
-    { id: 'new water', bead: O, text: gone(0, a) ? 'New water' : null },
-    // The particle's tag starts on the piece that comes free first and goes with it, so the reader sees it leave; only
-    // then does the rest of the particle get a tag of its own.
-    { id: 'freed', bead: 0, text: gone(0, a) ? 'Dissolved particle' : 'Soluble particle', below: true },
+    { id: 'water', bead: H + MOLECULES * 2, text: 'Water (H₂O)' },
+    // The oxygen the text talks about: part of the particle, until the hydrogen ions take it away as new water.
+    { id: 'oxygen', bead: O, text: gone(0, a) ? 'New water (H₂O)' : 'Oxygen atom, in the particle' },
+    // The particle's tag starts on the piece that comes free first and goes with it, so the reader sees it leave; once
+    // free it is named as what it is, a metal ion, matching the text. Only then does the rest of the particle get a tag.
+    { id: 'freed', bead: 0, text: gone(0, a) ? 'Metal ion' : 'Soluble particle', below: true },
     { id: 'particle', bead: holding ?? 0, text: gone(0, a) && holding !== undefined ? 'Soluble particle' : null, below: true },
   ]
 }
@@ -165,7 +166,7 @@ export function DissolveFigure() {
       view={
         <Stage
           label={`A soluble particle in water, ${added ? `with ${added} molecules of sulfuric acid added` : 'with no acid'}`}
-          vessel="tank" focus={0.95} progress={acid} labels={[]}
+          vessel="tank" focus={0.95} zoomIn={1} progress={acid} labels={[]}
         >
           <Beads beads={beads} value={acid} follow={acidTags(acid)} />
         </Stage>
@@ -189,6 +190,7 @@ export function DissolveFigure() {
 /** How many hydroxide ions each metal takes when it settles as a solid hydroxide (its charge as an ion). */
 const VALENCE: Record<string, number> = { iron: 3, aluminium: 3, nickel: 2, cobalt: 2, manganese: 2, lithium: 1 }
 const SODIUM = 0.06
+const BIND = 0.1 // how much lower in pH a metal's hydroxides bind to it than it settles
 /** Where hydroxide `i` of `n` sits on a settled metal: either side for two, a triangle for three. Face on, so all show. */
 const onMetal = (n: number, i: number): Vec => {
   const a = Math.PI / 2 + (i / n) * Math.PI * 2 + (n === 2 ? Math.PI / 2 : 0)
@@ -196,6 +198,13 @@ const onMetal = (n: number, i: number): Vec => {
 }
 /** Where the sodium sits on its hydroxide in the vial: sodium hydroxide, NaOH. */
 const NA_ON_OH: Vec = [0, -0.085, 0]
+
+/**
+ * Settled solids sit in one row on the floor, face on, so it is plain they have dropped out; what is still dissolved
+ * floats higher up (`high`), leaving a clear gap above them.
+ */
+const onFloor = (s: number, count: number): Vec => [(s - (count - 1) / 2) * 0.3, 0.1, 0]
+const high = ([x, y, z]: Vec): Vec => [x, y + 0.3, z]
 
 /** Slot `k` in the dosing vial: four sodium hydroxide units to a ring, turned with the vial. */
 function vialSlot(k: number, progress: number): Vec {
@@ -215,6 +224,9 @@ function vialSlot(k: number, progress: number): Vec {
 function settleScene<M extends string>(
   counts: Record<M, number>, order: M[], share: (m: M, pH: number) => number,
   range: [number, number], hydrogenIons: number, sulfates: number, neutralAt: number,
+  /** Extra pH values to give their own share of the slider, such as the edges of a window to mark. */
+  marks: number[] = [],
+  waters = 2,
 ) {
   const ks = (from: number, to: number) => Array.from({ length: Math.max(0, to - from) }, (_, i) => from + i)
   const metals = metalBeads(counts, order)
@@ -223,6 +235,7 @@ function settleScene<M extends string>(
   const slot = new Array<number>(n)
   metals.map((_, i) => i).sort((a, b) => at[a] - at[b] || a - b).forEach((i, s) => (slot[i] = s))
   const colour = (j: number) => COLOUR[metals[j].metal as keyof typeof COLOUR]
+  const settling = at.filter(Number.isFinite).length
   const valence = (j: number) => VALENCE[metals[j].metal]
   // Every hydroxide's job, in the order they leave the vial: meet hydrogen ion `ion`, or bind to metal bead `metal`.
   type Job = { pH: number; ion?: number; metal?: number; place?: number }
@@ -230,12 +243,20 @@ function settleScene<M extends string>(
     ...ks(0, hydrogenIons).map((i) => ({ pH: range[0] + ((i + 0.5) / hydrogenIons) * (neutralAt - range[0]), ion: i })),
     ...ks(0, n)
       .filter((j) => Number.isFinite(at[j]))
-      .flatMap((j) => ks(0, valence(j)).map((place) => ({ pH: at[j], metal: j, place }))),
+      .flatMap((j) => ks(0, valence(j)).map((place) => ({ pH: Math.max(range[0], at[j] - BIND), metal: j, place }))),
   ].sort((a, b) => a.pH - b.pH)
   const N = jobs.length
   const meets = (i: number) => jobs.findIndex((job) => job.ion === i)
   const out = (k: number, pH: number) => pH >= jobs[k].pH
-  const tilt = (pH: number) => (pH - range[0]) / (range[1] - range[0])
+  // The slider is not linear in pH: every event gets an equal share of its travel, so a metal's hydroxides visibly bind
+  // to it (while it is still dissolved) a step before the solid drops, even where events crowd together in pH.
+  const knots = [...new Set([...jobs.map((job) => job.pH), ...at.filter(Number.isFinite), ...marks])].filter((v) => v > range[0] && v < range[1]).sort((a, b) => a - b)
+  const pHs = [range[0], ...knots, range[1]]
+  const positions = pHs.map((_, i) => i / (pHs.length - 1))
+  /** Slider position (0 to 1) for a pH, and back. */
+  const toPos = (pH: number) => interpolate(pHs.map((v, i) => [v, positions[i]]), pH)
+  const fromPos = (pos: number) => interpolate(positions.map((v, i) => [v, pHs[i]]), pos)
+  const tilt = toPos
   // Bead order: metal ions, hydrogen ions, hydroxide oxygens, their hydrogens, sodium ions, sulfate ions, water.
   const H = n
   const OH = H + hydrogenIons
@@ -245,14 +266,14 @@ function settleScene<M extends string>(
   const beads: Bead[] = [
     ...ks(0, n).map((j): Bead => ({
       size: METAL,
-      aim: (pH) => (pH >= at[j] ? { to: pile(slot[j]), color: colour(j), speed: 1.6 } : { to: drift(j), jig: 0.06, color: colour(j) }),
+      aim: (pH) => (pH >= at[j] ? { to: onFloor(slot[j], settling), color: colour(j), speed: 2.2 } : { to: high(drift(j)), jig: 0.06, color: colour(j) }),
     })),
     ...ks(0, hydrogenIons).map((i): Bead => ({
       size: HYDROGEN_ION,
       aim: (pH) =>
         out(meets(i), pH)
           ? { on: OH + meets(i), offset: ON_OXYGEN[1], color: COLOUR.hydrogen, speed: 1.4 }
-          : { to: drift(i, 31), jig: 0.32, pace: 1.7, color: COLOUR.hydrogenIon, speed: 2 },
+          : { to: high(drift(i, 31)), jig: 0.32, pace: 1.7, color: COLOUR.hydrogenIon, speed: 2 },
     })),
     ...ks(0, N).map((k): Bead => ({
       size: OXYGEN,
@@ -260,17 +281,17 @@ function settleScene<M extends string>(
         const job = jobs[k]
         if (!out(k, pH)) return { to: vialSlot(k, tilt(pH)), color: COLOUR.oxygen }
         if (job.metal !== undefined) return { on: job.metal, offset: onMetal(valence(job.metal), job.place ?? 0), color: COLOUR.oxygen, speed: 1.4 }
-        return { to: drift(k, 41), jig: 0.06, color: COLOUR.oxygen, speed: 1.6 }
+        return { to: high(drift(k, 41)), jig: 0.06, color: COLOUR.oxygen, speed: 1.6 }
       },
     })),
     ...ks(0, N).map((k): Bead => ({ size: HYDROGEN, aim: () => ({ on: OH + k, offset: ON_OXYGEN[0], color: COLOUR.hydrogen }) })),
     ...ks(0, N).map((k): Bead => ({
       size: SODIUM,
       aim: (pH) =>
-        out(k, pH) ? { to: drift(k, 51), jig: 0.2, pace: 1.2, color: COLOUR.sodium, speed: 1.6 } : { on: OH + k, offset: NA_ON_OH, color: COLOUR.sodium },
+        out(k, pH) ? { to: high(drift(k, 51)), jig: 0.2, pace: 1.2, color: COLOUR.sodium, speed: 1.6 } : { on: OH + k, offset: NA_ON_OH, color: COLOUR.sodium },
     })),
-    ...ks(0, sulfates).map((s): Bead => ({ size: SULFATE, aim: () => ({ to: drift(s, 61), jig: 0.05, color: COLOUR.sulfate }) })),
-    ...water(2, 21, W),
+    ...ks(0, sulfates).map((s): Bead => ({ size: SULFATE, aim: () => ({ to: high(drift(s, 61)), jig: 0.05, color: COLOUR.sulfate }) })),
+    ...water(waters, 21, W),
   ]
 
   /**
@@ -296,10 +317,10 @@ function settleScene<M extends string>(
       { id: 'sodium', bead: NA + (sodium ?? 0), text: sodium === undefined ? null : 'Sodium ion' },
       { id: 'sulfate', bead: SO, text: 'Sulfate ion', below: true },
       { id: 'ion', bead: H + (ion ?? 0), text: ion === undefined ? null : 'Hydrogen ion' },
-      { id: 'new water', bead: OH + (made ?? 0), text: made === undefined ? null : 'New water' },
-      // A hydroxide is named while it travels to its metal, then becomes part of the solid's tag.
-      { id: 'hydroxide', bead: OH + (binding ?? 0), text: binding !== undefined && pH < jobs[binding].pH + 0.25 ? 'Hydroxide ion' : null },
-      { id: 'water', bead: W, text: 'Water', below: true },
+      { id: 'new water', bead: OH + (made ?? 0), text: made === undefined ? null : 'New water (H₂O)' },
+      // A hydroxide is named from leaving the vial until its metal settles; then it is part of the solid's tag.
+      { id: 'hydroxide', bead: OH + (binding ?? 0), text: binding !== undefined && pH < at[jobs[binding].metal ?? 0] ? 'Hydroxide ion' : null },
+      { id: 'water', bead: W, text: 'Water (H₂O)', below: true },
       // Each named metal's tag stays on one of its beads still dissolved, if any.
       ...named.map((m, i): Follow => {
         const j = stillIn(m)
@@ -313,7 +334,7 @@ function settleScene<M extends string>(
     { points: jobs.map((job) => job.pH), pitch: 1000 },
     { points: at.filter(Number.isFinite), pitch: 440 },
   ]
-  return { beads, tags, steps }
+  return { beads, tags, steps, toPos, fromPos }
 }
 
 /** 'a', 'a and b', 'a, b and c'. */
@@ -327,32 +348,40 @@ const ION_KEYS = [
 ]
 const acidity = { left: 'more acidic', right: 'less acidic' }
 const clamp = (v: number, [lo, hi]: [number, number]) => Math.min(hi, Math.max(lo, v))
-/** How far through its own range a figure's slider is, 0 to 1. */
-const share = (v: number, [lo, hi]: [number, number]) => (v - lo) / (hi - lo)
-/** Figures 2 and 3 share one pH scale; each slider shows the whole scale and the part it covers. */
-const shared = (step: 1 | 2) => ({
-  track: [IMPURITY_PH[0], MIXED_PH[1]] as [number, number],
-  steps: [
-    { from: IMPURITY_PH[0], to: IMPURITY_PH[1], text: 'Clearing the impurities', active: step === 1 },
-    { from: MIXED_PH[0], to: MIXED_PH[1], text: 'Recovering the metals', active: step === 2 },
-  ],
-})
+/**
+ * Figures 2 and 3 share one slider scale: 0 to 1 is figure 2's stretch and 1 to 2 figure 3's, and figure 3 starts where
+ * figure 2 was left (see ph.ts). Each figure maps its stretch to pH in its own way (see `settleScene`).
+ */
+const shared = { track: [0, 2] as [number, number] }
 
 // ───────────────────────────── Figure 2: clearing out the impurities ─────────────────────────────
+
+/** Where to stop: the whole slider is amber before the sweet spot, green in it and red past it, with a line saying why. */
+const SWEET = sweetSpot()
+/** Points across the sweet spot, so it gets a good stretch of the slider rather than a sliver. */
+const SWEET_MARKS = [0, 1, 2, 3, 4].map((i) => SWEET[0] + (i / 4) * (SWEET[1] - SWEET[0]))
+const STAGES = {
+  early: { tone: '#f2a33a', note: 'Impurities still dissolved' },
+  sweet: { tone: '#9bc53d', note: 'Sweet spot: impurities out, little nickel lost' },
+  late: { tone: '#e5483c', note: 'Too far: losing nickel' },
+}
 
 const IMPURITY_COUNT: Record<Metal, number> = { iron: 1, aluminium: 1, nickel: 2, cobalt: 1, manganese: 1, lithium: 1 }
 
 export function ImpurityFigure() {
-  const pH = clamp(useSharedPH(), IMPURITY_PH)
-  const scene = useMemo(() => settleScene(IMPURITY_COUNT, METALS, settled, IMPURITY_PH, 2, 3, IMPURITY_PH[1]), [])
-  const setPH = (v: number) => {
-    clickSteps(scene.steps, pH, clamp(v, IMPURITY_PH))
-    setSharedPH(v)
+  const pH = clamp(useImpurityPH(), IMPURITY_PH)
+  const scene = useMemo(() => settleScene(IMPURITY_COUNT, METALS, settled, IMPURITY_PH, 2, 3, IMPURITY_PH[1], SWEET_MARKS), [])
+  const pos = scene.toPos(pH)
+  const stage = pH < SWEET[0] ? 'early' : pH <= SWEET[1] ? 'sweet' : 'late'
+  const setPos = (v: number) => {
+    const next = scene.fromPos(v)
+    clickSteps(scene.steps, pH, next)
+    setImpurityPH(next)
   }
   return (
     <Frame
       view={
-        <Stage label={`Dissolved battery metals at pH ${pH.toFixed(1)}`} vessel="tank" focus={0.95} shift={0.25} labels={[]} progress={share(pH, IMPURITY_PH)}>
+        <Stage label={`Dissolved battery metals at pH ${pH.toFixed(1)}`} vessel="tank" focus={0.8} shift={0} zoomIn={1.6} closeIn={0.45} floor labels={[]} progress={pos}>
           <Beads beads={scene.beads} value={pH} follow={scene.tags(pH, ['iron', 'aluminium', 'nickel'], (m) => NAME[m])} />
         </Stage>
       }
@@ -360,7 +389,8 @@ export function ImpurityFigure() {
         <Chart
           label="Share of each metal still dissolved, against how acidic the solution is"
           series={METALS.map((m) => ({ name: m, color: COLOUR[m], y: (x) => 100 - settled(m, x) }))}
-          range={IMPURITY_PH} ticks={[1, 2, 3, 4, 5]} left="more acidic" right="less acidic (pH)" value={pH}
+          range={IMPURITY_PH} left="more acidic" right="less acidic (pH)" value={pH} yTitle="Still dissolved" zoom={pos}
+          band={{ from: SWEET[0], to: SWEET[1], text: 'sweet spot' }}
         />
       }
       keyTitle="Share still dissolved"
@@ -371,12 +401,15 @@ export function ImpurityFigure() {
         { name: 'Cobalt lost with them', value: pct(settled('cobalt', pH)) },
       ]}
       equations={['NaOH → Na⁺ + OH⁻', 'H⁺ + OH⁻ → H₂O', 'Fe³⁺ + 3 OH⁻ → Fe(OH)₃ (solid)', 'Al³⁺ + 3 OH⁻ → Al(OH)₃ (solid)', 'Na⁺ and SO₄²⁻ stay dissolved']}
-      slider={{ ...acidity, text: `pH ${pH.toFixed(1)}`, min: IMPURITY_PH[0], max: IMPURITY_PH[1], step: 0.05, value: pH, set: setPH, label: 'Acidity (pH)', ...shared(1) }}
+      slider={{
+        ...acidity, text: `pH ${pH.toFixed(1)}`, min: 0, max: 1, step: 0.002, value: pos, set: setPos, label: 'Acidity (pH)', ...shared,
+        ...STAGES[stage],
+      }}
       caption={
         <>
           Measured by Chernyaev, Wilson &amp; Lundström (2021), Scientific Reports 11, 23283, CC BY 4.0. The nickel, cobalt and lithium that sink here
           are dragged down with the sludge. Each step up in pH means ten times fewer hydrogen ions; the bead counts are illustrative. Copper is
-          removed in an earlier step.
+          taken out separately, by adding iron, which this figure does not show.
         </>
       }
     />
@@ -385,19 +418,21 @@ export function ImpurityFigure() {
 
 // ───────────────────────────── Figure 3: the valuable metals ─────────────────────────────
 
-const MIXED_COUNT: Record<MixedMetal, number> = { nickel: 2, cobalt: 1, manganese: 1, lithium: 1 }
+const MIXED_COUNT: Record<MixedMetal, number> = { nickel: 1, cobalt: 1, manganese: 1, lithium: 1 }
 
 export function MixedFigure() {
-  const pH = clamp(useSharedPH(), MIXED_PH)
-  const scene = useMemo(() => settleScene(MIXED_COUNT, MIXED_METALS, settledMixed, MIXED_PH, 1, 2, 6.6), [])
-  const setPH = (v: number) => {
-    clickSteps(scene.steps, pH, clamp(v, MIXED_PH))
-    setSharedPH(v)
+  const pH = clamp(useMixedPH(), MIXED_PH)
+  const scene = useMemo(() => settleScene(MIXED_COUNT, MIXED_METALS, settledMixed, MIXED_PH, 1, 1, 6.6, [], 1), [])
+  const pos = scene.toPos(pH)
+  const setPos = (v: number) => {
+    const next = scene.fromPos(v - 1)
+    clickSteps(scene.steps, pH, next)
+    setMixedPH(next)
   }
   return (
     <Frame
       view={
-        <Stage label={`Nickel, cobalt, manganese and lithium in solution at pH ${pH.toFixed(1)}`} vessel="tank" focus={0.95} shift={0.25} labels={[]} progress={share(pH, MIXED_PH)}>
+        <Stage label={`Nickel, cobalt, manganese and lithium in solution at pH ${pH.toFixed(1)}`} vessel="tank" focus={0.8} shift={0} zoomIn={1.6} closeIn={0.45} floor labels={[]} progress={pos}>
           <Beads beads={scene.beads} value={pH} follow={scene.tags(pH, MIXED_METALS, (m) => NAME[m])} />
         </Stage>
       }
@@ -405,7 +440,7 @@ export function MixedFigure() {
         <Chart
           label="Share of each metal still dissolved, against how acidic the solution is"
           series={MIXED_METALS.map((m) => ({ name: m, color: COLOUR[m], y: (x) => 100 - settledMixed(m, x) }))}
-          range={MIXED_PH} ticks={[6, 7, 8, 9, 10]} left="more acidic" right="less acidic (pH)" value={pH}
+          range={MIXED_PH} left="more acidic" right="less acidic (pH)" value={pH} yTitle="Still dissolved" zoom={pos}
         />
       }
       keyTitle="Share still dissolved"
@@ -416,12 +451,13 @@ export function MixedFigure() {
         { name: 'Manganese settled', value: pct(settledMixed('manganese', pH)) },
       ]}
       equations={['Ni²⁺ + 2 OH⁻ → Ni(OH)₂ (solid)', 'Co²⁺ + 2 OH⁻ → Co(OH)₂ (solid)', 'Mn²⁺ + 2 OH⁻ → Mn(OH)₂ (solid)', 'Lithium hydroxide dissolves, so lithium stays in the liquid', 'Na⁺ and SO₄²⁻ stay dissolved: the waste water is sodium sulfate solution']}
-      slider={{ ...acidity, text: `pH ${pH.toFixed(1)}`, min: MIXED_PH[0], max: MIXED_PH[1], step: 0.05, value: pH, set: setPH, label: 'Acidity (pH)', ...shared(2) }}
+      slider={{ ...acidity, text: `pH ${pH.toFixed(1)}`, min: 1, max: 2, step: 0.002, value: 1 + pos, set: setPos, label: 'Acidity (pH)', ...shared }}
       caption={
         <>
           Calculated, not measured: from how little of each metal hydroxide can stay dissolved (solubility constants from Martell &amp; Smith, 1976),
           for a solution like leached NMC battery waste (Chernyaev et al., 2023) after the impurities have been filtered off. Real solutions are
-          messier: the metals drag each other down. Bead counts are illustrative.
+          messier: the metals drag each other down. Lithium stays dissolved here; it is recovered afterwards with sodium carbonate, which this
+          figure does not show. Bead counts are illustrative.
         </>
       }
     />
