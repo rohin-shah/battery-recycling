@@ -144,8 +144,8 @@ const ZOOM_IN = 0.9 // extra zoom at the top of the slider: nearly twice as clos
 const FOCUS_IN = 0.8 // height in the liquid the camera closes in on
 
 function Scene({
-  labels, zoomIn, focus, vessel, progress, children,
-}: { labels: SceneLabel[]; zoomIn: number; focus: number; vessel: Vessel; progress: number; children: ReactNode }) {
+  labels, zoomIn, focus, vessel, progress, shift, children,
+}: { labels: SceneLabel[]; zoomIn: number; focus: number; vessel: Vessel; progress: number; shift?: number; children: ReactNode }) {
   // Labels mount a frame late: drei's Html needs the canvas attached first.
   const [ready, setReady] = useState(false)
   useEffect(() => {
@@ -157,7 +157,7 @@ function Scene({
   const tank = vessel === 'tank'
   // The tank is seen almost face on, filling the panel with room on the right for labels.
   const zoom = tank ? Math.min(width / (width < 420 ? 3.4 : 3.9), height / 2.4) : Math.min(124, width * (width < 420 ? 0.22 : 0.24)) * zoomIn
-  const k = tank ? (width < 420 ? 0.85 : 0.62) : width < 420 ? 0.62 : 0.3 // shift along the camera's right-hand axis
+  const k = tank ? (shift ?? (width < 420 ? 0.85 : 0.62)) : width < 420 ? 0.62 : 0.3 // shift along the camera's right-hand axis
   // As the slider moves up, the camera closes in on the middle of the liquid, in step with the slider.
   const view = (p: number) => {
     const s = k * (1 - p)
@@ -224,8 +224,12 @@ function Scene({
 
 /** The 3D view. The canvas only exists while the figure is on or near the screen. */
 export function Stage({
-  label, labels, zoomIn = 1.35, focus = 1.05, vessel = 'beaker', progress = 0, children,
-}: { label: string; labels: SceneLabel[]; zoomIn?: number; focus?: number; vessel?: Vessel; progress?: number; children: ReactNode }) {
+  label, labels, zoomIn = 1.35, focus = 1.05, vessel = 'beaker', progress = 0, shift, children,
+}: {
+  label: string; labels: SceneLabel[]; zoomIn?: number; focus?: number; vessel?: Vessel; progress?: number
+  /** How far to slide the view sideways, leaving room on the right for tags. */
+  shift?: number; children: ReactNode
+}) {
   const box = useRef<HTMLDivElement>(null)
   const [near, setNear] = useState(false)
   useEffect(() => {
@@ -239,7 +243,7 @@ export function Stage({
     <div ref={box} className="hm-view" role="img" aria-label={label}>
       {near && (
         <Canvas dpr={[1, 2]} gl={{ antialias: true }} flat aria-hidden>
-          <Scene labels={labels} zoomIn={zoomIn} focus={focus} vessel={vessel} progress={progress}>{children}</Scene>
+          <Scene labels={labels} zoomIn={zoomIn} focus={focus} vessel={vessel} progress={progress} shift={shift}>{children}</Scene>
         </Canvas>
       )}
     </div>

@@ -18,6 +18,8 @@ export const COLOUR = {
   oxygen: '#e5483c',
   hydrogenIon: '#ffffff',
   hydrogen: '#9fb1ba', // hydrogen that is part of a water molecule or a hydroxide ion
+  sulfate: '#f08fb0', // pink, kept clear of lithium's yellow
+  sodium: '#5fd4e8',
 } as const
 
 export const hash = (i: number, k: number) => {
@@ -51,11 +53,4 @@ export function tipped([x, y, z]: Vec, progress: number): Vec {
   const dx = x - TUBE[0]
   const dy = y - TUBE[1]
   return [TUBE[0] + dx * Math.cos(t) - dy * Math.sin(t), TUBE[1] + dx * Math.sin(t) + dy * Math.cos(t), z]
-}
-
-/** Place `n` in the dosing tube, stacked in rings of eight, with the tube tipped by `progress`. */
-export function inTube(n: number, progress = 0): Vec {
-  const ring = Math.floor(n / 8)
-  const a = (n % 8) * (Math.PI / 4) + ring * 0.4
-  return tipped([TUBE[0] + Math.cos(a) * 0.1, TUBE[1] + 0.06 + ring * 0.066, TUBE[2] + Math.sin(a) * 0.1], progress)
 }
