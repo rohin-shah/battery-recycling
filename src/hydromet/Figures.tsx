@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { IMPURITY_PH, METALS, MIXED_METALS, MIXED_PH, settled, settledMixed, type Metal, type MixedMetal } from './data'
 import { Chart, Frame } from './Frame'
-import { COLOUR, drift, inTube, pile, R, TUBE, type Vec } from './layout'
+import { COLOUR, drift, inTube, pile, R, tipped, TUBE, type Vec } from './layout'
 import { setSharedPH, useSharedPH } from './ph'
-import { type Bead, Beads, Stage } from './scene'
+import { type Bead, Beads, type Follow, Stage } from './scene'
 import './hydromet.css'
 
 const NAME = { iron: 'Iron', aluminium: 'Aluminium', nickel: 'Nickel', cobalt: 'Cobalt', manganese: 'Manganese', lithium: 'Lithium' } as const
@@ -39,128 +39,126 @@ function water(n: number, salt: number, base: number): Bead[] {
   return [...oxygens, ...hydrogens]
 }
 
-// ───────────────────────────── Figure 1: making an acid, and a metal oxide dissolving in it ─────────────────────────────
+// ───────────────────────────── Figure 1: making an acid, and a particle dissolving in it ─────────────────────────────
 
 /**
- * Illustrative, not measured. Sulfuric acid molecules go into water and split into two hydrogen ions and a sulfate;
- * a small grain of metal oxide sits on the bottom. The oxide only gives way in strong acid: Chen & Ho (2018) dissolved
- * battery cathode powder in 0.25 to 2 mol/L sulfuric acid, roughly pH 0.5 and below.
+ * Illustrative, not measured. The reader adds sulfuric acid to water, a molecule at a time; each splits into two
+ * hydrogen ions and a sulfate. A soluble particle sits on the bottom, and only gives way once the acid is strong: the
+ * last stretch of the slider (Chen & Ho 2018 needed 0.25 to 2 mol/L sulfuric acid to dissolve battery cathode powder).
+ * Few beads, so each one can be followed.
  */
-const ACID_PH: [number, number] = [0, 7]
-const MOLECULES = 12 // sulfuric acid molecules in the tube
-const OXIDES = 8 // metal–oxygen pairs in the grain
-const DISSOLVES_FROM = 2 // pH at which the first pair gives way
+const MOLECULES = 6 // sulfuric acid molecules in the tube
+const PAIRS = 4 // particle–oxygen pairs in the particle; the first PAIRS molecules' hydrogen ions take their oxygens
+const DISSOLVES_FROM = 5 / 7 // share of the acid added before the particle starts to give way
 const SULFATE = 0.075
-const COLOUR_METAL = '#4fb3a9'
+const HYDROGEN_ION = 0.042 // drawn larger here, so the reader can follow them
+const LAND = 0.025 // how much earlier in the slider's travel the hydrogen ions land on a pair than it comes away
+const COLOUR_PARTICLE = '#4fb3a9'
 const COLOUR_SULFATE = '#e0b84a'
 
-/** pH at which molecule `m` goes into the water: evenly spread from water (pH 7) to strong acid (pH 0). */
-const addedAt = (m: number) => ACID_PH[1] - ((m + 0.5) / MOLECULES) * (ACID_PH[1] - ACID_PH[0])
-/** pH at which oxide pair `j` dissolves: the top layer first. */
-const dissolvesAt = (j: number) => DISSOLVES_FROM - ((j + 0.5) / OXIDES) * DISSOLVES_FROM
+/** How much acid (0 to 1) is in when molecule `m` goes into the water. */
+const addedAt = (m: number) => (m + 0.5) / MOLECULES
+/** How much acid is in when pair `j` comes away: the top layer first. */
+const dissolvesAt = (j: number) => DISSOLVES_FROM + ((j + 0.5) / PAIRS) * (1 - DISSOLVES_FROM)
+const gone = (j: number, a: number) => a >= dissolvesAt(j)
+const taken = (j: number, a: number) => a >= dissolvesAt(j) - LAND
 
-/** A small block of metal and oxygen on the beaker floor, 4 × 2 × 2, alternating like a salt crystal. */
-function grainSites() {
-  const s = 0.15
-  const metals: Vec[] = []
+/** The particle on the tank floor, 2 × 2 × 2, alternating like a salt crystal. */
+function particleSites() {
+  const s = 0.16
+  const cores: Vec[] = []
   const oxygens: Vec[] = []
   for (let iy = 1; iy >= 0; iy--)
     for (let iz = 0; iz < 2; iz++)
-      for (let ix = 0; ix < 4; ix++) {
-        const p: Vec = [(ix - 1.5) * s, 0.14 + iy * s, (iz - 0.5) * s]
-        ;((ix + iy + iz) % 2 ? oxygens : metals).push(p)
+      for (let ix = 0; ix < 2; ix++) {
+        const p: Vec = [(ix - 0.5) * s, 0.14 + iy * s, (iz - 0.5) * s]
+        ;((ix + iy + iz) % 2 ? oxygens : cores).push(p)
       }
-  return { metals, oxygens }
+  return { cores, oxygens }
 }
 
 /** Place `m` in the dosing tube: three molecules to a ring. */
-function tubeSlot(m: number): Vec {
+function tubeSlot(m: number, progress: number): Vec {
   const a = (m % 3) * ((Math.PI * 2) / 3) + Math.floor(m / 3) * 0.6
-  return [TUBE[0] + Math.cos(a) * 0.075, TUBE[1] + 0.1 + Math.floor(m / 3) * 0.12, TUBE[2] + Math.sin(a) * 0.075]
+  return tipped([TUBE[0] + Math.cos(a) * 0.075, TUBE[1] + 0.1 + Math.floor(m / 3) * 0.12, TUBE[2] + Math.sin(a) * 0.075], progress)
 }
+
+/** Spread a drifting place across the tank, which is wider than the beaker. */
+const wide = ([x, y, z]: Vec): Vec => [x * 1.25, y, z]
 const H_ON_SULFATE: Vec[] = [[0.075, 0.03, 0], [-0.075, 0.03, 0]]
 
+// Bead order: particle cores, their oxygens, sulfates, hydrogens (two per molecule), then background water.
+const O = PAIRS
+const S = PAIRS * 2
+const H = S + MOLECULES
+
 function acidBeads(): Bead[] {
-  const { metals, oxygens } = grainSites()
-  const O = OXIDES // index of the first oxygen
-  const S = OXIDES * 2 // index of the first sulfate
-  const gone = (j: number, pH: number) => pH <= dissolvesAt(j)
+  const { cores, oxygens } = particleSites()
   return [
-    ...metals.map((p, j): Bead => ({
+    ...cores.map((p, j): Bead => ({
       size: METAL,
-      aim: (pH) => (gone(j, pH) ? { to: drift(j, 3), jig: 0.035, color: COLOUR_METAL } : { to: p, color: COLOUR_METAL }),
+      aim: (a) => (gone(j, a) ? { to: wide(drift(j, 3)), jig: 0.06, color: COLOUR_PARTICLE, speed: 1.4 } : { to: p, color: COLOUR_PARTICLE }),
     })),
     ...oxygens.map((p, j): Bead => ({
       size: OXYGEN,
-      aim: (pH) => (gone(j, pH) ? { to: drift(j, 7), jig: 0.03, color: COLOUR.oxygen } : { to: p, color: COLOUR.oxygen }),
+      aim: (a) => (gone(j, a) ? { to: wide(drift(j, 7)), jig: 0.06, color: COLOUR.oxygen, speed: 1.4 } : { to: p, color: COLOUR.oxygen }),
     })),
     // Sulfate: in the tube as part of a molecule, then loose in the water.
     ...Array.from({ length: MOLECULES }, (_, m): Bead => ({
       size: SULFATE,
-      aim: (pH) => (pH <= addedAt(m) ? { to: drift(m, 13), jig: 0.04, color: COLOUR_SULFATE } : { to: tubeSlot(m), color: COLOUR_SULFATE }),
+      aim: (a) => (a >= addedAt(m) ? { to: wide(drift(m, 13)), jig: 0.05, color: COLOUR_SULFATE } : { to: tubeSlot(m, a), color: COLOUR_SULFATE }),
     })),
-    // Hydrogen: on its sulfate in the tube; split off as a loose ion in the water; then, for the first pairs, taken by an
-    // oxygen of the grain to make water.
+    // Hydrogen: on its sulfate in the tube; split off as an ion roaming the water; then, for the first molecules,
+    // swimming over to an oxygen of the particle to make water.
     ...Array.from({ length: MOLECULES * 2 }, (_, k): Bead => {
       const m = Math.floor(k / 2)
       return {
-        size: HYDROGEN,
-        aim: (pH) => {
-          if (m < OXIDES && gone(m, pH)) return { on: O + m, offset: ON_OXYGEN[k % 2], color: COLOUR.hydrogen }
-          if (pH <= addedAt(m)) return { to: drift(k, 17), jig: 0.07, color: COLOUR.hydrogenIon }
+        size: HYDROGEN_ION,
+        aim: (a) => {
+          if (m < PAIRS && taken(m, a)) return { on: O + m, offset: ON_OXYGEN[k % 2], color: COLOUR.hydrogen, speed: 1.4 }
+          if (a >= addedAt(m)) return { to: wide(drift(k, 17)), jig: 0.32, pace: 1.7, color: COLOUR.hydrogenIon, speed: 2 }
           return { on: S + m, offset: H_ON_SULFATE[k % 2], color: COLOUR.hydrogenIon }
         },
       }
     }),
-    ...water(6, 21, S + MOLECULES + MOLECULES * 2),
+    ...water(3, 21, H + MOLECULES * 2),
+  ]
+}
+
+/**
+ * Tags that ride with the beads of the first reaction, saying what each is at that moment: one hydrogen ion from the
+ * vial to the particle, the oxygen it takes away as water, and the piece of particle left dissolved.
+ */
+function acidTags(a: number): Follow[] {
+  return [
+    { bead: H, text: a < addedAt(0) ? 'Acid' : gone(0, a) ? null : 'Hydrogen ion' },
+    { bead: O, text: gone(0, a) ? 'Water' : null },
+    { bead: 0, text: gone(0, a) ? 'Dissolved particle' : 'Soluble particle', below: true },
   ]
 }
 
 export function DissolveFigure() {
-  const [pH, setPH] = useState(ACID_PH[1])
+  const [acid, setAcid] = useState(0)
   const beads = useMemo(() => acidBeads(), [])
-  const added = Array.from({ length: MOLECULES }, (_, m) => pH <= addedAt(m)).filter(Boolean).length
-  const dissolved = Array.from({ length: OXIDES }, (_, j) => pH <= dissolvesAt(j)).filter(Boolean).length
+  const added = Array.from({ length: MOLECULES }, (_, m) => acid >= addedAt(m)).filter(Boolean).length
   return (
     <Frame
       view={
         <Stage
-          label={`A grain of metal oxide in water${added ? ` with ${added} molecules of sulfuric acid added, pH ${pH.toFixed(1)}` : ''}`}
-          zoomIn={1.45} focus={1.15}
-          labels={[
-            { at: [0.2, TUBE[1] + 0.42, 0], text: 'Sulfuric acid' },
-            { at: [R + 0.1, 1.0, 0], text: 'Water' },
-            { at: [R + 0.1, 0.2, 0], text: 'Metal oxide' },
-          ]}
+          label={`A soluble particle in water, ${added ? `with ${added} molecules of sulfuric acid added` : 'with no acid'}`}
+          vessel="tank" focus={0.95} progress={acid} labels={[]}
         >
-          <Beads beads={beads} value={pH} />
+          <Beads beads={beads} value={acid} follow={acidTags(acid)} />
         </Stage>
       }
-      keys={[
-        { name: 'Metal', color: COLOUR_METAL },
-        { name: 'Oxygen', color: COLOUR.oxygen },
-        { name: 'Hydrogen ion', color: COLOUR.hydrogenIon },
-        { name: 'Sulfate', color: COLOUR_SULFATE },
-        { name: 'Hydrogen in water', color: COLOUR.hydrogen },
-      ]}
-      readouts={[
-        { name: 'pH', value: pH.toFixed(1) },
-        { name: 'Loose hydrogen ions', value: String(added * 2 - dissolved * 2) },
-        { name: 'Metal dissolved', value: `${dissolved} of ${OXIDES}` },
-      ]}
-      equations={[
-        'Sulfuric acid splits up in water: H₂SO₄ → 2 H⁺ + SO₄²⁻',
-        'metal oxide + hydrogen ions → dissolved metal + water',
-        'MO + 2 H⁺ → M²⁺ + H₂O',
-      ]}
       slider={{
-        left: 'more acidic', right: 'less acidic', text: pH >= ACID_PH[1] ? 'pH 7, plain water' : `pH ${pH.toFixed(1)}`,
-        min: ACID_PH[0], max: ACID_PH[1], step: 0.05, value: pH, set: setPH, label: 'Acidity (pH)',
+        left: 'water', right: 'strong acid', text: added ? 'Acid added' : 'Plain water',
+        min: 0, max: 1, step: 0.01, value: acid, set: setAcid, label: 'Acid added',
       }}
       caption={
         <>
-          Illustrative. Each step down in pH means ten times more hydrogen ions, so the bead counts are not to scale. The metal oxide only gives way in
-          strong acid: Chen &amp; Ho (2018) dissolved battery cathode powder in 0.25 to 2 mol/L sulfuric acid, around pH 0.5 and below.
+          Illustrative: real acid has far more hydrogen ions than shown. The particle only gives way once the acid is strong; Chen &amp; Ho (2018) needed
+          0.25 to 2 mol/L sulfuric acid to dissolve battery cathode powder.
         </>
       }
     />
@@ -202,7 +200,7 @@ function settleBeads<M extends string>(
     // Hydroxide ions: an oxygen with one hydrogen, waiting in the tube and then loose in the liquid.
     ...Array.from({ length: hydroxides }, (_, k): Bead => ({
       size: OXYGEN,
-      aim: (pH) => (pH >= release(k) ? { to: drift(k, 41), jig: 0.04, color: COLOUR.oxygen } : { to: inTube(k), color: COLOUR.oxygen }),
+      aim: (pH) => (pH >= release(k) ? { to: drift(k, 41), jig: 0.04, color: COLOUR.oxygen } : { to: inTube(k, (pH - range[0]) / (range[1] - range[0])), color: COLOUR.oxygen }),
     })),
     ...Array.from({ length: hydroxides }, (_, k): Bead => ({ size: HYDROGEN, aim: () => ({ on: OH + k, offset: ON_OXYGEN[0], color: COLOUR.hydrogen }) })),
     ...water(6, 21, n + hydrogenIons + hydroxides * 2),
@@ -215,6 +213,8 @@ const ION_KEYS = [
 ]
 const acidity = { left: 'more acidic', right: 'less acidic' }
 const clamp = (v: number, [lo, hi]: [number, number]) => Math.min(hi, Math.max(lo, v))
+/** How far through its own range a figure's slider is, 0 to 1. */
+const share = (v: number, [lo, hi]: [number, number]) => (v - lo) / (hi - lo)
 /** Figures 2 and 3 share one pH scale; each slider shows the whole scale and the part it covers. */
 const shared = (step: 1 | 2) => ({
   track: [IMPURITY_PH[0], MIXED_PH[1]] as [number, number],
@@ -239,7 +239,7 @@ export function ImpurityFigure() {
   return (
     <Frame
       view={
-        <Stage label={`A beaker of dissolved battery metals at pH ${pH.toFixed(1)}`} labels={settleLabels('Settled: sludge')}>
+        <Stage label={`A beaker of dissolved battery metals at pH ${pH.toFixed(1)}`} labels={settleLabels('Settled: sludge')} progress={share(pH, IMPURITY_PH)}>
           <Beads beads={beads} value={pH} />
         </Stage>
       }
@@ -280,7 +280,7 @@ export function MixedFigure() {
   return (
     <Frame
       view={
-        <Stage label={`A beaker of nickel, cobalt, manganese and lithium in solution at pH ${pH.toFixed(1)}`} labels={settleLabels('Settled: mixed metals')}>
+        <Stage label={`A beaker of nickel, cobalt, manganese and lithium in solution at pH ${pH.toFixed(1)}`} labels={settleLabels('Settled: mixed metals')} progress={share(pH, MIXED_PH)}>
           <Beads beads={beads} value={pH} />
         </Stage>
       }

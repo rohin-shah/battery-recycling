@@ -5,6 +5,7 @@ export type Vec = [number, number, number]
 export const R = 0.9 // beaker inner radius
 export const LIQUID_TOP = 1.45
 export const TUBE: Vec = [0, 1.62, 0]
+export const TANK = { w: 2.4, d: 1.6, h: 1.9 } // the aquarium in figure 1
 
 /** Bead colours. Metals are stronger than the page palette so they stay distinct on the dark panel. */
 export const COLOUR = {
@@ -38,9 +39,20 @@ export function pile(s: number, perLayer = 36, radius = R - 0.3, lift = 0.13): V
   return [Math.cos(a) * r, 0.15 + Math.floor(s / perLayer) * lift, Math.sin(a) * r]
 }
 
-/** Place `n` in the dosing tube, stacked in rings of eight. */
-export function inTube(n: number): Vec {
+/** How far the dosing tube tips over (radians) by the end of the slider's travel. */
+export const TILT = 0.85
+
+/** A point in the dosing tube, once the tube has tipped over by `progress` (0 to 1) of its full tilt, about its mouth. */
+export function tipped([x, y, z]: Vec, progress: number): Vec {
+  const t = TILT * progress
+  const dx = x - TUBE[0]
+  const dy = y - TUBE[1]
+  return [TUBE[0] + dx * Math.cos(t) - dy * Math.sin(t), TUBE[1] + dx * Math.sin(t) + dy * Math.cos(t), z]
+}
+
+/** Place `n` in the dosing tube, stacked in rings of eight, with the tube tipped by `progress`. */
+export function inTube(n: number, progress = 0): Vec {
   const ring = Math.floor(n / 8)
   const a = (n % 8) * (Math.PI / 4) + ring * 0.4
-  return [TUBE[0] + Math.cos(a) * 0.1, TUBE[1] + 0.06 + ring * 0.066, TUBE[2] + Math.sin(a) * 0.1]
+  return tipped([TUBE[0] + Math.cos(a) * 0.1, TUBE[1] + 0.06 + ring * 0.066, TUBE[2] + Math.sin(a) * 0.1], progress)
 }
