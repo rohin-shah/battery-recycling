@@ -179,7 +179,7 @@ export function DissolveFigure() {
       view={
         <Stage
           label={`A soluble particle in water, ${added ? `with ${added} molecules of sulfuric acid added` : 'with no acid'}`}
-          vessel="tank" focus={0.95} zoomIn={1} progress={acid} labels={[]}
+          vessel="tank" focus={0.95} zoomIn={1} closeIn={0.3} closeFocus={0.85} progress={acid} labels={[]}
         >
           <Beads beads={beads} value={acid} follow={acidTags(acid)} />
         </Stage>

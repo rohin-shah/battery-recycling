@@ -180,9 +180,9 @@ export type SceneLabel = { at: Vec; text: string }
 const FOCUS_IN = 0.8 // height in the liquid the camera closes in on
 
 function Scene({
-  labels, zoomIn, focus, vessel, progress, shift, closeIn, floor, children,
+  labels, zoomIn, focus, vessel, progress, shift, closeIn, closeFocus, floor, children,
 }: {
-  labels: SceneLabel[]; zoomIn: number; focus: number; vessel: Vessel; progress: number; shift?: number; closeIn: number; floor: boolean
+  labels: SceneLabel[]; zoomIn: number; focus: number; vessel: Vessel; progress: number; shift?: number; closeIn: number; closeFocus: number; floor: boolean
   children: ReactNode
 }) {
   // Labels mount a frame late: drei's Html needs the canvas attached first.
@@ -200,7 +200,7 @@ function Scene({
   // As the slider moves up, the camera closes in on the middle of the liquid, in step with the slider.
   const view = (p: number) => {
     const s = k * (1 - p)
-    const f = focus + (FOCUS_IN - focus) * p
+    const f = focus + (closeFocus - focus) * p
     return {
       zoom: zoom * (1 + closeIn * p),
       eye: (tank ? [1.4 + s, f + 0.9, 7] : [6 + s, 4.6 + f - 0.86, 6 - s]) as Vec,
@@ -270,13 +270,15 @@ function Scene({
 
 /** The 3D view. The canvas only exists while the figure is on or near the screen. */
 export function Stage({
-  label, labels, zoomIn = 1.35, focus = 1.05, vessel = 'beaker', progress = 0, shift, closeIn = 0.9, floor = false, children,
+  label, labels, zoomIn = 1.35, focus = 1.05, vessel = 'beaker', progress = 0, shift, closeIn = 0.9, closeFocus = FOCUS_IN, floor = false, children,
 }: {
   label: string; labels: SceneLabel[]; zoomIn?: number; focus?: number; vessel?: Vessel; progress?: number
   /** How far to slide the view sideways, leaving room on the right for tags. */
   shift?: number
   /** Extra zoom at the top of the slider: 0.9 is nearly twice as close. */
   closeIn?: number
+  /** The height the camera closes in on at the top of the slider. */
+  closeFocus?: number
   /** Draw a floor for settled solids to sit on. */
   floor?: boolean; children: ReactNode
 }) {
@@ -293,7 +295,7 @@ export function Stage({
     <div ref={box} className="hm-view" role="img" aria-label={label}>
       {near && (
         <Canvas dpr={[1, 2]} gl={{ antialias: true }} flat aria-hidden>
-          <Scene labels={labels} zoomIn={zoomIn} focus={focus} vessel={vessel} progress={progress} shift={shift} closeIn={closeIn} floor={floor}>{children}</Scene>
+          <Scene labels={labels} zoomIn={zoomIn} focus={focus} vessel={vessel} progress={progress} shift={shift} closeIn={closeIn} closeFocus={closeFocus} floor={floor}>{children}</Scene>
         </Canvas>
       )}
     </div>
