@@ -1,4 +1,4 @@
-import { type CSSProperties, type ReactNode, type Ref, useState } from 'react'
+import { type CSSProperties, type ReactNode, useState } from 'react'
 
 /** One line on a chart: a colour and a function from the slider value to a percentage. */
 export type Series = { name: string; color: string; y: (x: number) => number }
@@ -109,18 +109,16 @@ export type Readout = { name: string; value: string }
 
 /** The dark panel around a figure: 3D view with its slider on the right, then optionally a chart, key, readouts and equations. */
 export function Frame({
-  view, chart, keyTitle, keys, readouts, equations, slider, caption, box,
+  view, chart, keyTitle, keys, readouts, equations, slider, caption,
 }: {
   view: ReactNode; chart?: ReactNode; keyTitle?: string; keys?: KeyItem[]; readouts?: Readout[]; equations?: string[]
   slider: Slider
   caption: ReactNode
-  /** The figure element, for watching whether it is on screen. */
-  box?: Ref<HTMLElement>
 }) {
   const [open, setOpen] = useState(false)
   const side = chart || keys || readouts || equations
   return (
-    <figure className="hm" ref={box}>
+    <figure className="hm">
       <div className="hm-panel">
         <div className={side ? 'hm-stage' : 'hm-stage hm-solo'}>
           <div className="hm-main">
