@@ -87,16 +87,16 @@ export default function App() {
       </Figure>
       <p>
         Then the metal containing acid is purified using <Ion c="sodium">sodium</Ion> <Ion c="oxygen">hydroxide</Ion> to grab the <Ion c="aluminium">aluminium</Ion>, and <Ion c="iron">iron</Ion> is added to trade places with copper. This is
-        almost entirely efficient: about 98% of the <Ion c="iron">iron</Ion> and <Ion c="aluminium">aluminium</Ion> is removed, though about 9% of the <Ion c="nickel">nickel</Ion> goes with them. Adding <Ion c="sodium">sodium</Ion>
+        almost entirely efficient: about 98% of the <Ion c="iron">iron</Ion> and <Ion c="aluminium">aluminium</Ion> is removed, though about 9% of the <Ion c="nickel">nickel</Ion> goes with them. Adding <Ion c="sodium">sodium</Ion>{' '}
         <Ion c="oxygen">hydroxide</Ion> is like adding half of water. This means any <Ion c="hydrogenIon">hydrogen</Ion> floating about is very attracted to it and makes more water—and therefore less
-        acid which can hold less dissolved metal. Once the <Ion c="hydrogenIon">hydrogen</Ion> is used up, the <Ion c="oxygen">hydroxide</Ion> grabs the metal ions instead, making solid metal
+        acid which can hold less dissolved metal. Once the <Ion c="hydrogenIon">hydrogen</Ion> is used up, the <Ion c="oxygen">hydroxide</Ion> grabs the metal ions instead, making solid metal{' '}
         <Ion c="oxygen">hydroxides</Ion> that settle out.
       </p>
       <p>
         The less metal containing acid still has <Ion c="lithium">lithium</Ion>, <Ion c="nickel">nickel</Ion>, <Ion c="cobalt">cobalt</Ion> and <Ion c="manganese">manganese</Ion> in it. These are extracted by adding <Ion c="sodium">sodium</Ion> <Ion c="oxygen">hydroxide</Ion> and
         carbonate. A US national lab model, based on what commercial plants achieve, puts this stage at 98% for the <Ion c="nickel">nickel</Ion>, <Ion c="cobalt">cobalt</Ion> and <Ion c="manganese">manganese</Ion> and 90%
         for the <Ion c="lithium">lithium</Ion>. Real plants differ in the order and method of these steps. We’re now left with a waste water containing <Ion c="sodium">sodium</Ion> <Ion c="sulfate">sulfate</Ion> that
-        is relatively inert. The water is often evaporated off leaving behind the salt. Use the slider to add <Ion c="oxygen">hydroxide ions</Ion> through <Ion c="sodium">sodium</Ion> <Ion c="oxygen">hydroxide</Ion>
+        is relatively inert. The water is often evaporated off leaving behind the salt. Use the slider to add <Ion c="oxygen">hydroxide ions</Ion> through <Ion c="sodium">sodium</Ion> <Ion c="oxygen">hydroxide</Ion>{' '}
         to neutralise the acid and settle out the <Ion c="nickel">nickel</Ion>, <Ion c="cobalt">cobalt</Ion> and <Ion c="manganese">manganese</Ion>.
       </p>
       <Figure>
