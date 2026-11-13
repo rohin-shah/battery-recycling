@@ -10,13 +10,13 @@ export const TANK = { w: 2.4, d: 1.6, h: 1.9 } // the aquarium in figure 1
 /** Bead colours. Metals are stronger than the page palette so they stay distinct on the dark panel. */
 export const COLOUR = {
   iron: '#d2601f',
-  aluminium: '#f1f4f4',
+  aluminium: '#d9c39a', // champagne: white would vanish in the page text, and grey is taken by water's hydrogen
   nickel: '#3fbf5f',
   cobalt: '#2f6ff0',
   manganese: '#b45ae0',
   lithium: '#f2cf2e',
   oxygen: '#e5483c',
-  hydrogenIon: '#ffffff',
+  hydrogenIon: '#b6f03c', // lime: white would vanish in the page text
   hydrogen: '#9fb1ba', // hydrogen that is part of a water molecule or a hydroxide ion
   sulfate: '#f08fb0', // pink, kept clear of lithium's yellow
   sodium: '#5fd4e8',

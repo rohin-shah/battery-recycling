@@ -1,4 +1,4 @@
-import { lazy, type ReactNode, Suspense } from 'react'
+import { type CSSProperties, lazy, type ReactNode, Suspense } from 'react'
 import { COLOUR } from './hydromet/layout'
 import { SOURCES, type SourceId } from './sources'
 
@@ -8,9 +8,9 @@ const DissolveFigure = figure('DissolveFigure')
 const ImpurityFigure = figure('ImpurityFigure')
 const MixedFigure = figure('MixedFigure')
 
-/** A particle's name in the text, in the colour of its beads in the figures, on the figures' dark ground so every colour reads. */
+/** A particle's name in the text, in the colour of its beads (toned towards the text colour so it reads on the page). */
 const Ion = ({ c, children }: { c: keyof typeof COLOUR; children: ReactNode }) => (
-  <span className="ion" style={{ color: COLOUR[c] }}>
+  <span className="ion" style={{ '--c': COLOUR[c] } as CSSProperties}>
     {children}
   </span>
 )
