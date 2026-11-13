@@ -412,8 +412,9 @@ export function ImpurityFigure() {
     if (shown === pos) return
     const next = scene.fromPos(shown)
     const nextStage = stageAt(next)
-    // Steps knock brightly inside the sweet spot and dully past it; crossing into either plays its own cue.
-    clickSteps(scene.steps, pH, next, nextStage === 'sweet' ? 'good' : nextStage === 'late' ? 'bad' : 'neutral')
+    // Only the main events make a sound here: a metal settling (bright in the sweet spot, dull past it), and the cue on
+    // crossing into the sweet spot or past it. Each hydroxide leaving the vial stays silent; there are too many of them.
+    clickSteps([scene.steps[1]], pH, next, nextStage === 'sweet' ? 'good' : nextStage === 'late' ? 'bad' : 'neutral')
     if (nextStage !== stage && nextStage !== 'early') cue(nextStage === 'sweet' ? 'good' : 'bad')
     setImpurityPH(next)
   }
