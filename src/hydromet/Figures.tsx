@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { IMPURITY_PH, interpolate, METALS, sweetSpot, MIXED_METALS, MIXED_PH, settled, settledMixed, type Metal, type MixedMetal } from './data'
 import { backlash, thumbAt } from './backlash'
+import { useIdle } from './idle'
 import { clickSteps, cue } from './click'
 import { Chart, Frame } from './Frame'
 import { COLOUR, drift, hash, tipped, TUBE, type Vec } from './layout'
@@ -13,7 +14,7 @@ const pct = (v: number) => `${Math.round(v)}%`
 
 const METAL = 0.07
 const OXYGEN = 0.05
-const HYDROGEN = 0.028
+const HYDROGEN = 0.036 // every hydrogen, loose or bonded, is drawn the same size and colour
 /** Where the hydrogens sit on an oxygen: two for water, the first alone for a hydroxide ion. */
 const ON_OXYGEN: Vec[] = [[0.052, 0.036, 0], [-0.052, 0.036, 0]]
 
@@ -53,7 +54,7 @@ const MOLECULES = 3 // sulfuric acid molecules in the tube
 const PAIRS = 2 // particle–oxygen pairs in the particle; the first PAIRS molecules' hydrogen ions take their oxygens
 const DISSOLVES_FROM = 5 / 7 // share of the acid added before the particle starts to give way
 const SULFATE = 0.075
-const HYDROGEN_ION = 0.042 // drawn larger here, so the reader can follow them
+const HYDROGEN_ION = HYDROGEN
 const LAND = 0.025 // how much earlier in the slider's travel the hydrogen ions land on a pair than it comes away
 const COLOUR_PARTICLE = '#4fb3a9'
 
@@ -163,8 +164,12 @@ const POURS = Array.from({ length: MOLECULES }, (_, m) => addedAt(m))
 const FREES = Array.from({ length: PAIRS }, (_, j) => dissolvesAt(j))
 
 export function DissolveFigure() {
-  const [acid, setValue] = useState(0)
+  const [real, setValue] = useState(0)
   const [thumb, setThumb] = useState<number | null>(null)
+  const box = useRef<HTMLElement>(null)
+  const idle = useIdle(box, thumb === null, 0.55)
+  // Until the reader moves the slider, the idle loop drives it.
+  const acid = thumb === null ? idle : real
   const setAcid = (v: number) => {
     setThumb(v)
     const next = backlash(acid, v, [0, 1])
@@ -176,6 +181,7 @@ export function DissolveFigure() {
   const added = Array.from({ length: MOLECULES }, (_, m) => acid >= addedAt(m)).filter(Boolean).length
   return (
     <Frame
+      box={box}
       view={
         <Stage
           label={`A soluble particle in water, ${added ? `with ${added} molecules of sulfuric acid added` : 'with no acid'}`}
@@ -186,7 +192,7 @@ export function DissolveFigure() {
       }
       slider={{
         left: 'water', right: 'strong acid', text: added ? 'Acid added' : 'Plain water',
-        min: 0, max: 1, step: 0.002, value: thumbAt(thumb, acid, [0, 1]), set: setAcid, label: 'Acid added',
+        min: 0, max: 1, step: 0.002, value: thumb === null ? acid : thumbAt(thumb, acid, [0, 1]), set: setAcid, label: 'Acid added',
       }}
       caption={
         <>
@@ -401,11 +407,15 @@ const STAGES = {
 const IMPURITY_COUNT: Record<Metal, number> = { iron: 1, aluminium: 1, nickel: 2, cobalt: 1, manganese: 1, lithium: 1 }
 
 export function ImpurityFigure() {
-  const pH = clamp(useImpurityPH(), IMPURITY_PH)
   const scene = useMemo(() => settleScene(IMPURITY_COUNT, METALS, settled, IMPURITY_PH, 2, 3, IMPURITY_PH[1], SWEET_MARKS, 2, 1.9), [])
+  const [thumb, setThumb] = useState<number | null>(null)
+  const box = useRef<HTMLElement>(null)
+  const idle = useIdle(box, thumb === null, 0.3)
+  const real = clamp(useImpurityPH(), IMPURITY_PH)
+  // Until the reader moves the slider, the idle loop drives it.
+  const pH = thumb === null ? scene.fromPos(scene.toPos(real) + idle) : real
   const pos = scene.toPos(pH)
   const stage = stageAt(pH)
-  const [thumb, setThumb] = useState<number | null>(null)
   const setPos = (v: number) => {
     setThumb(v)
     const shown = backlash(pos, v, [0, 1])
@@ -419,6 +429,7 @@ export function ImpurityFigure() {
   }
   return (
     <Frame
+      box={box}
       view={
         <Stage label={`Dissolved battery metals at pH ${pH.toFixed(1)}`} vessel="tank" focus={0.8} shift={0.15} zoomIn={1.6} closeIn={0.3} floor labels={[]} progress={pos}>
           <Beads beads={scene.beads} value={pH} follow={scene.tags(pH, ['iron', 'aluminium', 'nickel'], (m) => NAME[m])} />
@@ -441,7 +452,7 @@ export function ImpurityFigure() {
       ]}
       equations={['NaOH → Na⁺ + OH⁻', 'H⁺ + OH⁻ → H₂O', 'Fe³⁺ + 3 OH⁻ → Fe(OH)₃ (solid)', 'Al³⁺ + 3 OH⁻ → Al(OH)₃ (solid)', 'Na⁺ and SO₄²⁻ stay dissolved']}
       slider={{
-        ...acidity, text: `pH ${pH.toFixed(1)}`, min: 0, max: 1, step: 0.002, value: thumbAt(thumb, pos, [0, 1]), set: setPos, label: 'Acidity (pH)', ...shared,
+        ...acidity, text: `pH ${pH.toFixed(1)}`, min: 0, max: 1, step: 0.002, value: thumb === null ? pos : thumbAt(thumb, pos, [0, 1]), set: setPos, label: 'Acidity (pH)', ...shared,
         ...STAGES[stage],
       }}
       caption={
@@ -460,10 +471,14 @@ export function ImpurityFigure() {
 const MIXED_COUNT: Record<MixedMetal, number> = { nickel: 1, cobalt: 1, manganese: 1, lithium: 1 }
 
 export function MixedFigure() {
-  const pH = clamp(useMixedPH(), MIXED_PH)
   const scene = useMemo(() => settleScene(MIXED_COUNT, MIXED_METALS, settledMixed, MIXED_PH, 1, 1, 6.6, [], 1), [])
-  const pos = scene.toPos(pH)
   const [thumb, setThumb] = useState<number | null>(null)
+  const box = useRef<HTMLElement>(null)
+  const idle = useIdle(box, thumb === null, 0.3)
+  const real = clamp(useMixedPH(), MIXED_PH)
+  // Until the reader moves the slider, the idle loop drives it.
+  const pH = thumb === null ? scene.fromPos(scene.toPos(real) + idle) : real
+  const pos = scene.toPos(pH)
   const setPos = (v: number) => {
     setThumb(v)
     const shown = backlash(1 + pos, v, [1, 2])
@@ -474,6 +489,7 @@ export function MixedFigure() {
   }
   return (
     <Frame
+      box={box}
       view={
         <Stage label={`Nickel, cobalt, manganese and lithium in solution at pH ${pH.toFixed(1)}`} vessel="tank" focus={0.8} shift={0.3} zoomIn={1.6} closeIn={0.45} floor labels={[]} progress={pos}>
           <Beads beads={scene.beads} value={pH} follow={scene.tags(pH, MIXED_METALS, (m) => NAME[m])} />
@@ -494,7 +510,7 @@ export function MixedFigure() {
         { name: 'Manganese settled', value: pct(settledMixed('manganese', pH)) },
       ]}
       equations={['Ni²⁺ + 2 OH⁻ → Ni(OH)₂ (solid)', 'Co²⁺ + 2 OH⁻ → Co(OH)₂ (solid)', 'Mn²⁺ + 2 OH⁻ → Mn(OH)₂ (solid)', 'Lithium hydroxide dissolves, so lithium stays in the liquid', 'Na⁺ and SO₄²⁻ stay dissolved: the waste water is sodium sulfate solution']}
-      slider={{ ...acidity, text: `pH ${pH.toFixed(1)}`, min: 1, max: 2, step: 0.002, value: thumbAt(thumb, 1 + pos, [1, 2]), set: setPos, label: 'Acidity (pH)', ...shared }}
+      slider={{ ...acidity, text: `pH ${pH.toFixed(1)}`, min: 1, max: 2, step: 0.002, value: thumb === null ? 1 + pos : thumbAt(thumb, 1 + pos, [1, 2]), set: setPos, label: 'Acidity (pH)', ...shared }}
       caption={
         <>
           Calculated, not measured: from how little of each metal hydroxide can stay dissolved (solubility constants from Martell &amp; Smith, 1976),
