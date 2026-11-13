@@ -1,4 +1,5 @@
 import { lazy, type ReactNode, Suspense } from 'react'
+import { COLOUR } from './hydromet/layout'
 import { SOURCES, type SourceId } from './sources'
 
 // The figures bring three.js with them, so they load after the text.
@@ -6,6 +7,13 @@ const figure = (name: 'DissolveFigure' | 'ImpurityFigure' | 'MixedFigure') => la
 const DissolveFigure = figure('DissolveFigure')
 const ImpurityFigure = figure('ImpurityFigure')
 const MixedFigure = figure('MixedFigure')
+
+/** A particle's name in the text, in the colour of its beads in the figures, on the figures' dark ground so every colour reads. */
+const Ion = ({ c, children }: { c: keyof typeof COLOUR; children: ReactNode }) => (
+  <span className="ion" style={{ color: COLOUR[c] }}>
+    {children}
+  </span>
+)
 
 const Figure = ({ children }: { children: ReactNode }) => <Suspense fallback={<div className="hm-loading" />}>{children}</Suspense>
 
@@ -58,7 +66,7 @@ export default function App() {
       <h4>A brief introduction to hydrometallurgy</h4>
       <p>
         Why it’s called hydrometallurgy can be slightly unintuitive: “hydro” means water; everything here happens with the metals dissolved in a liquid
-        that’s essentially spicy water. Acids can be thought of as water with extra hydrogen ions floating about. Add some acid to the water to spice
+        that’s essentially spicy water. Acids can be thought of as water with extra <Ion c="hydrogenIon">hydrogen ions</Ion> floating about. Add some acid to the water to spice
         it up and see what happens.
       </p>
       <Figure>
@@ -67,29 +75,29 @@ export default function App() {
 
       <h4>The process</h4>
       <p>
-        The black mass is subjected to a series of steps. Firstly it’s bathed in warm acid. This dissolves all of the metals. Graphite and other
-        impurities don’t dissolve so can be filtered off. This is because the metals are generally bonded to oxygen. The oxygen atoms love that there
-        are all those hydrogen ions floating about, and split up from the metal—leaving the metal floating about (dissolved) with new water molecules
-        instead. The carbon in the graphite is largely unfazed by the hydrogen so it stays as graphite. Here’s an acidic solution with metals
-        dissolved. Adjust the acidity by adding sodium hydroxide and watch how it splits and makes new water + metallic hydroxides. Find the sweet spot
-        to isolate the iron and aluminium.
+        The black mass is subjected to a series of steps. Firstly it’s bathed in warm acid. This dissolves all of the metals. <Ion c="graphite">Graphite</Ion> and other
+        impurities don’t dissolve so can be filtered off. This is because the metals are generally bonded to <Ion c="oxygen">oxygen</Ion>. The <Ion c="oxygen">oxygen</Ion> atoms love that there
+        are all those <Ion c="hydrogenIon">hydrogen ions</Ion> floating about, and split up from the metal—leaving the metal floating about (dissolved) with new water molecules
+        instead. The <Ion c="graphite">carbon</Ion> in the <Ion c="graphite">graphite</Ion> is largely unfazed by the <Ion c="hydrogenIon">hydrogen</Ion> so it stays as <Ion c="graphite">graphite</Ion>. Here’s an acidic solution with metals
+        dissolved. Adjust the acidity by adding <Ion c="sodium">sodium</Ion> <Ion c="oxygen">hydroxide</Ion> and watch how it splits and makes new water + metallic <Ion c="oxygen">hydroxides</Ion>. Find the sweet spot
+        to isolate the <Ion c="iron">iron</Ion> and <Ion c="aluminium">aluminium</Ion>.
       </p>
       <Figure>
         <ImpurityFigure />
       </Figure>
       <p>
-        Then the metal containing acid is purified using sodium hydroxide to grab the aluminium, and iron is added to trade places with copper. This is
-        almost entirely efficient: about 98% of the iron and aluminium is removed, though about 9% of the nickel goes with them. Adding sodium
-        hydroxide is like adding half of water. This means any hydrogen floating about is very attracted to it and makes more water—and therefore less
-        acid which can hold less dissolved metal. Once the hydrogen is used up, the hydroxide grabs the metal ions instead, making solid metal
-        hydroxides that settle out.
+        Then the metal containing acid is purified using <Ion c="sodium">sodium</Ion> <Ion c="oxygen">hydroxide</Ion> to grab the <Ion c="aluminium">aluminium</Ion>, and <Ion c="iron">iron</Ion> is added to trade places with copper. This is
+        almost entirely efficient: about 98% of the <Ion c="iron">iron</Ion> and <Ion c="aluminium">aluminium</Ion> is removed, though about 9% of the <Ion c="nickel">nickel</Ion> goes with them. Adding <Ion c="sodium">sodium</Ion>
+        <Ion c="oxygen">hydroxide</Ion> is like adding half of water. This means any <Ion c="hydrogenIon">hydrogen</Ion> floating about is very attracted to it and makes more water—and therefore less
+        acid which can hold less dissolved metal. Once the <Ion c="hydrogenIon">hydrogen</Ion> is used up, the <Ion c="oxygen">hydroxide</Ion> grabs the metal ions instead, making solid metal
+        <Ion c="oxygen">hydroxides</Ion> that settle out.
       </p>
       <p>
-        The less metal containing acid still has lithium, nickel, cobalt and manganese in it. These are extracted by adding sodium hydroxide and
-        carbonate. A US national lab model, based on what commercial plants achieve, puts this stage at 98% for the nickel, cobalt and manganese and 90%
-        for the lithium. Real plants differ in the order and method of these steps. We’re now left with a waste water containing sodium sulfate that
-        is relatively inert. The water is often evaporated off leaving behind the salt. Use the slider to add hydroxide ions through sodium hydroxide
-        to neutralise the acid and settle out the nickel, cobalt and manganese.
+        The less metal containing acid still has <Ion c="lithium">lithium</Ion>, <Ion c="nickel">nickel</Ion>, <Ion c="cobalt">cobalt</Ion> and <Ion c="manganese">manganese</Ion> in it. These are extracted by adding <Ion c="sodium">sodium</Ion> <Ion c="oxygen">hydroxide</Ion> and
+        carbonate. A US national lab model, based on what commercial plants achieve, puts this stage at 98% for the <Ion c="nickel">nickel</Ion>, <Ion c="cobalt">cobalt</Ion> and <Ion c="manganese">manganese</Ion> and 90%
+        for the <Ion c="lithium">lithium</Ion>. Real plants differ in the order and method of these steps. We’re now left with a waste water containing <Ion c="sodium">sodium</Ion> <Ion c="sulfate">sulfate</Ion> that
+        is relatively inert. The water is often evaporated off leaving behind the salt. Use the slider to add <Ion c="oxygen">hydroxide ions</Ion> through <Ion c="sodium">sodium</Ion> <Ion c="oxygen">hydroxide</Ion>
+        to neutralise the acid and settle out the <Ion c="nickel">nickel</Ion>, <Ion c="cobalt">cobalt</Ion> and <Ion c="manganese">manganese</Ion>.
       </p>
       <Figure>
         <MixedFigure />

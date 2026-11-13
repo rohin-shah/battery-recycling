@@ -33,3 +33,4 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid 
 
 /* Space held for a figure while its code loads */
 .hm-loading { max-width: 980px; height: 520px; margin: 20px auto; border-radius: 14px; background: #0f1512; }
+.ion { background: #0f1512; border-radius: 4px; padding: 0 0.3em; font-weight: 600; white-space: nowrap; }

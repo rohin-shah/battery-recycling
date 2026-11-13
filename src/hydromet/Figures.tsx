@@ -56,7 +56,6 @@ const SULFATE = 0.075
 const HYDROGEN_ION = 0.042 // drawn larger here, so the reader can follow them
 const LAND = 0.025 // how much earlier in the slider's travel the hydrogen ions land on a pair than it comes away
 const COLOUR_PARTICLE = '#4fb3a9'
-const COLOUR_GRAPHITE = '#6b7377'
 
 /** How much acid (0 to 1) is in when molecule `m` goes into the water. */
 const addedAt = (m: number) => (m + 0.5) / MOLECULES
@@ -127,7 +126,7 @@ function acidBeads(): Bead[] {
     // A flake of graphite: a ring of carbon atoms. The acid never touches it, so it never moves.
     ...Array.from({ length: 6 }, (_, i): Bead => {
       const a = (i / 6) * Math.PI * 2
-      return { size: 0.055, aim: () => ({ to: [0.62 + Math.cos(a) * 0.12, 0.2 + Math.sin(a) * 0.12, 0], color: COLOUR_GRAPHITE }) }
+      return { size: 0.055, aim: () => ({ to: [0.62 + Math.cos(a) * 0.12, 0.2 + Math.sin(a) * 0.12, 0], color: COLOUR.graphite }) }
     }),
   ]
 }

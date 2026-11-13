@@ -20,6 +20,7 @@ export const COLOUR = {
   hydrogen: '#9fb1ba', // hydrogen that is part of a water molecule or a hydroxide ion
   sulfate: '#f08fb0', // pink, kept clear of lithium's yellow
   sodium: '#5fd4e8',
+  graphite: '#6b7377',
 } as const
 
 export const hash = (i: number, k: number) => {
