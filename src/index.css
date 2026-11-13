@@ -1,16 +1,17 @@
 :root {
-  /* Palette: #285943 #acb876 #9bc53d #7cb4b8 #4e4187 */
-  --bg: #f7f8f4;
-  --text: #1b2620;
+  /* Palette: f96304 d5db1e 00b49b 006a5b 9db2cb 6a82a0 3d4d60 */
+  --bg: #f4f6f9;
+  --text: #232d39;
   --muted: color-mix(in srgb, var(--text) 65%, transparent);
   --line: color-mix(in srgb, var(--text) 14%, transparent);
-  --teal: #7cb4b8;
+  --teal: #00b49b;
+  --link: #006a5b;
   font: 17px/1.6 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   color: var(--text);
   background: var(--bg);
 }
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #121815; --text: #eef1ea; }
+  :root { --bg: #151c25; --text: #eef2f7; --link: #00b49b; }
 }
 body { margin: 0; }
 main { max-width: 1080px; margin: 0 auto; padding: 16px 16px 64px; }
@@ -23,7 +24,7 @@ h4 { font-size: 1rem; margin: 24px auto 0; }
 p { margin-top: 8px; margin-bottom: 12px; }
 main > ul { padding-left: 1.2em; box-sizing: border-box; }
 li { margin: 6px 0; }
-a { color: inherit; }
+a { color: var(--link); }
 button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
 
 .sources { list-style: none; padding-left: 0 !important; font-size: 0.85rem; color: var(--muted); }
@@ -32,6 +33,6 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid 
 .sources b { color: var(--text); font-weight: 600; }
 
 /* Space held for a figure while its code loads */
-.hm-loading { max-width: 980px; height: 520px; margin: 20px auto; border-radius: 14px; background: #0f1512; }
+.hm-loading { max-width: 980px; height: 520px; margin: 20px auto; border-radius: 14px; background: #18202a; }
 /* Particle names: the bead's colour, mixed a little towards the text colour so light ones stay readable */
 .ion { color: color-mix(in oklab, var(--c) 70%, var(--text)); }

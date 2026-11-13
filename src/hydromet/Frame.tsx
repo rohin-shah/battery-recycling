@@ -54,7 +54,7 @@ export function Chart({
       ))}
       <line x1={x(value)} x2={x(value)} y1={4} y2={H - 32} className="cursor" />
       {series.map((s) => (
-        <circle key={s.name} cx={x(value)} cy={y(s.y(value))} r={3.5} fill={s.color} stroke="#0f1512" />
+        <circle key={s.name} cx={x(value)} cy={y(s.y(value))} r={3.5} fill={s.color} stroke="#18202a" />
       ))}
     </svg>
   )

@@ -1,7 +1,7 @@
 /* Hydrometallurgy figures: a dark panel on the light page */
 .hm { margin: 20px 0; padding: 0; }
 main > .hm { max-width: 980px; }
-.hm-panel { padding: 14px; border-radius: 14px; background: #0f1512; color: #e9efe9; border: 1px solid #26332c; }
+.hm-panel { padding: 14px; border-radius: 14px; background: #18202a; color: #eef2f7; border: 1px solid #2b3746; }
 .hm figcaption { margin-top: 8px; font-size: 0.82rem; line-height: 1.45; opacity: 0.75; }
 .hm-stage { display: grid; gap: 12px; }
 /* The 3D view runs the full width, under the slider; the slider sits on the right, drawn behind the scene so ions
@@ -22,25 +22,25 @@ main > .hm { max-width: 980px; }
 .hm-tag {
   position: absolute; left: 14px; top: 0; transform: translateY(-50%); white-space: nowrap;
   font-weight: 600; font-size: 12px; line-height: 1;
-  color: #e9efe9; border: 1px solid #e9efe9; padding: 5px 7px; background: #0f1512;
+  color: #eef2f7; border: 1px solid #eef2f7; padding: 5px 7px; background: #18202a;
 }
-.hm-tag::before { content: ''; position: absolute; right: 100%; top: 50%; width: 14px; height: 1px; background: #e9efe9; }
-.hm-chart { width: 100%; height: auto; font-size: 10px; fill: #9fb0a6; }
-.hm-chart .grid { stroke: #2a3a33; stroke-width: 1; }
-.hm-chart .cursor { stroke: #e9efe9; stroke-width: 1; stroke-dasharray: 3 3; }
-.hm-chart .title { fill: #9fb0a6; font-weight: 600; }
-.hm-key-title { margin: 8px 0 0; font-weight: 600; font-size: 12px; line-height: 1.2; color: #9fb0a6; }
+.hm-tag::before { content: ''; position: absolute; right: 100%; top: 50%; width: 14px; height: 1px; background: #eef2f7; }
+.hm-chart { width: 100%; height: auto; font-size: 10px; fill: #9db2cb; }
+.hm-chart .grid { stroke: #2b3746; stroke-width: 1; }
+.hm-chart .cursor { stroke: #eef2f7; stroke-width: 1; stroke-dasharray: 3 3; }
+.hm-chart .title { fill: #9db2cb; font-weight: 600; }
+.hm-key-title { margin: 8px 0 0; font-weight: 600; font-size: 12px; line-height: 1.2; color: #9db2cb; }
 .hm-key { list-style: none; padding: 0; margin: 6px 0 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
 .hm-key i { display: inline-block; width: 0.7em; height: 0.7em; border-radius: 50%; margin-right: 0.4em; }
 .hm-readout { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0 0; }
-.hm-readout div { border: 1px solid #e9efe9; padding: 6px 8px; }
-.hm-readout dt { font-weight: 600; font-size: 12px; line-height: 1.2; color: #9fb0a6; }
+.hm-readout div { border: 1px solid #eef2f7; padding: 6px 8px; }
+.hm-readout dt { font-weight: 600; font-size: 12px; line-height: 1.2; color: #9db2cb; }
 .hm-readout dd { margin: 4px 0 0; font-size: 1.4rem; font-variant-numeric: tabular-nums; }
 .hm-toggle { display: block; margin-top: 10px; font-size: 0.8rem; }
-.hm-toggle input { accent-color: #9bc53d; }
+.hm-toggle input { accent-color: #00b49b; }
 .hm-eq { list-style: none; padding: 0; margin: 6px 0 0; font-size: 0.8rem; line-height: 1.5; }
-.hm-vslider { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 92px; font-size: 12px; color: #9fb0a6; text-align: center; }
-.hm-vslider b { color: #e9efe9; font-size: 0.9rem; line-height: 1.25; }
+.hm-vslider { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 92px; font-size: 12px; color: #9db2cb; text-align: center; }
+.hm-vslider b { color: #eef2f7; font-size: 0.9rem; line-height: 1.25; }
 .hm-vtrack { position: relative; flex: 1; min-height: 0; width: 100%; }
 /* Taken out of the flow so its own height cannot stretch the panel: the view sets the height */
 .hm-vtrack input {
@@ -51,15 +51,15 @@ main > .hm { max-width: 980px; }
 /* The rail: in colour over this figure's part of the scale (--from to --to, measured from the bottom), grey elsewhere */
 .hm-vtrack .rail {
   position: absolute; top: 8px; bottom: 8px; left: calc(50% - 3px); width: 6px; border-radius: 3px;
-  background: linear-gradient(to top, #2f3d36 var(--from, 0%), var(--tone, #9bc53d) var(--from, 0%), var(--tone, #9bc53d) var(--to, 100%), #2f3d36 var(--to, 100%));
+  background: linear-gradient(to top, #2b3746 var(--from, 0%), var(--tone, #00b49b) var(--from, 0%), var(--tone, #00b49b) var(--to, 100%), #2b3746 var(--to, 100%));
 }
 .hm-vtrack input::-webkit-slider-runnable-track { background: transparent; }
 .hm-vtrack input::-moz-range-track { background: transparent; }
 .hm-vtrack input::-webkit-slider-thumb {
-  -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--tone, #9bc53d); border: 3px solid #0f1512;
-  box-shadow: 0 0 0 1px var(--tone, #9bc53d); transition: background 0.3s;
+  -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--tone, #00b49b); border: 3px solid #18202a;
+  box-shadow: 0 0 0 1px var(--tone, #00b49b); transition: background 0.3s;
 }
-.hm-vtrack input::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--tone, #9bc53d); border: 3px solid #0f1512; }
+.hm-vtrack input::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--tone, #00b49b); border: 3px solid #18202a; }
 @media (max-width: 520px) {
   .hm-vslider { width: 64px; font-size: 11px; }
   .hm-vslider b { font-size: 0.8rem; }
@@ -67,10 +67,10 @@ main > .hm { max-width: 980px; }
 }
 /* A tag riding along with one bead */
 .hm-follow {
-  position: absolute; left: 10px; bottom: 8px; width: max-content; max-width: 11em; line-height: 1.25; font-size: 11px; font-weight: 600; color: #e9efe9;
-  padding: 3px 6px; text-shadow: 0 0 3px #0f1512, 0 0 6px #0f1512; /* dark halo keeps white text legible over beads */
+  position: absolute; left: 10px; bottom: 8px; width: max-content; max-width: 11em; line-height: 1.25; font-size: 11px; font-weight: 600; color: #eef2f7;
+  padding: 3px 6px; text-shadow: 0 0 3px #18202a, 0 0 6px #18202a; /* dark halo keeps white text legible over beads */
 }
-.hm-follow::before { content: ''; position: absolute; left: -6px; bottom: -4px; width: 10px; height: 1px; background: #e9efe9; transform: rotate(-40deg); }
+.hm-follow::before { content: ''; position: absolute; left: -6px; bottom: -4px; width: 10px; height: 1px; background: #eef2f7; transform: rotate(-40deg); }
 .hm-follow.below { bottom: auto; top: 8px; }
 /* New tags fade in rather than pop */
 .hm-follow { animation: hm-tag-in 0.4s ease-out; }
@@ -79,8 +79,8 @@ main > .hm { max-width: 980px; }
 .hm-follow.below::before { bottom: auto; top: -4px; transform: rotate(40deg); }
 /* Coloured stretches beside the slider track, and the line saying what the current one means */
 .hm-note { font-style: normal; font-size: 12px; line-height: 1.3; font-weight: 600; }
-.hm-chart .band rect { fill: rgba(155, 197, 61, 0.14); }
-.hm-chart .band text { fill: #9bc53d; font-weight: 600; }
+.hm-chart .band rect { fill: rgba(0, 180, 155, 0.14); }
+.hm-chart .band text { fill: #00b49b; font-weight: 600; }
 .hm-note-box { display: flex; align-items: flex-end; justify-content: center; height: 4.2em; font-size: 12px; flex: none; }
 /* A tag flipped to the left of its bead */
 .hm-follow.flip { left: auto; right: 10px; text-align: right; }

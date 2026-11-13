@@ -236,7 +236,7 @@ function Scene({
         <>
           <mesh position={[0, -0.12, 0]}>
             <boxGeometry args={tank ? [TANK.w + 0.3, 0.24, TANK.d + 0.3] : [2.15, 0.24, 2.15]} />
-            <meshStandardMaterial color="#2b3a34" roughness={0.7} />
+            <meshStandardMaterial color="#2b3746" roughness={0.7} />
           </mesh>
           {tank ? <Tank /> : <Beaker />}
         </>
@@ -245,7 +245,7 @@ function Scene({
       {floor && (
         <mesh position={[0, -0.03, 0]}>
           <boxGeometry args={[2.4, 0.06, 1.1]} />
-          <meshStandardMaterial color="#2a3a33" roughness={0.8} />
+          <meshStandardMaterial color="#2b3746" roughness={0.8} />
         </mesh>
       )}
       <ContactShadows position={[0, 0.005, 0]} scale={4} blur={2.4} opacity={0.55} frames={1} />

@@ -55,7 +55,7 @@ const DISSOLVES_FROM = 5 / 7 // share of the acid added before the particle star
 const SULFATE = 0.075
 const HYDROGEN_ION = HYDROGEN
 const LAND = 0.025 // how much earlier in the slider's travel the hydrogen ions land on a pair than it comes away
-const COLOUR_PARTICLE = '#4fb3a9'
+const COLOUR_PARTICLE = '#00b49b'
 
 /** How much acid (0 to 1) is in when molecule `m` goes into the water. */
 const addedAt = (m: number) => (m + 0.5) / MOLECULES
@@ -393,9 +393,9 @@ const SWEET = sweetSpot()
 const SWEET_MARKS = [0, 1, 2, 3, 4].map((i) => SWEET[0] + (i / 4) * (SWEET[1] - SWEET[0]))
 const stageAt = (pH: number) => (pH < SWEET[0] ? 'early' : pH <= SWEET[1] ? 'sweet' : 'late')
 const STAGES = {
-  early: { tone: '#f2a33a', note: 'Impurities still dissolved' },
-  sweet: { tone: '#9bc53d', note: 'Sweet spot: impurities out, little nickel lost' },
-  late: { tone: '#e5483c', note: 'Too far: losing nickel' },
+  early: { tone: '#9db2cb', note: 'Impurities still dissolved' },
+  sweet: { tone: '#00b49b', note: 'Sweet spot: impurities out, little nickel lost' },
+  late: { tone: '#f96304', note: 'Too far: losing nickel' },
 }
 
 const IMPURITY_COUNT: Record<Metal, number> = { iron: 1, aluminium: 1, nickel: 2, cobalt: 1, manganese: 1, lithium: 1 }

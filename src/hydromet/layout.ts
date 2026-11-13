@@ -7,20 +7,20 @@ export const LIQUID_TOP = 1.45
 export const TUBE: Vec = [0, 1.62, 0]
 export const TANK = { w: 2.4, d: 1.6, h: 1.9 } // the aquarium in figure 1
 
-/** Bead colours. Metals are stronger than the page palette so they stay distinct on the dark panel. */
+/** Bead colours, built on the page palette (f96304 d5db1e 00b49b 006a5b 9db2cb 6a82a0 3d4d60) and riffs on it, kept distinct from one another on the dark panel. */
 export const COLOUR = {
-  iron: '#d2601f',
-  aluminium: '#d9c39a', // champagne: white would vanish in the page text
-  nickel: '#3fbf5f',
-  cobalt: '#2f6ff0',
-  manganese: '#b45ae0',
-  lithium: '#f2cf2e',
-  oxygen: '#e5483c',
-  hydrogenIon: '#b6f03c', // lime: white would vanish in the page text
-  hydrogen: '#b6f03c', // hydrogen in a water molecule or hydroxide ion: the same as a loose hydrogen ion, so it reads as the same atom
-  sulfate: '#f08fb0', // pink, kept clear of lithium's yellow
+  iron: '#e0457b', // raspberry: rust-red would blur into oxygen's orange on the settled pile
+  aluminium: '#9db2cb', // steel: from the palette; silvery, like the metal
+  nickel: '#00b49b',
+  cobalt: '#4f8fe6',
+  manganese: '#a77dd6',
+  lithium: '#ffc23d',
+  oxygen: '#f96304',
+  hydrogenIon: '#d5db1e', // palette lime
+  hydrogen: '#d5db1e', // hydrogen in a water molecule or hydroxide ion: the same as a loose hydrogen ion, so it reads as the same atom
+  sulfate: '#efe2b8', // cream, clear of iron's raspberry and lithium's amber
   sodium: '#5fd4e8',
-  graphite: '#6b7377',
+  graphite: '#6a82a0',
 } as const
 
 export const hash = (i: number, k: number) => {
