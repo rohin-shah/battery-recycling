@@ -15,9 +15,11 @@ import { LIQUID_TOP, R, TANK, TUBE, tubeAngle, type Vec } from './layout'
 /**
  * `wait`: don't head for `to` until the beads listed have reached where they are riding (within a small distance); keep
  * still at `hold` until then. Used so a metal ion only settles once its hydroxides have actually bonded to it.
+ * `away`: float sideways on its own clock at this speed (units a second; the sign is the direction), whatever the
+ * slider does, until well off screen. Once `away` is gone the bead eases back to `to`.
  */
 export type Aim = { color: string; speed?: number } & (
-  | { to: Vec; jig?: number; pace?: number; wait?: { for: number[]; hold: Vec } }
+  | { to: Vec; jig?: number; pace?: number; wait?: { for: number[]; hold: Vec }; away?: number }
   | { on: number; offset: Vec }
 )
 export type Bead = { size: number; aim: (value: number) => Aim }
@@ -78,6 +80,11 @@ export function Beads({ beads, value, follow = [] }: { beads: Bead[]; value: num
     for (const riders of [false, true]) {
       aims.forEach((a, i) => {
         if ('on' in a !== riders) return
+        if ('to' in a && a.away) {
+          s[i][0] = Math.max(-9, Math.min(9, s[i][0] + a.away * dt))
+          for (const k of [1, 2]) s[i][k] = MathUtils.damp(s[i][k], a.to[k], 1, dt)
+          return
+        }
         for (let k = 0; k < 3; k++) {
           let goal = 'on' in a ? s[a.on][k] + a.offset[k] : a.to[k] + (calm ? 0 : Math.sin(t * (a.pace ?? 1) * (0.9 + k * 0.3) + i * (k + 1)) * (a.jig ?? 0))
           if (k === 1 && 'to' in a && a.jig) goal = Math.min(goal, LIQUID_TOP - 0.06) // wanderers stay under the surface

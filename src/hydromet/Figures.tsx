@@ -271,13 +271,12 @@ function settleScene<M extends string>(
   metals.map((_, i) => i).sort((a, b) => at[a] - at[b] || a - b).forEach((i, s) => (slot[i] = s))
   const place = (n: number, scatter: Vec) => (spread ? spot(n, spread) : high(scatter))
   /**
-   * Spectators drift out towards the nearer side as the slider rises, so the important beads have the view to
-   * themselves when it closes in. The one carrying a tag stays.
+   * Spectators float off on their own once the slider has passed them by, so the important beads have the view to
+   * themselves: slowly, on their own clock rather than the slider's, towards the nearer side and on over the chart.
+   * Moving the slider back down calls them home; moving it up again sends them off from wherever they are.
    */
-  const aside = ([x, y, z]: Vec, pH: number, keep: boolean): Vec =>
-    !clearSpectators || keep ? [x, y, z] : [x + (x < 0 ? -1 : 1) * 6 * Math.min(1, toPos(pH) * 1.2), y, z] // far enough to leave over the chart too
-  /** Spectators head off slowly, so they drift away rather than shoot off. */
-  const drifting = clearSpectators
+  const motion = { down: false }
+  const away = ([x]: Vec, leaving: boolean) => (clearSpectators && leaving && !motion.down ? (x < 0 ? -1 : 1) * 0.22 : undefined)
   /** The sodium most recently let out of the vial, which carries the tag. */
   const lastOut = (pH: number) => ks(0, N).reverse().find((k) => out(k, pH))
   const colour = (j: number) => COLOUR[metals[j].metal as keyof typeof COLOUR]
@@ -341,10 +340,10 @@ function settleScene<M extends string>(
       size: SODIUM,
       aim: (pH) =>
         out(k, pH)
-          ? { to: aside(place(40 + k, drift(k, 51)), pH, k === lastOut(pH)), jig: 0.2, pace: 1.2, color: COLOUR.sodium, speed: drifting ? 0.45 : 1.6 }
+          ? { to: place(40 + k, drift(k, 51)), away: away(place(40 + k, drift(k, 51)), k !== lastOut(pH)), jig: 0.2, pace: 1.2, color: COLOUR.sodium, speed: 1.2 }
           : { on: OH + k, offset: NA_ON_OH, color: COLOUR.sodium },
     })),
-    ...ks(0, sulfates).map((s): Bead => ({ size: SULFATE, aim: (pH) => ({ to: aside(place(60 + s, drift(s, 61)), pH, s === 0), jig: 0.05, color: COLOUR.sulfate, speed: drifting ? 0.45 : 1.2 }) })),
+    ...ks(0, sulfates).map((s): Bead => ({ size: SULFATE, aim: (pH) => ({ to: place(60 + s, drift(s, 61)), away: away(place(60 + s, drift(s, 61)), s > 0 && toPos(pH) > 0.08), jig: 0.05, color: COLOUR.sulfate, speed: 1.2 }) })),
     ...water(waters, 21, W),
   ]
 
@@ -388,7 +387,9 @@ function settleScene<M extends string>(
     { points: jobs.map((job) => job.pH), pitch: 1000 },
     { points: at.filter(Number.isFinite), pitch: 440 },
   ]
-  return { beads, tags, steps, toPos, fromPos }
+  /** Tell the scene which way the reader last moved the slider. */
+  const movedDown = (down: boolean) => void (motion.down = down)
+  return { beads, tags, steps, toPos, fromPos, movedDown }
 }
 
 /** 'a', 'a and b', 'a, b and c'. */
@@ -433,6 +434,7 @@ export function ImpurityFigure() {
     setThumb(v)
     const shown = backlash(pos, v, [0, 1])
     if (shown === pos) return
+    scene.movedDown(shown < pos) // moving down calls the floating-off ions back
     const next = scene.fromPos(shown)
     const nextStage = stageAt(next)
     // Only the main events make a sound here: a metal settling (bright in the sweet spot, dull past it), and the cue on
