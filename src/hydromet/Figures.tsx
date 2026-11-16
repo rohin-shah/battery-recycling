@@ -275,7 +275,9 @@ function settleScene<M extends string>(
    * themselves when it closes in. The one carrying a tag stays.
    */
   const aside = ([x, y, z]: Vec, pH: number, keep: boolean): Vec =>
-    !clearSpectators || keep ? [x, y, z] : [x + (x < 0 ? -1 : 1) * 2.6 * Math.min(1, toPos(pH) * 1.6), y, z]
+    !clearSpectators || keep ? [x, y, z] : [x + (x < 0 ? -1 : 1) * 2.6 * Math.min(1, toPos(pH) * 1.2), y, z]
+  /** Spectators head off slowly, so they drift away rather than shoot off. */
+  const drifting = clearSpectators
   /** The sodium most recently let out of the vial, which carries the tag. */
   const lastOut = (pH: number) => ks(0, N).reverse().find((k) => out(k, pH))
   const colour = (j: number) => COLOUR[metals[j].metal as keyof typeof COLOUR]
@@ -339,10 +341,10 @@ function settleScene<M extends string>(
       size: SODIUM,
       aim: (pH) =>
         out(k, pH)
-          ? { to: aside(place(40 + k, drift(k, 51)), pH, k === lastOut(pH)), jig: 0.2, pace: 1.2, color: COLOUR.sodium, speed: 1.6 }
+          ? { to: aside(place(40 + k, drift(k, 51)), pH, k === lastOut(pH)), jig: 0.2, pace: 1.2, color: COLOUR.sodium, speed: drifting ? 0.45 : 1.6 }
           : { on: OH + k, offset: NA_ON_OH, color: COLOUR.sodium },
     })),
-    ...ks(0, sulfates).map((s): Bead => ({ size: SULFATE, aim: (pH) => ({ to: aside(place(60 + s, drift(s, 61)), pH, s === 0), jig: 0.05, color: COLOUR.sulfate, speed: 1.2 }) })),
+    ...ks(0, sulfates).map((s): Bead => ({ size: SULFATE, aim: (pH) => ({ to: aside(place(60 + s, drift(s, 61)), pH, s === 0), jig: 0.05, color: COLOUR.sulfate, speed: drifting ? 0.45 : 1.2 }) })),
     ...water(waters, 21, W),
   ]
 
