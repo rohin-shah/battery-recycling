@@ -16,7 +16,7 @@ export function Chart({
   series, range, left, right, value, label, yTitle, zoom = 0, band,
 }: {
   series: Series[]; range: [number, number]; left: string; right: string; value: number; label: string; yTitle: string; zoom?: number
-  /** A stretch of the x-axis to mark, with its name. */
+  /** A stretch of the x-axis to shade; its name is used for the screen-reader label only. */
   band?: { from: number; to: number; text: string }
 }) {
   const span = (range[1] - range[0]) * (1 - ZOOM * zoom)
@@ -33,9 +33,8 @@ export function Chart({
         {yTitle}
       </text>
       {band && band.to > lo && band.from < hi && (
-        <g className="band">
+        <g className="band" aria-label={band.text}>
           <rect x={x(Math.max(band.from, lo))} y={4} width={x(Math.min(band.to, hi)) - x(Math.max(band.from, lo))} height={H - 36} />
-          <text x={(x(Math.max(band.from, lo)) + x(Math.min(band.to, hi))) / 2} y={y(50) - 4} textAnchor="middle">{band.text}</text>
         </g>
       )}
       {[0, 50, 100].map((p) => (
@@ -118,14 +117,6 @@ function VerticalSlider({ slider }: { slider: Slider }) {
       </span>
       <span>{slider.left}</span>
       <b>{slider.text}</b>
-      {/* A fixed-height box for the note, text kept to its bottom edge, so a longer or shorter note never resizes the slider */}
-      {slider.note !== undefined && (
-        <span className="hm-note-box">
-          <em className="hm-note" style={{ color: slider.tone }}>
-            {slider.note}
-          </em>
-        </span>
-      )}
     </label>
   )
 }
@@ -149,6 +140,12 @@ export function Frame({
         <div className={side ? 'hm-stage' : 'hm-stage hm-solo'}>
           <div className="hm-main">
             {view}
+            {/* What the slider's current colour means, as one line across the top of the scene */}
+            {slider.note && (
+              <p className="hm-status" style={{ '--tone': slider.tone } as CSSProperties} aria-live="polite">
+                {slider.note}
+              </p>
+            )}
             <VerticalSlider slider={slider} />
           </div>
           {side && (

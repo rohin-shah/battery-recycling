@@ -3,10 +3,10 @@
 main > .hm { max-width: 980px; }
 .hm-panel { padding: 14px; border-radius: 14px; background: #18202a; color: #eef2f7; border: 1px solid #2b3746; }
 .hm figcaption { margin-top: 8px; font-size: 0.82rem; line-height: 1.45; opacity: 0.75; }
-.hm-stage { display: grid; gap: 12px; }
+.hm-stage { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); } /* minmax: the canvas's own width must never widen the column */
 /* The 3D view runs the full width, under the slider; the slider sits on the right, drawn behind the scene so ions
    and tags float in front of it instead of being cut off. The view takes no clicks, so the slider still works. */
-.hm-main { position: relative; }
+.hm-main { position: relative; min-width: 0; }
 .hm-main .hm-view, .hm-main .hm-view * { pointer-events: none !important; }
 .hm-main .hm-view { z-index: 1; }
 .hm-main .hm-vslider { position: absolute; top: 0; right: 0; bottom: 0; }
@@ -16,7 +16,7 @@ main > .hm { max-width: 980px; }
 .hm-solo { max-width: 720px; margin: 0 auto; }
 .hm-view { position: relative; height: 300px; overflow: visible; }
 @media (min-width: 820px) {
-  .hm-stage:not(.hm-solo) { grid-template-columns: 1.3fr 1fr; align-items: center; }
+  .hm-stage:not(.hm-solo) { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); align-items: center; }
   .hm-view { height: 460px; }
 }
 .hm-tag {
@@ -78,11 +78,18 @@ main > .hm { max-width: 980px; }
 @media (prefers-reduced-motion: reduce) { .hm-follow { animation: none; } }
 .hm-follow.below::before { bottom: auto; top: -4px; transform: rotate(40deg); }
 /* Coloured stretches beside the slider track, and the line saying what the current one means */
-.hm-note { font-style: normal; font-size: 12px; line-height: 1.3; font-weight: 600; }
 .hm-chart .band rect { fill: rgba(0, 180, 155, 0.14); }
 .hm-chart .band text { fill: #00b49b; font-weight: 600; }
-.hm-note-box { display: flex; align-items: flex-end; justify-content: center; height: 4.2em; font-size: 12px; flex: none; }
 /* A tag flipped to the left of its bead */
 .hm-follow.flip { left: auto; right: 10px; text-align: right; }
 .hm-follow.flip::before { left: auto; right: -6px; transform: rotate(40deg); }
 .hm-follow.flip.below::before { transform: rotate(-40deg); }
+/* The slider's meaning, as a pill across the top-left of the scene in the slider's colour */
+.hm-status {
+  position: absolute; top: 8px; left: 8px; z-index: 2; margin: 0; max-width: calc(100% - 110px);
+  display: flex; align-items: center; gap: 7px; padding: 5px 10px; border-radius: 999px;
+  font-size: 12.5px; line-height: 1.25; font-weight: 600; color: var(--tone);
+  background: color-mix(in srgb, var(--tone) 14%, #18202a); border: 1px solid color-mix(in srgb, var(--tone) 45%, transparent);
+  transition: color 0.3s, background 0.3s, border-color 0.3s;
+}
+.hm-status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--tone); flex: none; }
