@@ -251,14 +251,33 @@ function settleScene<M extends string>(
   waters = 2,
   /** If set, dissolved ions spread evenly across this width instead of scattering at random. */
   spread = 0,
+  /** Let the ions that only look on (sodium, sulfate) drift off the sides as the slider rises and the view closes in. */
+  clearSpectators = false,
+  /** Bind the first bead of a metal to start settling at this pH, so it lines up with a marked moment. */
+  firstAt: Partial<Record<M, number>> = {},
 ) {
   const ks = (from: number, to: number) => Array.from({ length: Math.max(0, to - from) }, (_, i) => from + i)
   const metals = metalBeads(counts, order)
   const n = metals.length
   const at = firstMove(metals, share, range)
+  const bindAt = new Map<number, number>()
+  for (const m of Object.keys(firstAt) as M[]) {
+    const j = metals.findIndex((b) => b.metal === m)
+    if (j < 0) continue
+    bindAt.set(j, firstAt[m] as number) // its hydroxides start binding exactly at the marked pH
+    at[j] = (firstAt[m] as number) + BIND
+  }
   const slot = new Array<number>(n)
   metals.map((_, i) => i).sort((a, b) => at[a] - at[b] || a - b).forEach((i, s) => (slot[i] = s))
   const place = (n: number, scatter: Vec) => (spread ? spot(n, spread) : high(scatter))
+  /**
+   * Spectators drift out towards the nearer side as the slider rises, so the important beads have the view to
+   * themselves when it closes in. The one carrying a tag stays.
+   */
+  const aside = ([x, y, z]: Vec, pH: number, keep: boolean): Vec =>
+    !clearSpectators || keep ? [x, y, z] : [x + (x < 0 ? -1 : 1) * 2.6 * Math.min(1, toPos(pH) * 1.6), y, z]
+  /** The sodium most recently let out of the vial, which carries the tag. */
+  const lastOut = (pH: number) => ks(0, N).reverse().find((k) => out(k, pH))
   const colour = (j: number) => COLOUR[metals[j].metal as keyof typeof COLOUR]
   const settling = at.filter(Number.isFinite).length
   const valence = (j: number) => VALENCE[metals[j].metal]
@@ -268,7 +287,7 @@ function settleScene<M extends string>(
     ...ks(0, hydrogenIons).map((i) => ({ pH: range[0] + ((i + 0.5) / hydrogenIons) * (neutralAt - range[0]), ion: i })),
     ...ks(0, n)
       .filter((j) => Number.isFinite(at[j]))
-      .flatMap((j) => ks(0, valence(j)).map((place) => ({ pH: Math.max(range[0], at[j] - BIND), metal: j, place }))),
+      .flatMap((j) => ks(0, valence(j)).map((place) => ({ pH: bindAt.get(j) ?? Math.max(range[0], at[j] - BIND), metal: j, place }))),
   ].sort((a, b) => a.pH - b.pH)
   const N = jobs.length
   const meets = (i: number) => jobs.findIndex((job) => job.ion === i)
@@ -319,9 +338,11 @@ function settleScene<M extends string>(
     ...ks(0, N).map((k): Bead => ({
       size: SODIUM,
       aim: (pH) =>
-        out(k, pH) ? { to: place(40 + k, drift(k, 51)), jig: 0.2, pace: 1.2, color: COLOUR.sodium, speed: 1.6 } : { on: OH + k, offset: NA_ON_OH, color: COLOUR.sodium },
+        out(k, pH)
+          ? { to: aside(place(40 + k, drift(k, 51)), pH, k === lastOut(pH)), jig: 0.2, pace: 1.2, color: COLOUR.sodium, speed: 1.6 }
+          : { on: OH + k, offset: NA_ON_OH, color: COLOUR.sodium },
     })),
-    ...ks(0, sulfates).map((s): Bead => ({ size: SULFATE, aim: () => ({ to: place(60 + s, drift(s, 61)), jig: 0.05, color: COLOUR.sulfate }) })),
+    ...ks(0, sulfates).map((s): Bead => ({ size: SULFATE, aim: (pH) => ({ to: aside(place(60 + s, drift(s, 61)), pH, s === 0), jig: 0.05, color: COLOUR.sulfate, speed: 1.2 }) })),
     ...water(waters, 21, W),
   ]
 
@@ -401,7 +422,7 @@ const STAGES = {
 const IMPURITY_COUNT: Record<Metal, number> = { iron: 1, aluminium: 1, nickel: 2, cobalt: 1, manganese: 1, lithium: 1 }
 
 export function ImpurityFigure() {
-  const scene = useMemo(() => settleScene(IMPURITY_COUNT, METALS, settled, IMPURITY_PH, 2, 3, IMPURITY_PH[1], SWEET_MARKS, 2, 1.9), [])
+  const scene = useMemo(() => settleScene(IMPURITY_COUNT, METALS, settled, IMPURITY_PH, 2, 3, IMPURITY_PH[1], SWEET_MARKS, 1, 1.9, true, { nickel: SWEET[1] }), [])
   const [thumb, setThumb] = useState<number | null>(null)
   const pH = clamp(useImpurityPH(), IMPURITY_PH)
   const pos = scene.toPos(pH)
