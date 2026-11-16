@@ -84,12 +84,13 @@ main > .hm { max-width: 980px; }
 .hm-follow.flip { left: auto; right: 10px; text-align: right; }
 .hm-follow.flip::before { left: auto; right: -6px; transform: rotate(40deg); }
 .hm-follow.flip.below::before { transform: rotate(-40deg); }
-/* The slider's meaning, as a pill across the top-left of the scene in the slider's colour */
+/* The slider's meaning, as a pill where the floor used to be, under the settled row, in the slider's colour */
 .hm-status {
-  position: absolute; top: 8px; left: 8px; z-index: 2; margin: 0; max-width: calc(100% - 110px);
+  position: absolute; bottom: 10px; left: calc((100% - 92px) / 2); transform: translateX(-50%); z-index: 2; margin: 0; max-width: calc(100% - 110px); width: max-content;
   display: flex; align-items: center; gap: 7px; padding: 5px 10px; border-radius: 999px;
   font-size: 12.5px; line-height: 1.25; font-weight: 600; color: var(--tone);
   background: color-mix(in srgb, var(--tone) 14%, #18202a); border: 1px solid color-mix(in srgb, var(--tone) 45%, transparent);
   transition: color 0.3s, background 0.3s, border-color 0.3s;
 }
 .hm-status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--tone); flex: none; }
+@media (max-width: 520px) { .hm-status { left: calc((100% - 64px) / 2); } }
