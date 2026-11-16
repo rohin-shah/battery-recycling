@@ -41,11 +41,11 @@ main > .hm { max-width: 980px; }
 .hm-eq { list-style: none; padding: 0; margin: 6px 0 0; font-size: 0.8rem; line-height: 1.5; }
 .hm-vslider { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 92px; font-size: 12px; color: #9db2cb; text-align: center; }
 .hm-vslider b { color: #eef2f7; font-size: 0.9rem; line-height: 1.25; }
-.hm-vtrack { position: relative; flex: 1; min-height: 0; width: 100%; }
+.hm-vtrack { position: relative; flex: 1; min-height: 0; width: 100%; touch-action: none; cursor: pointer; }
 /* Taken out of the flow so its own height cannot stretch the panel: the view sets the height */
 .hm-vtrack input {
   position: absolute; top: 0; bottom: 0; left: calc(50% - 14px); height: 100%; writing-mode: vertical-lr; direction: rtl; width: 28px; margin: 0;
-  -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer;
+  -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; pointer-events: none; /* the track takes the drag */
 }
 /* Our own rail and thumb, so the whole slider takes the colour in --tone */
 /* The rail: in colour over this figure's part of the scale (--from to --to, measured from the bottom), grey elsewhere */

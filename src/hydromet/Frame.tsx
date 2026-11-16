@@ -1,4 +1,4 @@
-import { type CSSProperties, type ReactNode, useState } from 'react'
+import { type CSSProperties, type PointerEvent, type ReactNode, useRef, useState } from 'react'
 
 /** One line on a chart: a colour and a function from the slider value to a percentage. */
 export type Series = { name: string; color: string; y: (x: number) => number }
@@ -79,10 +79,36 @@ function VerticalSlider({ slider }: { slider: Slider }) {
   const { min, max } = slider
   const [from, to] = slider.track ?? [min, max]
   const at = (v: number) => `${((v - from) / (to - from)) * 100}%`
+  // On a touch screen a vertical drag would scroll the page, so the track takes the drag itself: the whole column is
+  // the hit area, the browser is told not to pan there (touch-action: none in the CSS), and the value follows the
+  // finger. The range input underneath stays for the keyboard and screen readers.
+  const dragging = useRef<number | null>(null)
+  const follow = (e: PointerEvent<HTMLSpanElement>) => {
+    const r = e.currentTarget.getBoundingClientRect()
+    const share = Math.min(1, Math.max(0, (r.bottom - 8 - e.clientY) / (r.height - 16)))
+    const v = Math.round((from + share * (to - from)) / slider.step) * slider.step
+    slider.set(Math.min(max, Math.max(min, v)))
+  }
   return (
     <label className="hm-vslider">
       <span>{slider.right}</span>
-      <span className="hm-vtrack" style={{ ...(slider.tone && { '--tone': slider.tone }), '--from': at(min), '--to': at(max) } as CSSProperties}>
+      <span
+        className="hm-vtrack" style={{ ...(slider.tone && { '--tone': slider.tone }), '--from': at(min), '--to': at(max) } as CSSProperties}
+        onPointerDown={(e) => {
+          e.preventDefault()
+          dragging.current = e.pointerId
+          try {
+            e.currentTarget.setPointerCapture(e.pointerId) // keep the drag even if the finger leaves the column
+          } catch {
+            // Capture isn't always available; the drag still works while over the column.
+          }
+          e.currentTarget.querySelector('input')?.focus()
+          follow(e)
+        }}
+        onPointerMove={(e) => dragging.current === e.pointerId && follow(e)}
+        onPointerUp={() => (dragging.current = null)}
+        onPointerCancel={() => (dragging.current = null)}
+      >
         <i className="rail" aria-hidden />
         <input
           type="range" min={from} max={to} step={slider.step} value={slider.value} aria-label={slider.label}
