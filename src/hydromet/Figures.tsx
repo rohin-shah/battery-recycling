@@ -275,7 +275,7 @@ function settleScene<M extends string>(
    * themselves when it closes in. The one carrying a tag stays.
    */
   const aside = ([x, y, z]: Vec, pH: number, keep: boolean): Vec =>
-    !clearSpectators || keep ? [x, y, z] : [x + (x < 0 ? -1 : 1) * 2.6 * Math.min(1, toPos(pH) * 1.2), y, z]
+    !clearSpectators || keep ? [x, y, z] : [x + (x < 0 ? -1 : 1) * 6 * Math.min(1, toPos(pH) * 1.2), y, z] // far enough to leave over the chart too
   /** Spectators head off slowly, so they drift away rather than shoot off. */
   const drifting = clearSpectators
   /** The sodium most recently let out of the vial, which carries the tag. */

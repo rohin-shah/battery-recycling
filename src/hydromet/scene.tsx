@@ -180,9 +180,11 @@ export type SceneLabel = { at: Vec; text: string }
 const FOCUS_IN = 0.8 // height in the liquid the camera closes in on
 
 function Scene({
-  labels, zoomIn, focus, vessel, progress, shift, closeIn, closeFocus, floor, children,
+  labels, zoomIn, focus, vessel, progress, shift, closeIn, closeFocus, floor, bleed, children,
 }: {
   labels: SceneLabel[]; zoomIn: number; focus: number; vessel: Vessel; progress: number; shift?: number; closeIn: number; closeFocus: number; floor: boolean
+  /** How many pixels the canvas runs on past the view's right edge (over the chart); the scene stays framed in the view. */
+  bleed: number
   children: ReactNode
 }) {
   // Labels mount a frame late: drei's Html needs the canvas attached first.
@@ -192,17 +194,20 @@ function Scene({
     return () => cancelAnimationFrame(id)
   }, [])
   // Narrow panels: zoom out and slide the scene left so the labels fit beside the beaker.
-  const { width, height } = useThree((t) => t.size)
+  const { width: full, height } = useThree((t) => t.size)
+  const width = full - bleed // frame the scene in the view itself, not the wider canvas
   const tank = vessel === 'tank'
   // The tank is seen almost face on, filling the panel with room on the right for labels.
   const zoom = (tank ? Math.min(width / (width < 420 ? 3.4 : 3.9), height / 2.4) : Math.min(124, width * (width < 420 ? 0.22 : 0.24))) * zoomIn
   const k = tank ? (shift ?? (width < 420 ? 0.85 : 0.62)) : width < 420 ? 0.62 : 0.3 // shift along the camera's right-hand axis
   // As the slider moves up, the camera closes in on the middle of the liquid, in step with the slider.
   const view = (p: number) => {
-    const s = k * (1 - p)
+    const z = zoom * (1 + closeIn * p)
+    // Slide right by half the bleed, so the scene sits in the middle of the view rather than of the wider canvas.
+    const s = k * (1 - p) + bleed / 2 / z
     const f = focus + (closeFocus - focus) * p
     return {
-      zoom: zoom * (1 + closeIn * p),
+      zoom: z,
       eye: (tank ? [1.4 + s, f + 0.9, 7] : [6 + s, 4.6 + f - 0.86, 6 - s]) as Vec,
       target: (tank ? [s, f, 0] : [s, f, -s]) as Vec,
     }
@@ -284,6 +289,24 @@ export function Stage({
 }) {
   const box = useRef<HTMLDivElement>(null)
   const [near, setNear] = useState(false)
+  // Where the chart and key sit beside the view (wide screens), the canvas runs on over them, so beads leaving the
+  // scene fly across the chart instead of vanishing at the view's edge. It takes no clicks, so the chart still works.
+  const [bleed, setBleed] = useState(0)
+  useEffect(() => {
+    const el = box.current
+    const stage = el?.closest('.hm-stage')
+    const side = stage?.querySelector('.hm-side')
+    if (!el || !stage || !side) return
+    const measure = () => {
+      const v = el.getBoundingClientRect()
+      const r = side.getBoundingClientRect()
+      setBleed(r.top < v.bottom - 10 && r.left >= v.right - 10 ? Math.max(0, Math.round(r.right - v.right)) : 0)
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(stage)
+    return () => ro.disconnect()
+  }, [])
   useEffect(() => {
     const el = box.current
     if (!el) return
@@ -294,8 +317,16 @@ export function Stage({
   return (
     <div ref={box} className="hm-view" role="img" aria-label={label}>
       {near && (
-        <Canvas dpr={[1, 2]} gl={{ antialias: true }} flat aria-hidden>
-          <Scene labels={labels} zoomIn={zoomIn} focus={focus} vessel={vessel} progress={progress} shift={shift} closeIn={closeIn} closeFocus={closeFocus} floor={floor}>{children}</Scene>
+        <Canvas
+          dpr={[1, 2]} gl={{ antialias: true }} flat aria-hidden
+          style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `calc(100% + ${bleed}px)` }}
+        >
+          <Scene
+            labels={labels} zoomIn={zoomIn} focus={focus} vessel={vessel} progress={progress} shift={shift} closeIn={closeIn} closeFocus={closeFocus}
+            floor={floor} bleed={bleed}
+          >
+            {children}
+          </Scene>
         </Canvas>
       )}
     </div>
