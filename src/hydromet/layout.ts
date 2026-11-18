@@ -36,14 +36,20 @@ export function drift(k: number, salt = 0): Vec {
 }
 
 /**
- * The dosing beaker's tilt (radians) for `progress` (0 to 1) along the slider: upright at the start, tipping over its
- * mouth as the slider rises, to well past horizontal at the end.
+ * The dosing beaker's tilt (radians) for `progress` (0 to 1) along the slider: leaning at 45° at the start, tipping
+ * over its mouth as the slider rises, to well past horizontal at the end.
  */
-export const tubeAngle = (progress: number) => 2.4 * progress
+export const tubeAngle = (progress: number) => Math.PI / 4 + (2.4 - Math.PI / 4) * progress // 45° at the start
 /** The beaker's height below its mouth. */
 export const BEAKER_DEPTH = 0.45
-/** Just outside the beaker's mouth: what leaves it passes here before falling. */
-export const MOUTH: Vec = [0.28, 1.92, 0]
+/**
+ * A point just beyond the beaker's mouth, along its axis, for the beaker's tilt at `progress`: whatever leaves the
+ * beaker heads here first, straight out through the opening, and only then falls.
+ */
+export function mouth(progress: number): Vec {
+  const t = tubeAngle(progress)
+  return [TUBE[0] - Math.sin(t) * 0.16, TUBE[1] + Math.cos(t) * 0.16, TUBE[2]]
+}
 
 /** A point in the dosing beaker, turned with the beaker about its mouth. */
 export function tipped([x, y, z]: Vec, progress: number): Vec {

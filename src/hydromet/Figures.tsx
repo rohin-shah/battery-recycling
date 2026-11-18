@@ -3,7 +3,7 @@ import { IMPURITY_PH, interpolate, METALS, sweetSpot, MIXED_METALS, MIXED_PH, se
 import { backlash, thumbAt } from './backlash'
 import { clickSteps, cue } from './click'
 import { Chart, Frame } from './Frame'
-import { COLOUR, drift, hash, MOUTH, tipped, TUBE, type Vec } from './layout'
+import { COLOUR, drift, hash, mouth, tipped, TUBE, type Vec } from './layout'
 import { setImpurityPH, setMixedPH, useImpurityPH, useMixedPH } from './ph'
 import { type Bead, Beads, type Follow, Stage } from './scene'
 import './hydromet.css'
@@ -110,7 +110,7 @@ function acidBeads(): Bead[] {
     // Sulfate: in the tube as part of a molecule, then loose in the water.
     ...Array.from({ length: MOLECULES }, (_, m): Bead => ({
       size: SULFATE,
-      aim: (a) => (a >= addedAt(m) ? { to: wide(drift(m, 13)), jig: 0.05, color: COLOUR.sulfate, via: MOUTH } : { to: tubeSlot(m, a), color: COLOUR.sulfate }),
+      aim: (a) => (a >= addedAt(m) ? { to: wide(drift(m, 13)), jig: 0.05, color: COLOUR.sulfate, via: mouth(a) } : { to: tubeSlot(m, a), color: COLOUR.sulfate }),
     })),
     // Hydrogen: on its sulfate in the tube; split off as an ion roaming the water; then, for the first molecules,
     // swimming over to an oxygen of the particle to make water.
@@ -120,7 +120,7 @@ function acidBeads(): Bead[] {
         size: HYDROGEN_ION,
         aim: (a) => {
           if (m < PAIRS && taken(m, a)) return { on: O + m, offset: ON_OXYGEN[k % 2], color: COLOUR.hydrogen, speed: 1.4 }
-          if (a >= addedAt(m)) return { to: wide(drift(k, 17)), jig: 0.32, pace: 1.7, color: COLOUR.hydrogenIon, speed: 2, via: MOUTH }
+          if (a >= addedAt(m)) return { to: wide(drift(k, 17)), jig: 0.32, pace: 1.7, color: COLOUR.hydrogenIon, speed: 2, via: mouth(a) }
           return { on: S + m, offset: H_ON_SULFATE[k % 2], color: COLOUR.hydrogenIon }
         },
       }
@@ -333,8 +333,8 @@ function settleScene<M extends string>(
       aim: (pH) => {
         const job = jobs[k]
         if (!out(k, pH)) return { to: vialSlot(k, tilt(pH)), color: COLOUR.oxygen }
-        if (job.metal !== undefined) return { on: job.metal, offset: onMetal(valence(job.metal), job.place ?? 0), color: COLOUR.oxygen, speed: 2.6, via: MOUTH }
-        return { to: place(20 + k, drift(k, 41)), jig: 0.06, color: COLOUR.oxygen, speed: 1.6, via: MOUTH }
+        if (job.metal !== undefined) return { on: job.metal, offset: onMetal(valence(job.metal), job.place ?? 0), color: COLOUR.oxygen, speed: 2.6, via: mouth(tilt(pH)) }
+        return { to: place(20 + k, drift(k, 41)), jig: 0.06, color: COLOUR.oxygen, speed: 1.6, via: mouth(tilt(pH)) }
       },
     })),
     ...ks(0, N).map((k): Bead => ({ size: HYDROGEN, aim: () => ({ on: OH + k, offset: ON_OXYGEN[0], color: COLOUR.hydrogen }) })),
@@ -342,7 +342,7 @@ function settleScene<M extends string>(
       size: SODIUM,
       aim: (pH) =>
         out(k, pH)
-          ? { to: place(40 + k, drift(k, 51)), away: away(place(40 + k, drift(k, 51)), k !== lastOut(pH)), jig: 0.2, pace: 1.2, color: COLOUR.sodium, speed: 1.2, via: MOUTH }
+          ? { to: place(40 + k, drift(k, 51)), away: away(place(40 + k, drift(k, 51)), k !== lastOut(pH)), jig: 0.2, pace: 1.2, color: COLOUR.sodium, speed: 1.2, via: mouth(tilt(pH)) }
           : { on: OH + k, offset: NA_ON_OH, color: COLOUR.sodium },
     })),
     ...ks(0, sulfates).map((s): Bead => ({ size: SULFATE, aim: (pH) => ({ to: place(60 + s, drift(s, 61)), away: away(place(60 + s, drift(s, 61)), s > 0 && toPos(pH) > 0.08), jig: 0.05, color: COLOUR.sulfate, speed: 1.2 }) })),
