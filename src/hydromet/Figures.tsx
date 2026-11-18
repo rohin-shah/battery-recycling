@@ -3,7 +3,7 @@ import { IMPURITY_PH, interpolate, METALS, sweetSpot, MIXED_METALS, MIXED_PH, se
 import { backlash, thumbAt } from './backlash'
 import { clickSteps, cue } from './click'
 import { Chart, Frame } from './Frame'
-import { COLOUR, drift, hash, mouth, tipped, TUBE, type Vec } from './layout'
+import { BIG_BEAKER, COLOUR, drift, hash, mouth, tipped, TUBE, type Vec } from './layout'
 import { setImpurityPH, setMixedPH, useImpurityPH, useMixedPH } from './ph'
 import { type Bead, Beads, type Follow, Stage } from './scene'
 import './hydromet.css'
@@ -84,7 +84,7 @@ function tubeSlot(m: number, progress: number): Vec {
 }
 
 /** A fixed tag by the dosing beaker's mouth, naming what is in it. */
-const beakerLabel = (what: string) => [{ at: [TUBE[0] + 0.22, TUBE[1] - 0.2, 0] as Vec, text: `Beaker of ${what}` }]
+const beakerLabel = (what: string) => [{ at: [TUBE[0] + 0.3, TUBE[1] - 0.2, 0] as Vec, text: `Beaker of ${what}` }]
 
 /** Spread a drifting place across the tank, which is wider than the beaker. */
 const wide = ([x, y, z]: Vec): Vec => [x * 1.25, y, z]
@@ -234,7 +234,7 @@ const spot = (n: number, width: number): Vec => {
 function vialSlot(k: number, progress: number): Vec {
   const ring = Math.floor(k / 4)
   const a = (k % 4) * (Math.PI / 2) + ring * 0.5
-  return tipped([TUBE[0] + Math.cos(a) * 0.07, TUBE[1] - 0.36 + ring * 0.11, TUBE[2] + Math.sin(a) * 0.07], progress)
+  return tipped([TUBE[0] + Math.cos(a) * 0.13, TUBE[1] - 0.5 + ring * 0.13, TUBE[2] + Math.sin(a) * 0.13], progress)
 }
 
 /**
@@ -446,7 +446,7 @@ export function ImpurityFigure() {
   return (
     <Frame
       view={
-        <Stage label={`Dissolved battery metals at pH ${pH.toFixed(1)}`} vessel="tank" focus={0.8} shift={0.15} zoomIn={1.6} closeIn={0.3} labels={beakerLabel('sodium hydroxide')} progress={pos}>
+        <Stage label={`Dissolved battery metals at pH ${pH.toFixed(1)}`} vessel="tank" focus={0.9} shift={0.15} zoomIn={1.35} closeIn={0.2} closeFocus={0.95} beaker={BIG_BEAKER} labels={beakerLabel('sodium hydroxide')} progress={pos}>
           <Beads beads={scene.beads} value={pH} follow={scene.tags(pH, ['iron', 'aluminium', 'nickel'], (m) => NAME[m])} />
         </Stage>
       }
@@ -504,7 +504,7 @@ export function MixedFigure() {
   return (
     <Frame
       view={
-        <Stage label={`Nickel, cobalt, manganese and lithium in solution at pH ${pH.toFixed(1)}`} vessel="tank" focus={0.8} shift={0.3} zoomIn={1.6} closeIn={0.45} labels={beakerLabel('sodium hydroxide')} progress={pos}>
+        <Stage label={`Nickel, cobalt, manganese and lithium in solution at pH ${pH.toFixed(1)}`} vessel="tank" focus={0.9} shift={0.3} zoomIn={1.35} closeIn={0.2} closeFocus={0.95} beaker={BIG_BEAKER} labels={beakerLabel('sodium hydroxide')} progress={pos}>
           <Beads beads={scene.beads} value={pH} follow={scene.tags(pH, MIXED_METALS, (m) => NAME[m])} />
         </Stage>
       }

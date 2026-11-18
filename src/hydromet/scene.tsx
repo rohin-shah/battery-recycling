@@ -2,7 +2,7 @@ import { ContactShadows, Environment, Html, Lightformer, OrthographicCamera } fr
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { Color, type Group, LatheGeometry, MathUtils, Object3D, Vector2, Vector3, type InstancedMesh } from 'three'
-import { BEAKER_DEPTH, LIQUID_TOP, R, TANK, TUBE, tubeAngle, type Vec } from './layout'
+import { type BeakerSize, LIQUID_TOP, R, SMALL_BEAKER, TANK, TUBE, tubeAngle, type Vec } from './layout'
 
 /**
  * The shared stage for the hydrometallurgy figures: a glass beaker on a slab, seen from one fixed isometric viewpoint
@@ -198,9 +198,10 @@ export type SceneLabel = { at: Vec; text: string }
 const FOCUS_IN = 0.8 // height in the liquid the camera closes in on
 
 function Scene({
-  labels, zoomIn, focus, vessel, progress, shift, closeIn, closeFocus, floor, bleed, children,
+  labels, zoomIn, focus, vessel, progress, shift, closeIn, closeFocus, floor, bleed, beaker, children,
 }: {
   labels: SceneLabel[]; zoomIn: number; focus: number; vessel: Vessel; progress: number; shift?: number; closeIn: number; closeFocus: number; floor: boolean
+  beaker: BeakerSize
   /** How many pixels the canvas runs on past the view's right edge (over the chart); the scene stays framed in the view. */
   bleed: number
   children: ReactNode
@@ -274,16 +275,16 @@ function Scene({
       <ContactShadows position={[0, 0.005, 0]} scale={4} blur={2.4} opacity={0.55} frames={1} />
       {/* Dosing beaker: opaque, mouth at the pivot and body hanging below; upright at first, tipping as the slider rises */}
       <group ref={tube} position={TUBE} rotation={[0, 0, tubeAngle(progress)]}>
-        <mesh position={[0, -BEAKER_DEPTH / 2, 0]}>
-          <cylinderGeometry args={[0.17, 0.15, BEAKER_DEPTH, 40, 1, true]} />
+        <mesh position={[0, -beaker.depth / 2, 0]}>
+          <cylinderGeometry args={[beaker.radius, beaker.radius * 0.88, beaker.depth, 40, 1, true]} />
           <meshStandardMaterial color="#6a82a0" roughness={0.45} metalness={0.1} side={2} />
         </mesh>
-        <mesh position={[0, -BEAKER_DEPTH, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <circleGeometry args={[0.15, 40]} />
+        <mesh position={[0, -beaker.depth, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <circleGeometry args={[beaker.radius * 0.88, 40]} />
           <meshStandardMaterial color="#6a82a0" roughness={0.45} metalness={0.1} side={2} />
         </mesh>
         <mesh position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <torusGeometry args={[0.17, 0.012, 8, 40]} />
+          <torusGeometry args={[beaker.radius, 0.012, 8, 40]} />
           <meshStandardMaterial color="#9db2cb" roughness={0.4} />
         </mesh>
       </group>
@@ -300,7 +301,7 @@ function Scene({
 
 /** The 3D view. The canvas only exists while the figure is on or near the screen. */
 export function Stage({
-  label, labels, zoomIn = 1.35, focus = 1.05, vessel = 'beaker', progress = 0, shift, closeIn = 0.9, closeFocus = FOCUS_IN, floor = false, children,
+  label, labels, zoomIn = 1.35, focus = 1.05, vessel = 'beaker', progress = 0, shift, closeIn = 0.9, closeFocus = FOCUS_IN, floor = false, beaker = SMALL_BEAKER, children,
 }: {
   label: string; labels: SceneLabel[]; zoomIn?: number; focus?: number; vessel?: Vessel; progress?: number
   /** How far to slide the view sideways, leaving room on the right for tags. */
@@ -310,7 +311,9 @@ export function Stage({
   /** The height the camera closes in on at the top of the slider. */
   closeFocus?: number
   /** Draw a floor for settled solids to sit on. */
-  floor?: boolean; children: ReactNode
+  floor?: boolean
+  /** The size of the dosing beaker. */
+  beaker?: BeakerSize; children: ReactNode
 }) {
   const box = useRef<HTMLDivElement>(null)
   const [near, setNear] = useState(false)
@@ -348,7 +351,7 @@ export function Stage({
         >
           <Scene
             labels={labels} zoomIn={zoomIn} focus={focus} vessel={vessel} progress={progress} shift={shift} closeIn={closeIn} closeFocus={closeFocus}
-            floor={floor} bleed={bleed}
+            floor={floor} bleed={bleed} beaker={beaker}
           >
             {children}
           </Scene>

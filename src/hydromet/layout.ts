@@ -4,7 +4,7 @@ export type Vec = [number, number, number]
 
 export const R = 0.9 // beaker inner radius
 export const LIQUID_TOP = 1.45
-export const TUBE: Vec = [0.3, 1.95, 0] // the beaker's mouth, which it tips about; its body hangs below
+export const TUBE: Vec = [0.3, 1.85, 0] // the beaker's mouth, which it tips about; its body hangs below
 export const TANK = { w: 2.4, d: 1.6, h: 1.9 } // the aquarium in figure 1
 
 /** Bead colours, built on the page palette (f96304 d5db1e 00b49b 006a5b 9db2cb 6a82a0 3d4d60) and riffs on it, kept distinct from one another on the dark panel. */
@@ -40,8 +40,10 @@ export function drift(k: number, salt = 0): Vec {
  * over its mouth as the slider rises, to well past horizontal at the end.
  */
 export const tubeAngle = (progress: number) => Math.PI / 4 + (2.4 - Math.PI / 4) * progress // 45° at the start
-/** The beaker's height below its mouth. */
-export const BEAKER_DEPTH = 0.45
+/** The dosing beaker's size: radius at the mouth, and depth below it. Figures 2 and 3 use the bigger one. */
+export type BeakerSize = { radius: number; depth: number }
+export const SMALL_BEAKER: BeakerSize = { radius: 0.17, depth: 0.45 }
+export const BIG_BEAKER: BeakerSize = { radius: 0.27, depth: 0.62 }
 /**
  * A point just beyond the beaker's mouth, along its axis, for the beaker's tilt at `progress`: whatever leaves the
  * beaker heads here first, straight out through the opening, and only then falls.
