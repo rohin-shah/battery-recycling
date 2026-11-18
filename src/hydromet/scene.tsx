@@ -193,7 +193,7 @@ export type Vessel = 'beaker' | 'tank'
 /** Whether to draw the beaker or tank and the slab under it. Off: the solution is shown without its container. */
 const container = false
 
-export type SceneLabel = { at: Vec; text: string }
+export type SceneLabel = { at: Vec; text: string; flip?: boolean }
 
 const FOCUS_IN = 0.8 // height in the liquid the camera closes in on
 
@@ -293,7 +293,7 @@ function Scene({
       {ready &&
         labels.map((l) => (
           <Html key={l.text} position={l.at} zIndexRange={[5, 0]} style={{ pointerEvents: 'none' }}>
-            <span className="hm-follow">{l.text}</span>
+            <span className={l.flip ? 'hm-follow flip' : 'hm-follow'}>{l.text}</span>
           </Html>
         ))}
     </>

@@ -14,7 +14,7 @@ main > .hm { max-width: 980px; }
 .hm-main .hm-vslider > :not(.hm-vtrack) { position: relative; z-index: 2; }
 .hm-main .hm-vtrack { z-index: 0; }
 .hm-solo { max-width: 720px; margin: 0 auto; }
-.hm-view { position: relative; height: 300px; overflow: visible; }
+.hm-view { position: relative; height: 360px; overflow: visible; }
 @media (min-width: 820px) {
   .hm-stage:not(.hm-solo) { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); align-items: center; }
   .hm-view { height: 460px; }
