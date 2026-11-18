@@ -2,7 +2,7 @@ import { ContactShadows, Environment, Html, Lightformer, OrthographicCamera } fr
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { Color, type Group, LatheGeometry, MathUtils, Object3D, Vector2, Vector3, type InstancedMesh } from 'three'
-import { type BeakerSize, LIQUID_TOP, R, SMALL_BEAKER, TANK, TUBE, tubeAngle, type Vec } from './layout'
+import { LIQUID_TOP, R, TANK, TUBE, tubeAngle, type Vec } from './layout'
 
 /**
  * The shared stage for the hydrometallurgy figures: a glass beaker on a slab, seen from one fixed isometric viewpoint
@@ -15,13 +15,12 @@ import { type BeakerSize, LIQUID_TOP, R, SMALL_BEAKER, TANK, TUBE, tubeAngle, ty
 /**
  * `wait`: don't head for `to` until the beads listed have reached where they are riding (within a small distance); keep
  * still at `hold` until then. Used so a metal ion only settles once its hydroxides have actually bonded to it.
- * `via`: on its way to `to`, pass through this point first (the beaker's mouth), so it is seen leaving there.
  * `away`: float sideways on its own clock at this speed (units a second; the sign is the direction), whatever the
  * slider does, until well off screen. Once `away` is gone the bead eases back to `to`.
  */
 export type Aim = { color: string; speed?: number } & (
-  | { to: Vec; jig?: number; pace?: number; wait?: { for: number[]; hold: Vec }; away?: number; via?: Vec }
-  | { on: number; offset: Vec; via?: Vec }
+  | { to: Vec; jig?: number; pace?: number; wait?: { for: number[]; hold: Vec }; away?: number }
+  | { on: number; offset: Vec }
 )
 export type Bead = { size: number; aim: (value: number) => Aim }
 
@@ -43,7 +42,6 @@ export function Beads({ beads, value, follow = [] }: { beads: Bead[]; value: num
   }, [])
   const state = useRef<Vec[] | null>(null)
   const released = useRef(new Set<number>())
-  const passed = useRef(new Set<number>())
   const [o, c] = useMemo(() => [new Object3D(), new Color()], [])
   useFrame(({ clock, camera }, dt) => {
     const m = mesh.current
@@ -77,15 +75,6 @@ export function Beads({ beads, value, follow = [] }: { beads: Bead[]; value: num
         return a
       }
       return { ...a, to: a.wait.hold, jig: 0 }
-    }).map((a, i): Aim => {
-      // Head for `via` first; once there (or if there is no `via`), go on as aimed.
-      const via = a.via
-      if (!via) {
-        passed.current.delete(i)
-        return a
-      }
-      if (!passed.current.has(i) && Math.hypot(...[0, 1, 2].map((d) => s[i][d] - via[d])) < 0.06) passed.current.add(i)
-      return passed.current.has(i) ? a : { to: via, color: a.color, speed: 5 }
     })
     // Beads with a place of their own move first; riders then follow whatever they sit on.
     for (const riders of [false, true]) {
@@ -193,15 +182,14 @@ export type Vessel = 'beaker' | 'tank'
 /** Whether to draw the beaker or tank and the slab under it. Off: the solution is shown without its container. */
 const container = false
 
-export type SceneLabel = { at: Vec; text: string; flip?: boolean }
+export type SceneLabel = { at: Vec; text: string }
 
 const FOCUS_IN = 0.8 // height in the liquid the camera closes in on
 
 function Scene({
-  labels, zoomIn, focus, vessel, progress, shift, closeIn, closeFocus, floor, bleed, beaker, children,
+  labels, zoomIn, focus, vessel, progress, shift, closeIn, closeFocus, floor, bleed, children,
 }: {
   labels: SceneLabel[]; zoomIn: number; focus: number; vessel: Vessel; progress: number; shift?: number; closeIn: number; closeFocus: number; floor: boolean
-  beaker: BeakerSize
   /** How many pixels the canvas runs on past the view's right edge (over the chart); the scene stays framed in the view. */
   bleed: number
   children: ReactNode
@@ -273,27 +261,19 @@ function Scene({
         </mesh>
       )}
       <ContactShadows position={[0, 0.005, 0]} scale={4} blur={2.4} opacity={0.55} frames={1} />
-      {/* Dosing beaker: opaque and drawn in front of every bead (no depth test), so nothing shows through it; mouth at the
-          pivot, body hanging below, tipping as the slider rises */}
+      {/* Dosing tube */}
+      {/* Dosing tube: lies on its side at first and turns mouth-down as the slider moves up */}
       <group ref={tube} position={TUBE} rotation={[0, 0, tubeAngle(progress)]}>
-        <mesh position={[0, -beaker.depth / 2, 0]} renderOrder={10}>
-          <cylinderGeometry args={[beaker.radius, beaker.radius * 0.88, beaker.depth, 40, 1, true]} />
-          <meshStandardMaterial color="#6a82a0" roughness={0.45} metalness={0.1} side={2} depthTest={false} />
-        </mesh>
-        <mesh position={[0, -beaker.depth, 0]} rotation={[Math.PI / 2, 0, 0]} renderOrder={10}>
-          <circleGeometry args={[beaker.radius * 0.88, 40]} />
-          <meshStandardMaterial color="#6a82a0" roughness={0.45} metalness={0.1} side={2} depthTest={false} />
-        </mesh>
-        <mesh position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]} renderOrder={11}>
-          <torusGeometry args={[beaker.radius, 0.012, 8, 40]} />
-          <meshStandardMaterial color="#9db2cb" roughness={0.4} depthTest={false} />
+        <mesh position={[0, 0.31, 0]}>
+          <cylinderGeometry args={[0.17, 0.17, 0.62, 40, 1, true]} />
+          <meshPhysicalMaterial color="#cfe6ea" transparent opacity={0.2} roughness={0.05} clearcoat={1} depthWrite={false} side={2} />
         </mesh>
       </group>
       {children}
       {ready &&
         labels.map((l) => (
           <Html key={l.text} position={l.at} zIndexRange={[5, 0]} style={{ pointerEvents: 'none' }}>
-            <span className={l.flip ? 'hm-follow flip' : 'hm-follow'}>{l.text}</span>
+            <span className="hm-tag">{l.text}</span>
           </Html>
         ))}
     </>
@@ -302,7 +282,7 @@ function Scene({
 
 /** The 3D view. The canvas only exists while the figure is on or near the screen. */
 export function Stage({
-  label, labels, zoomIn = 1.35, focus = 1.05, vessel = 'beaker', progress = 0, shift, closeIn = 0.9, closeFocus = FOCUS_IN, floor = false, beaker = SMALL_BEAKER, children,
+  label, labels, zoomIn = 1.35, focus = 1.05, vessel = 'beaker', progress = 0, shift, closeIn = 0.9, closeFocus = FOCUS_IN, floor = false, children,
 }: {
   label: string; labels: SceneLabel[]; zoomIn?: number; focus?: number; vessel?: Vessel; progress?: number
   /** How far to slide the view sideways, leaving room on the right for tags. */
@@ -312,9 +292,7 @@ export function Stage({
   /** The height the camera closes in on at the top of the slider. */
   closeFocus?: number
   /** Draw a floor for settled solids to sit on. */
-  floor?: boolean
-  /** The size of the dosing beaker. */
-  beaker?: BeakerSize; children: ReactNode
+  floor?: boolean; children: ReactNode
 }) {
   const box = useRef<HTMLDivElement>(null)
   const [near, setNear] = useState(false)
@@ -352,7 +330,7 @@ export function Stage({
         >
           <Scene
             labels={labels} zoomIn={zoomIn} focus={focus} vessel={vessel} progress={progress} shift={shift} closeIn={closeIn} closeFocus={closeFocus}
-            floor={floor} bleed={bleed} beaker={beaker}
+            floor={floor} bleed={bleed}
           >
             {children}
           </Scene>
