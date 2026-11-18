@@ -62,8 +62,8 @@ export const SOURCES = {
     url: undefined,
   },
   minviro2026: {
-    short: 'Minviro 2026',
-    full: 'Lase, Shah & Alacacayir (2026), Recycled vs Virgin Metals for Lithium-Ion Batteries: Comparing the Carbon Footprint, Minviro.',
+    short: 'Minviro 2025',
+    full: 'Lase, Myers, Shah & Alacacayir (2025), Climate Change Impact of Recycled vs Virgin Metals for Lithium-ion Batteries, Minviro white paper.',
     url: 'https://minviro.com/download/recycled-vs-virgin-metals-whitepaper',
   },
   nrel2015: {

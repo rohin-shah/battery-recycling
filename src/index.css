@@ -36,3 +36,23 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid 
 .hm-loading { max-width: 980px; height: 520px; margin: 20px auto; border-radius: 14px; background: #18202a; }
 /* Particle names: the bead's colour, mixed a little towards the text colour so light ones stay readable */
 .ion { color: color-mix(in oklab, var(--c) 70%, var(--text)); }
+/* The nickel chart: same dark panel as the figures, drawn in plain HTML so it reads at any width */
+.nickel { margin: 20px auto; }
+main > .nickel { max-width: 760px; }
+.nickel-panel { padding: 16px 18px; border-radius: 14px; background: #18202a; color: #eef2f7; border: 1px solid #2b3746; }
+.nickel figcaption { margin-top: 8px; font-size: 0.82rem; line-height: 1.45; opacity: 0.75; }
+.nickel-title { margin: 0; font-weight: 600; }
+.nickel-unit { margin: 2px 0 10px; font-size: 0.82rem; color: #9db2cb; }
+.nickel-legend { list-style: none; padding: 0; margin: 0 0 12px; display: flex; gap: 16px; font-size: 0.82rem; }
+.nickel-legend li::before, .nickel-bars li .track i { background: var(--bar); }
+.nickel-legend li::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
+.nickel .mined { --bar: #6a82a0; }
+.nickel .recycled { --bar: #00b49b; }
+.nickel-bars { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.nickel-bars li { display: grid; grid-template-columns: minmax(0, 15em) minmax(0, 1fr); gap: 4px 12px; align-items: center; margin: 0; font-size: 0.85rem; }
+.nickel-bars .name em { font-style: normal; color: #9db2cb; }
+.nickel-bars .track { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.nickel-bars .track i { display: block; height: 14px; border-radius: 3px; flex: none; }
+.nickel-bars .track b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.nickel-bars .recycled .name { color: #00b49b; }
+@media (max-width: 520px) { .nickel-bars li { grid-template-columns: minmax(0, 1fr); } }

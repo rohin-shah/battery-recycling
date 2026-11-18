@@ -190,7 +190,8 @@ export function DissolveFigure() {
       }}
       caption={
         <>
-          Illustrative: real acid has far more hydrogen ions than shown. The particle only gives way once the acid is strong; Chen &amp; Ho (2018) needed
+          Adding sulfuric acid to water that has some metallic compounds in it results in the hydrogen from the acid bonding with the oxygen from the
+          metallic compounds—thereby dissolving the metal. Illustrative: real acid has far more hydrogen ions than shown. The particle only gives way once the acid is strong; Chen &amp; Ho (2018) needed
           0.25 to 2 mol/L sulfuric acid to dissolve battery cathode powder.
         </>
       }
@@ -472,7 +473,9 @@ export function ImpurityFigure() {
       }}
       caption={
         <>
-          Measured by Chernyaev, Wilson &amp; Lundström (2021), Scientific Reports 11, 23283, CC BY 4.0. The nickel, cobalt and lithium that sink here
+          Adding sodium hydroxide to the acid lets it split into sodium and hydroxide, where the hydroxide would rather bond with the metals, become a
+          solid and therefore come out of solution (precipitate). Chart measured by Chernyaev, Wilson &amp; Lundström (2021), Scientific Reports 11,
+          23283, CC BY 4.0. The nickel, cobalt and lithium that sink here
           are dragged down with the sludge. Each step up in pH means ten times fewer hydrogen ions; the bead counts are illustrative. Copper is
           taken out separately, by adding iron, which this figure does not show.
         </>

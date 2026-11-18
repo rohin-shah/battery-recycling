@@ -1,5 +1,6 @@
 import { type CSSProperties, lazy, type ReactNode, Suspense } from 'react'
 import { COLOUR } from './hydromet/layout'
+import { NickelChart } from './NickelChart'
 import { SOURCES, type SourceId } from './sources'
 
 // The figures bring three.js with them, so they load after the text.
@@ -22,7 +23,7 @@ export default function App() {
     <main>
       <h1>Throwing your EV battery in the bin</h1>
       <p>
-        Your battery might be considered spent when it has less than 80% of the energy it once could, i.e., it
+        Your battery might be considered spent when it can store less than 80% of the energy it once could, i.e., it
         becomes less and less usable as a means to move things. Ideally, the battery might be taken straight out of your car—physically unplugged,
         unbolted and replugged and bolted into an energy storage facility. That’s because storing energy and releasing it doesn’t have to be as
         demanding as something moving humans and things about. This process can genuinely work as one Californian
@@ -31,7 +32,7 @@ export default function App() {
 
       <h2>Okay but what happens when it can’t store enough energy to be useful as energy storage?</h2>
       <p>
-        Then it has to be recycled–it’s law in lots of places. The good thing
+        Then it has to be recycled—it’s the law in lots of places. The good thing
         about that is that humans have gotten quite good at recycling batteries.
       </p>
 
@@ -44,10 +45,10 @@ export default function App() {
         and very much depends on where in the world and the type of battery that it is.
       </p>
 
-      <h3>What are batteries made of at this point?</h3>
+      <h3>What are lithium-ion batteries made of at this point?</h3>
       <p>
         Batteries constitute an array of modules which constitute an array of cells. Cells are made of a mixture
-        of chemicals like nickel, cobalt, manganese, lithium, iron, aluminium, copper, plastics and carbon. These
+        of materials like nickel, cobalt, manganese, lithium, iron, aluminium, copper, plastics and carbon. These
         early stages of the recycling process are designed to clean the cells as much as possible to isolate the things that we really want to
         recover—i.e., the metals. “Things we really want to recover” is largely driven by market forces: it’s what is economical to recover, not
         necessarily what’s best for the environment.
@@ -78,8 +79,8 @@ export default function App() {
         The black mass is subjected to a series of steps. Firstly it’s bathed in warm acid. This dissolves all of the metals. <Ion c="graphite">Graphite</Ion> and other
         impurities don’t dissolve so can be filtered off. This is because the metals are generally bonded to <Ion c="oxygen">oxygen</Ion>. The <Ion c="oxygen">oxygen</Ion> atoms love that there
         are all those <Ion c="hydrogenIon">hydrogen ions</Ion> floating about, and split up from the metal—leaving the metal floating about (dissolved) with new water molecules
-        instead. The <Ion c="graphite">carbon</Ion> in the <Ion c="graphite">graphite</Ion> is largely unfazed by the <Ion c="hydrogenIon">hydrogen</Ion> so it stays as <Ion c="graphite">graphite</Ion>. Here’s an acidic solution with metals
-        dissolved. Adjust the acidity by adding <Ion c="sodium">sodium</Ion> <Ion c="oxygen">hydroxide</Ion> and watch how it splits and makes new water + metallic <Ion c="oxygen">hydroxides</Ion>. Find the sweet spot
+        instead. The <Ion c="graphite">carbon</Ion> that makes the <Ion c="graphite">graphite</Ion> is largely unfazed by the <Ion c="hydrogenIon">hydrogen</Ion> so it stays as <Ion c="graphite">graphite</Ion>. Here’s an acidic solution with metals
+        dissolved in it. Adjust the acidity by adding <Ion c="sodium">sodium</Ion> <Ion c="oxygen">hydroxide</Ion> and watch how it splits and makes new water + metallic <Ion c="oxygen">hydroxides</Ion>. Find the sweet spot
         to isolate the <Ion c="iron">iron</Ion> and <Ion c="aluminium">aluminium</Ion>.
       </p>
       <Figure>
@@ -117,10 +118,11 @@ export default function App() {
 
       <h2>What about the environment then?</h2>
       <p>
-        Minviro’s whitepaper on the topic showed that the climate change impacts of recycled battery-grade nickel sulfate are lower than that of it
+        <a href={SOURCES.minviro2026.url}>Minviro’s whitepaper</a> on the topic showed that the climate change impacts of recycled battery-grade nickel sulfate are lower than that of it
         produced using the dominant mining process. This can be as little as 1/5th of the impact to around 1/3rd. It’s not a
         clear cut story for all metals, lithium is more varied when considering climate change impact alone—but this ignores things like water use. However, in each recycled case, we’re not extracting finite resources of these metal ores.
       </p>
+      <NickelChart />
 
       <h2>Sources</h2>
       <ul className="sources">
