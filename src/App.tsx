@@ -119,7 +119,7 @@ export default function App() {
       <h2>What about the environment then?</h2>
       <p>
         <a href={SOURCES.minviro2026.url}>Minviro’s whitepaper</a> on the topic showed that the climate change impacts of recycled battery-grade nickel sulfate are lower than that of it
-        produced using the dominant mining process. This can be as little as 1/5th of the impact to around 1/3rd. It’s not a
+        produced using the dominant mining method (from nickel laterite). This can be as little as 1/5th of the impact to around 1/3rd. It’s not a
         clear cut story for all metals, lithium is more varied when considering climate change impact alone—but this ignores things like water use. However, in each recycled case, we’re not extracting finite resources of these metal ores.
       </p>
       <NickelChart />
