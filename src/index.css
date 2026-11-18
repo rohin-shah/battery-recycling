@@ -42,17 +42,17 @@ main > .nickel { max-width: 760px; }
 .nickel-panel { padding: 16px 18px; border-radius: 14px; background: #18202a; color: #eef2f7; border: 1px solid #2b3746; }
 .nickel figcaption { margin-top: 8px; font-size: 0.82rem; line-height: 1.45; opacity: 0.75; }
 .nickel-title { margin: 0; font-weight: 600; }
-.nickel-unit { margin: 2px 0 10px; font-size: 0.82rem; color: #9db2cb; }
-.nickel-legend { list-style: none; padding: 0; margin: 0 0 12px; display: flex; gap: 16px; font-size: 0.82rem; }
-.nickel-legend li::before, .nickel-bars li .track i { background: var(--bar); }
+.nickel-legend { list-style: none; padding: 0; margin: 6px 0 14px; display: flex; gap: 16px; font-size: 0.82rem; }
+.nickel-legend li::before { background: var(--bar); }
 .nickel-legend li::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
 .nickel .mined { --bar: #6a82a0; }
 .nickel .recycled { --bar: #00b49b; }
-.nickel-bars { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
-.nickel-bars li { display: grid; grid-template-columns: minmax(0, 15em) minmax(0, 1fr); gap: 4px 12px; align-items: center; margin: 0; font-size: 0.85rem; }
-.nickel-bars .name em { font-style: normal; color: #9db2cb; }
-.nickel-bars .track { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.nickel-bars .track i { display: block; height: 14px; border-radius: 3px; flex: none; }
-.nickel-bars .track b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.nickel-bars { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; align-items: end; }
+.nickel-bars li { margin: 0; display: flex; flex-direction: column; gap: 6px; font-size: 0.72rem; line-height: 1.2; text-align: center; }
+.nickel-bars .col { height: 200px; display: flex; align-items: flex-end; justify-content: center; }
+.nickel-bars .col i { display: block; width: 72%; min-height: 2px; border-radius: 3px 3px 0 0; background: var(--bar); }
+.nickel-bars .name { min-height: 2.6em; }
+.nickel-bars .name em { display: block; font-style: normal; color: #9db2cb; }
 .nickel-bars .recycled .name { color: #00b49b; }
-@media (max-width: 520px) { .nickel-bars li { grid-template-columns: minmax(0, 1fr); } }
+.nickel-axis { margin: 10px 0 0; font-size: 0.78rem; color: #9db2cb; }
+@media (max-width: 520px) { .nickel-bars { gap: 4px; } .nickel-bars li { font-size: 0.62rem; } .nickel-bars .col { height: 160px; } }
