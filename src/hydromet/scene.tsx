@@ -273,19 +273,20 @@ function Scene({
         </mesh>
       )}
       <ContactShadows position={[0, 0.005, 0]} scale={4} blur={2.4} opacity={0.55} frames={1} />
-      {/* Dosing beaker: opaque, mouth at the pivot and body hanging below; upright at first, tipping as the slider rises */}
+      {/* Dosing beaker: opaque and drawn in front of every bead (no depth test), so nothing shows through it; mouth at the
+          pivot, body hanging below, tipping as the slider rises */}
       <group ref={tube} position={TUBE} rotation={[0, 0, tubeAngle(progress)]}>
-        <mesh position={[0, -beaker.depth / 2, 0]}>
+        <mesh position={[0, -beaker.depth / 2, 0]} renderOrder={10}>
           <cylinderGeometry args={[beaker.radius, beaker.radius * 0.88, beaker.depth, 40, 1, true]} />
-          <meshStandardMaterial color="#6a82a0" roughness={0.45} metalness={0.1} side={2} />
+          <meshStandardMaterial color="#6a82a0" roughness={0.45} metalness={0.1} side={2} depthTest={false} />
         </mesh>
-        <mesh position={[0, -beaker.depth, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <mesh position={[0, -beaker.depth, 0]} rotation={[Math.PI / 2, 0, 0]} renderOrder={10}>
           <circleGeometry args={[beaker.radius * 0.88, 40]} />
-          <meshStandardMaterial color="#6a82a0" roughness={0.45} metalness={0.1} side={2} />
+          <meshStandardMaterial color="#6a82a0" roughness={0.45} metalness={0.1} side={2} depthTest={false} />
         </mesh>
-        <mesh position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <mesh position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]} renderOrder={11}>
           <torusGeometry args={[beaker.radius, 0.012, 8, 40]} />
-          <meshStandardMaterial color="#9db2cb" roughness={0.4} />
+          <meshStandardMaterial color="#9db2cb" roughness={0.4} depthTest={false} />
         </mesh>
       </group>
       {children}

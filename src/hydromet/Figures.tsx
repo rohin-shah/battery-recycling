@@ -446,7 +446,7 @@ export function ImpurityFigure() {
   return (
     <Frame
       view={
-        <Stage label={`Dissolved battery metals at pH ${pH.toFixed(1)}`} vessel="tank" focus={0.9} shift={0.15} zoomIn={1.35} closeIn={0.2} closeFocus={0.95} beaker={BIG_BEAKER} labels={beakerLabel('sodium hydroxide')} progress={pos}>
+        <Stage label={`Dissolved battery metals at pH ${pH.toFixed(1)}`} vessel="tank" focus={1} shift={0.15} zoomIn={1.35} closeIn={0.2} closeFocus={0.95} beaker={BIG_BEAKER} labels={beakerLabel('sodium hydroxide')} progress={pos}>
           <Beads beads={scene.beads} value={pH} follow={scene.tags(pH, ['iron', 'aluminium', 'nickel'], (m) => NAME[m])} />
         </Stage>
       }
@@ -504,7 +504,7 @@ export function MixedFigure() {
   return (
     <Frame
       view={
-        <Stage label={`Nickel, cobalt, manganese and lithium in solution at pH ${pH.toFixed(1)}`} vessel="tank" focus={0.9} shift={0.3} zoomIn={1.35} closeIn={0.2} closeFocus={0.95} beaker={BIG_BEAKER} labels={beakerLabel('sodium hydroxide')} progress={pos}>
+        <Stage label={`Nickel, cobalt, manganese and lithium in solution at pH ${pH.toFixed(1)}`} vessel="tank" focus={1} shift={0.3} zoomIn={1.35} closeIn={0.2} closeFocus={0.95} beaker={BIG_BEAKER} labels={beakerLabel('sodium hydroxide')} progress={pos}>
           <Beads beads={scene.beads} value={pH} follow={scene.tags(pH, MIXED_METALS, (m) => NAME[m])} />
         </Stage>
       }
