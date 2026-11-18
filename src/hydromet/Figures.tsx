@@ -3,7 +3,7 @@ import { IMPURITY_PH, interpolate, METALS, sweetSpot, MIXED_METALS, MIXED_PH, se
 import { backlash, thumbAt } from './backlash'
 import { clickSteps, cue } from './click'
 import { Chart, Frame } from './Frame'
-import { COLOUR, drift, hash, tipped, TUBE, type Vec } from './layout'
+import { COLOUR, drift, hash, MOUTH, tipped, TUBE, type Vec } from './layout'
 import { setImpurityPH, setMixedPH, useImpurityPH, useMixedPH } from './ph'
 import { type Bead, Beads, type Follow, Stage } from './scene'
 import './hydromet.css'
@@ -80,12 +80,15 @@ function particleSites() {
 /** Place `m` in the dosing tube: three molecules to a ring. */
 function tubeSlot(m: number, progress: number): Vec {
   const a = (m % 3) * ((Math.PI * 2) / 3) + Math.floor(m / 3) * 0.6
-  return tipped([TUBE[0] + Math.cos(a) * 0.075, TUBE[1] + 0.1 + Math.floor(m / 3) * 0.12, TUBE[2] + Math.sin(a) * 0.075], progress)
+  return tipped([TUBE[0] + Math.cos(a) * 0.04, TUBE[1] - 0.34 + Math.floor(m / 3) * 0.12, TUBE[2] + Math.sin(a) * 0.04], progress)
 }
+
+/** A fixed tag by the dosing beaker's mouth, naming what is in it. */
+const beakerLabel = (what: string) => [{ at: [TUBE[0] + 0.22, TUBE[1] - 0.2, 0] as Vec, text: `Beaker of ${what}` }]
 
 /** Spread a drifting place across the tank, which is wider than the beaker. */
 const wide = ([x, y, z]: Vec): Vec => [x * 1.25, y, z]
-const H_ON_SULFATE: Vec[] = [[0.075, 0.03, 0], [-0.075, 0.03, 0]]
+const H_ON_SULFATE: Vec[] = [[0.06, 0.03, 0], [-0.06, 0.03, 0]]
 
 // Bead order: particle cores, their oxygens, sulfates, hydrogens (two per molecule), background water, graphite.
 const O = PAIRS
@@ -107,7 +110,7 @@ function acidBeads(): Bead[] {
     // Sulfate: in the tube as part of a molecule, then loose in the water.
     ...Array.from({ length: MOLECULES }, (_, m): Bead => ({
       size: SULFATE,
-      aim: (a) => (a >= addedAt(m) ? { to: wide(drift(m, 13)), jig: 0.05, color: COLOUR.sulfate } : { to: tubeSlot(m, a), color: COLOUR.sulfate }),
+      aim: (a) => (a >= addedAt(m) ? { to: wide(drift(m, 13)), jig: 0.05, color: COLOUR.sulfate, via: MOUTH } : { to: tubeSlot(m, a), color: COLOUR.sulfate }),
     })),
     // Hydrogen: on its sulfate in the tube; split off as an ion roaming the water; then, for the first molecules,
     // swimming over to an oxygen of the particle to make water.
@@ -117,7 +120,7 @@ function acidBeads(): Bead[] {
         size: HYDROGEN_ION,
         aim: (a) => {
           if (m < PAIRS && taken(m, a)) return { on: O + m, offset: ON_OXYGEN[k % 2], color: COLOUR.hydrogen, speed: 1.4 }
-          if (a >= addedAt(m)) return { to: wide(drift(k, 17)), jig: 0.32, pace: 1.7, color: COLOUR.hydrogenIon, speed: 2 }
+          if (a >= addedAt(m)) return { to: wide(drift(k, 17)), jig: 0.32, pace: 1.7, color: COLOUR.hydrogenIon, speed: 2, via: MOUTH }
           return { on: S + m, offset: H_ON_SULFATE[k % 2], color: COLOUR.hydrogenIon }
         },
       }
@@ -139,11 +142,9 @@ function acidBeads(): Bead[] {
  */
 function acidTags(a: number): Follow[] {
   const range = (n: number) => Array.from({ length: n }, (_, i) => i)
-  const inVial = range(MOLECULES).find((m) => a < addedAt(m))
   const ion = range(MOLECULES).find((m) => a >= addedAt(m) && !(m < PAIRS && gone(m, a)))
   const holding = range(PAIRS).reverse().find((j) => !gone(j, a))
   return [
-    { id: 'acid', bead: S + (inVial ?? 0), text: inVial === undefined ? null : 'Acid' },
     { id: 'ion', bead: H + (ion ?? 0) * 2, text: ion === undefined ? null : 'Hydrogen ion' },
     { id: 'sulfate', bead: S, text: a >= addedAt(0) ? 'Sulfate' : null, below: true },
     { id: 'water', bead: H + MOLECULES * 2, text: 'Water (H₂O)' },
@@ -179,7 +180,7 @@ export function DissolveFigure() {
       view={
         <Stage
           label={`A soluble particle in water, ${added ? `with ${added} molecules of sulfuric acid added` : 'with no acid'}`}
-          vessel="tank" focus={0.95} zoomIn={1} closeIn={0.3} closeFocus={0.85} progress={acid} labels={[]}
+          vessel="tank" focus={0.95} zoomIn={1} closeIn={0.15} closeFocus={0.95} progress={acid} labels={beakerLabel('sulfuric acid')}
         >
           <Beads beads={beads} value={acid} follow={acidTags(acid)} />
         </Stage>
@@ -233,7 +234,7 @@ const spot = (n: number, width: number): Vec => {
 function vialSlot(k: number, progress: number): Vec {
   const ring = Math.floor(k / 4)
   const a = (k % 4) * (Math.PI / 2) + ring * 0.5
-  return tipped([TUBE[0] + Math.cos(a) * 0.085, TUBE[1] + 0.09 + ring * 0.12, TUBE[2] + Math.sin(a) * 0.085], progress)
+  return tipped([TUBE[0] + Math.cos(a) * 0.07, TUBE[1] - 0.36 + ring * 0.11, TUBE[2] + Math.sin(a) * 0.07], progress)
 }
 
 /**
@@ -332,8 +333,8 @@ function settleScene<M extends string>(
       aim: (pH) => {
         const job = jobs[k]
         if (!out(k, pH)) return { to: vialSlot(k, tilt(pH)), color: COLOUR.oxygen }
-        if (job.metal !== undefined) return { on: job.metal, offset: onMetal(valence(job.metal), job.place ?? 0), color: COLOUR.oxygen, speed: 2.6 }
-        return { to: place(20 + k, drift(k, 41)), jig: 0.06, color: COLOUR.oxygen, speed: 1.6 }
+        if (job.metal !== undefined) return { on: job.metal, offset: onMetal(valence(job.metal), job.place ?? 0), color: COLOUR.oxygen, speed: 2.6, via: MOUTH }
+        return { to: place(20 + k, drift(k, 41)), jig: 0.06, color: COLOUR.oxygen, speed: 1.6, via: MOUTH }
       },
     })),
     ...ks(0, N).map((k): Bead => ({ size: HYDROGEN, aim: () => ({ on: OH + k, offset: ON_OXYGEN[0], color: COLOUR.hydrogen }) })),
@@ -341,7 +342,7 @@ function settleScene<M extends string>(
       size: SODIUM,
       aim: (pH) =>
         out(k, pH)
-          ? { to: place(40 + k, drift(k, 51)), away: away(place(40 + k, drift(k, 51)), k !== lastOut(pH)), jig: 0.2, pace: 1.2, color: COLOUR.sodium, speed: 1.2 }
+          ? { to: place(40 + k, drift(k, 51)), away: away(place(40 + k, drift(k, 51)), k !== lastOut(pH)), jig: 0.2, pace: 1.2, color: COLOUR.sodium, speed: 1.2, via: MOUTH }
           : { on: OH + k, offset: NA_ON_OH, color: COLOUR.sodium },
     })),
     ...ks(0, sulfates).map((s): Bead => ({ size: SULFATE, aim: (pH) => ({ to: place(60 + s, drift(s, 61)), away: away(place(60 + s, drift(s, 61)), s > 0 && toPos(pH) > 0.08), jig: 0.05, color: COLOUR.sulfate, speed: 1.2 }) })),
@@ -355,7 +356,6 @@ function settleScene<M extends string>(
    * metals share one tag on the pile.
    */
   const tags = (pH: number, named: M[], name: (m: M) => string): Follow[] => {
-    const inVial = ks(0, N).find((k) => !out(k, pH))
     const lastOut = (test: (job: Job) => boolean) => ks(0, N).reverse().find((k) => out(k, pH) && test(jobs[k]))
     const sodium = lastOut(() => true)
     const made = lastOut((job) => job.ion !== undefined)
@@ -367,7 +367,6 @@ function settleScene<M extends string>(
     const down = named.filter((m) => pH >= at[first(m)])
     const settledText = down.length === 1 ? `Settled: ${name(down[0]).toLowerCase()} hydroxide` : `Settled as hydroxides: ${list(down.map((m) => name(m).toLowerCase()))}`
     return [
-      { id: 'vial', bead: OH + (inVial ?? 0), text: inVial === undefined ? null : 'Sodium hydroxide' },
       { id: 'sodium', bead: NA + (sodium ?? 0), text: sodium === undefined ? null : 'Sodium ion' },
       { id: 'sulfate', bead: SO, text: 'Sulfate ion', below: true },
       { id: 'ion', bead: H + (ion ?? 0), text: ion === undefined ? null : 'Hydrogen ion' },
@@ -447,7 +446,7 @@ export function ImpurityFigure() {
   return (
     <Frame
       view={
-        <Stage label={`Dissolved battery metals at pH ${pH.toFixed(1)}`} vessel="tank" focus={0.8} shift={0.15} zoomIn={1.6} closeIn={0.3} labels={[]} progress={pos}>
+        <Stage label={`Dissolved battery metals at pH ${pH.toFixed(1)}`} vessel="tank" focus={0.8} shift={0.15} zoomIn={1.6} closeIn={0.3} labels={beakerLabel('sodium hydroxide')} progress={pos}>
           <Beads beads={scene.beads} value={pH} follow={scene.tags(pH, ['iron', 'aluminium', 'nickel'], (m) => NAME[m])} />
         </Stage>
       }
@@ -489,7 +488,7 @@ export function ImpurityFigure() {
 const MIXED_COUNT: Record<MixedMetal, number> = { nickel: 1, cobalt: 1, manganese: 1, lithium: 1 }
 
 export function MixedFigure() {
-  const scene = useMemo(() => settleScene(MIXED_COUNT, MIXED_METALS, settledMixed, MIXED_PH, 1, 1, 6.6, [], 1), [])
+  const scene = useMemo(() => settleScene(MIXED_COUNT, MIXED_METALS, settledMixed, MIXED_PH, 1, 1, 6.6, [], 1, 0, true), [])
   const [thumb, setThumb] = useState<number | null>(null)
   const pH = clamp(useMixedPH(), MIXED_PH)
   const pos = scene.toPos(pH)
@@ -497,6 +496,7 @@ export function MixedFigure() {
     setThumb(v)
     const shown = backlash(1 + pos, v, [1, 2])
     if (shown === 1 + pos) return
+    scene.movedDown(shown < 1 + pos) // moving down calls the floating-off ions back
     const next = scene.fromPos(shown - 1)
     clickSteps(scene.steps, pH, next)
     setMixedPH(next)
@@ -504,7 +504,7 @@ export function MixedFigure() {
   return (
     <Frame
       view={
-        <Stage label={`Nickel, cobalt, manganese and lithium in solution at pH ${pH.toFixed(1)}`} vessel="tank" focus={0.8} shift={0.3} zoomIn={1.6} closeIn={0.45} labels={[]} progress={pos}>
+        <Stage label={`Nickel, cobalt, manganese and lithium in solution at pH ${pH.toFixed(1)}`} vessel="tank" focus={0.8} shift={0.3} zoomIn={1.6} closeIn={0.45} labels={beakerLabel('sodium hydroxide')} progress={pos}>
           <Beads beads={scene.beads} value={pH} follow={scene.tags(pH, MIXED_METALS, (m) => NAME[m])} />
         </Stage>
       }

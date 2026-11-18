@@ -4,7 +4,7 @@ export type Vec = [number, number, number]
 
 export const R = 0.9 // beaker inner radius
 export const LIQUID_TOP = 1.45
-export const TUBE: Vec = [0, 1.62, 0]
+export const TUBE: Vec = [0.3, 1.95, 0] // the beaker's mouth, which it tips about; its body hangs below
 export const TANK = { w: 2.4, d: 1.6, h: 1.9 } // the aquarium in figure 1
 
 /** Bead colours, built on the page palette (f96304 d5db1e 00b49b 006a5b 9db2cb 6a82a0 3d4d60) and riffs on it, kept distinct from one another on the dark panel. */
@@ -36,12 +36,16 @@ export function drift(k: number, salt = 0): Vec {
 }
 
 /**
- * The dosing tube's angle from upright (radians) for `progress` (0 to 1) along the slider: it starts lying on its side,
- * holding everything in, and turns mouth-down as it empties.
+ * The dosing beaker's tilt (radians) for `progress` (0 to 1) along the slider: upright at the start, tipping over its
+ * mouth as the slider rises, to well past horizontal at the end.
  */
-export const tubeAngle = (progress: number) => (Math.PI / 2) * (1 - progress)
+export const tubeAngle = (progress: number) => 2.4 * progress
+/** The beaker's height below its mouth. */
+export const BEAKER_DEPTH = 0.45
+/** Just outside the beaker's mouth: what leaves it passes here before falling. */
+export const MOUTH: Vec = [0.28, 1.92, 0]
 
-/** A point in the dosing tube, turned with the tube about its mouth. */
+/** A point in the dosing beaker, turned with the beaker about its mouth. */
 export function tipped([x, y, z]: Vec, progress: number): Vec {
   const t = tubeAngle(progress)
   const dx = x - TUBE[0]

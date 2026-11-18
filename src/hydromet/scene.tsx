@@ -2,7 +2,7 @@ import { ContactShadows, Environment, Html, Lightformer, OrthographicCamera } fr
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { Color, type Group, LatheGeometry, MathUtils, Object3D, Vector2, Vector3, type InstancedMesh } from 'three'
-import { LIQUID_TOP, R, TANK, TUBE, tubeAngle, type Vec } from './layout'
+import { BEAKER_DEPTH, LIQUID_TOP, R, TANK, TUBE, tubeAngle, type Vec } from './layout'
 
 /**
  * The shared stage for the hydrometallurgy figures: a glass beaker on a slab, seen from one fixed isometric viewpoint
@@ -15,12 +15,13 @@ import { LIQUID_TOP, R, TANK, TUBE, tubeAngle, type Vec } from './layout'
 /**
  * `wait`: don't head for `to` until the beads listed have reached where they are riding (within a small distance); keep
  * still at `hold` until then. Used so a metal ion only settles once its hydroxides have actually bonded to it.
+ * `via`: on its way to `to`, pass through this point first (the beaker's mouth), so it is seen leaving there.
  * `away`: float sideways on its own clock at this speed (units a second; the sign is the direction), whatever the
  * slider does, until well off screen. Once `away` is gone the bead eases back to `to`.
  */
 export type Aim = { color: string; speed?: number } & (
-  | { to: Vec; jig?: number; pace?: number; wait?: { for: number[]; hold: Vec }; away?: number }
-  | { on: number; offset: Vec }
+  | { to: Vec; jig?: number; pace?: number; wait?: { for: number[]; hold: Vec }; away?: number; via?: Vec }
+  | { on: number; offset: Vec; via?: Vec }
 )
 export type Bead = { size: number; aim: (value: number) => Aim }
 
@@ -42,6 +43,7 @@ export function Beads({ beads, value, follow = [] }: { beads: Bead[]; value: num
   }, [])
   const state = useRef<Vec[] | null>(null)
   const released = useRef(new Set<number>())
+  const passed = useRef(new Set<number>())
   const [o, c] = useMemo(() => [new Object3D(), new Color()], [])
   useFrame(({ clock, camera }, dt) => {
     const m = mesh.current
@@ -75,6 +77,15 @@ export function Beads({ beads, value, follow = [] }: { beads: Bead[]; value: num
         return a
       }
       return { ...a, to: a.wait.hold, jig: 0 }
+    }).map((a, i): Aim => {
+      // Head for `via` first; once there (or if there is no `via`), go on as aimed.
+      const via = a.via
+      if (!via) {
+        passed.current.delete(i)
+        return a
+      }
+      if (!passed.current.has(i) && Math.hypot(...[0, 1, 2].map((d) => s[i][d] - via[d])) < 0.06) passed.current.add(i)
+      return passed.current.has(i) ? a : { to: via, color: a.color, speed: 5 }
     })
     // Beads with a place of their own move first; riders then follow whatever they sit on.
     for (const riders of [false, true]) {
@@ -261,19 +272,26 @@ function Scene({
         </mesh>
       )}
       <ContactShadows position={[0, 0.005, 0]} scale={4} blur={2.4} opacity={0.55} frames={1} />
-      {/* Dosing tube */}
-      {/* Dosing tube: lies on its side at first and turns mouth-down as the slider moves up */}
+      {/* Dosing beaker: opaque, mouth at the pivot and body hanging below; upright at first, tipping as the slider rises */}
       <group ref={tube} position={TUBE} rotation={[0, 0, tubeAngle(progress)]}>
-        <mesh position={[0, 0.31, 0]}>
-          <cylinderGeometry args={[0.17, 0.17, 0.62, 40, 1, true]} />
-          <meshPhysicalMaterial color="#cfe6ea" transparent opacity={0.2} roughness={0.05} clearcoat={1} depthWrite={false} side={2} />
+        <mesh position={[0, -BEAKER_DEPTH / 2, 0]}>
+          <cylinderGeometry args={[0.17, 0.15, BEAKER_DEPTH, 40, 1, true]} />
+          <meshStandardMaterial color="#6a82a0" roughness={0.45} metalness={0.1} side={2} />
+        </mesh>
+        <mesh position={[0, -BEAKER_DEPTH, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <circleGeometry args={[0.15, 40]} />
+          <meshStandardMaterial color="#6a82a0" roughness={0.45} metalness={0.1} side={2} />
+        </mesh>
+        <mesh position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[0.17, 0.012, 8, 40]} />
+          <meshStandardMaterial color="#9db2cb" roughness={0.4} />
         </mesh>
       </group>
       {children}
       {ready &&
         labels.map((l) => (
           <Html key={l.text} position={l.at} zIndexRange={[5, 0]} style={{ pointerEvents: 'none' }}>
-            <span className="hm-tag">{l.text}</span>
+            <span className="hm-follow">{l.text}</span>
           </Html>
         ))}
     </>
